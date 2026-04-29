@@ -20,16 +20,16 @@ const USERS: Array<{
   password: string;  // 5 символов
 }> = [
   // === Директор ===
-  { login: 'dir001', fullName: 'Владимир Сергеевич', phone: '',  role: 'director',  password: 'a4dvh' },
+  { login: 'dir001', fullName: 'Владимир Сергеевич', phone: '+7 999 835-35-55',  role: 'director',  password: 'a4dvh' },
 
   // === Менеджер ===
-  { login: 'mgr001', fullName: 'Арина',              phone: '',  role: 'manager',   password: 'DVtVB' },
+  { login: 'mgr001', fullName: 'Арина',              phone: '',                   role: 'manager',   password: 'DVtVB' },
 
   // === Замерщик ===
-  { login: 'srv001', fullName: 'Али',                phone: '',  role: 'surveyor',  password: 'Tg5Bs' },
+  { login: 'srv001', fullName: 'Али',                phone: '+7 967 134-65-56',  role: 'surveyor',  password: 'Tg5Bs' },
 
   // === Установщик ===
-  { login: 'ins001', fullName: 'Арсен',              phone: '',  role: 'installer', password: '3acvH' },
+  { login: 'ins001', fullName: 'Арсен',              phone: '+7 964 524-48-28',  role: 'installer', password: '3acvH' },
 ];
 
 async function main() {

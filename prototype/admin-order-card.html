@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a1422" />
+  <title>Заказ № 142 — СтальДверь</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: {
+        fontFamily: { sans: ['Inter','system-ui','sans-serif'] },
+        colors: { arctic: {
+          bg:'#0a1422', surface:'#142033', surface2:'#1c2a40',
+          border:'#243349', text:'#e6eef9', muted:'#8aa0bd',
+          steel:'#6b95d1', steelHover:'#82a8df', ice:'#d4e4f7',
+        }},
+        boxShadow: { card: '0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px -12px rgba(0,0,0,0.6)' }
+      }}
+    }
+  </script>
+  <style>
+    body { background:#0a1422; color:#e6eef9; font-family:Inter,system-ui,sans-serif; }
+    body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:-1;
+      background: radial-gradient(80rem 50rem at 80% -10%, rgba(107,149,209,0.08), transparent 60%),
+                  radial-gradient(60rem 40rem at -10% 110%, rgba(212,228,247,0.04), transparent 60%); }
+    [data-lucide] { width:1em; height:1em; }
+    .badge-prod { display:inline-flex; align-items:center; gap:0.4rem; padding:0.3rem 0.75rem;
+                  border-radius:9999px; font-size:0.8rem; font-weight:500;
+                  background:rgba(107,149,209,0.15); color:#a8c4eb;
+                  box-shadow:inset 0 0 0 1px rgba(107,149,209,0.35); }
+    .field-label { font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:#8aa0bd; font-weight:500; }
+    .input { background:#0e1a2c; border:1px solid #243349; color:#e6eef9; border-radius:0.5rem;
+             padding:0.55rem 0.8rem; font-size:0.9rem; width:100%; transition:border-color .15s, box-shadow .15s; }
+    .input:focus { outline:none; border-color:#6b95d1; box-shadow:0 0 0 3px rgba(107,149,209,0.15); }
+    select.input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238aa0bd' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+                   background-repeat:no-repeat; background-position:right 0.7rem center; padding-right:2rem; }
+    textarea.input { resize:vertical; min-height:5rem; }
+    .btn-primary { background:#6b95d1; color:#0a1422; font-weight:600; padding:0.7rem 1rem;
+                   border-radius:0.6rem; transition:background .15s; box-shadow:0 4px 14px -4px rgba(107,149,209,0.4); }
+    .btn-primary:hover { background:#82a8df; }
+    .btn-secondary { background:#1c2a40; color:#e6eef9; padding:0.55rem 0.9rem; border-radius:0.5rem;
+                     font-size:0.875rem; transition:background .15s; box-shadow:inset 0 0 0 1px #243349; }
+    .btn-secondary:hover { background:#243349; }
+    .btn-success { background:#3a8d72; color:#fff; padding:0.55rem 0.9rem; border-radius:0.5rem;
+                   font-size:0.875rem; transition:background .15s; }
+    .btn-success:hover { background:#46a487; }
+    .btn-danger { color:#e08585; padding:0.55rem 0.9rem; border-radius:0.5rem; font-size:0.875rem; }
+    .btn-danger:hover { background:rgba(224,133,133,0.08); }
+    .nav-link { padding:0.4rem 0.85rem; border-radius:0.5rem; font-size:0.875rem; color:#8aa0bd; transition:all .15s; }
+    .nav-link:hover { color:#e6eef9; background:#1c2a40; }
+    .nav-link.active { color:#e6eef9; background:#1c2a40; box-shadow:inset 0 0 0 1px #243349; }
+    .card { background:#142033; border:1px solid #243349; border-radius:0.85rem; padding:1.1rem;
+            box-shadow:0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px -12px rgba(0,0,0,0.6); }
+    .card-title { display:flex; align-items:center; gap:0.5rem; font-size:0.78rem; text-transform:uppercase;
+                  letter-spacing:0.06em; color:#8aa0bd; font-weight:600; margin-bottom:0.85rem; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <header class="border-b border-arctic-border bg-arctic-surface/60 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-arctic-steel/15 ring-1 ring-arctic-steel/30 flex items-center justify-center">
+            <i data-lucide="door-closed" class="text-arctic-steel"></i>
+          </div>
+          <div class="font-semibold tracking-tight">СтальДверь</div>
+        </div>
+        <nav class="flex items-center gap-1">
+          <a href="admin-orders.html"   class="nav-link active"><i data-lucide="package" class="inline mr-1.5"></i>Заказы</a>
+          <a href="admin-calendar.html" class="nav-link"><i data-lucide="calendar-days" class="inline mr-1.5"></i>Календарь</a>
+        </nav>
+      </div>
+      <div class="text-sm text-arctic-muted">Анна М. · менеджер</div>
+    </div>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-6 space-y-4">
+
+    <a href="admin-orders.html" class="inline-flex items-center gap-1.5 text-sm text-arctic-muted hover:text-arctic-text">
+      <i data-lucide="arrow-left"></i> К списку заказов
+    </a>
+
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <div class="text-xs uppercase tracking-wider text-arctic-muted">Заказ</div>
+        <h1 class="text-2xl font-semibold tracking-tight">№ 142</h1>
+      </div>
+      <span class="badge-prod"><i data-lucide="hammer"></i> В производстве</span>
+    </div>
+
+    <!-- Клиентская ссылка -->
+    <section class="card">
+      <div class="card-title">
+        <i data-lucide="link-2"></i> Ссылка для клиента
+      </div>
+      <div class="flex flex-col md:flex-row gap-2">
+        <input id="link" readonly value="https://stal-dveri.ru/order/8f3a-2d11-9c7b-44ee"
+               class="input flex-1 font-mono text-xs" />
+        <div class="flex gap-2">
+          <button onclick="navigator.clipboard.writeText(document.getElementById('link').value); this.innerHTML='<i data-lucide=&quot;check&quot;></i> Скопировано'; lucide.createIcons();"
+                  class="btn-secondary inline-flex items-center gap-2">
+            <i data-lucide="copy"></i> Скопировать
+          </button>
+          <a href="https://wa.me/79165551234?text=%D0%97%D0%B4%D1%80%D0%B0%D0%B2%D1%81%D1%82%D0%B2%D1%83%D0%B9%D1%82%D0%B5%21+%D0%A1%D1%82%D0%B0%D1%82%D1%83%D1%81+%D0%B2%D0%B0%D1%88%D0%B5%D0%B3%D0%BE+%D0%B7%D0%B0%D0%BA%D0%B0%D0%B7%D0%B0%3A+https%3A%2F%2Fstal-dveri.ru%2Forder%2F8f3a-2d11-9c7b-44ee"
+             target="_blank" class="btn-success inline-flex items-center gap-2">
+            <i data-lucide="message-circle"></i> WhatsApp
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <form class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <div class="md:col-span-2 space-y-4">
+
+        <section class="card space-y-3">
+          <div class="card-title"><i data-lucide="user"></i> Клиент</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <label>
+              <span class="field-label">ФИО</span>
+              <input value="Иван Петрович Соколов" class="input mt-1" />
+            </label>
+            <label>
+              <span class="field-label">Телефон</span>
+              <input value="+7 916 555-12-34" class="input mt-1 tabular-nums" />
+            </label>
+            <label class="md:col-span-2">
+              <span class="field-label">Адрес установки</span>
+              <input value="Москва, ул. Ленина, 10, кв. 25" class="input mt-1" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card space-y-3">
+          <div class="card-title"><i data-lucide="door-closed"></i> Дверь</div>
+          <label class="block">
+            <span class="field-label">Комментарий по двери</span>
+            <textarea rows="3" class="input mt-1"
+              placeholder="Цвет, фурнитура, особенности...">Модель «Премиум-3», цвет венге, ручка хром, глазок панорамный.</textarea>
+          </label>
+          <div class="grid grid-cols-2 gap-3">
+            <label>
+              <span class="field-label">Ширина, мм</span>
+              <input type="number" value="860" class="input mt-1 tabular-nums" />
+            </label>
+            <label>
+              <span class="field-label">Высота, мм</span>
+              <input type="number" value="2050" class="input mt-1 tabular-nums" />
+            </label>
+          </div>
+        </section>
+
+        <section class="card space-y-3">
+          <div class="card-title"><i data-lucide="wallet"></i> Оплата</div>
+          <div class="grid grid-cols-3 gap-3">
+            <label>
+              <span class="field-label">Сумма, ₽</span>
+              <input type="number" value="52000" class="input mt-1 tabular-nums" />
+            </label>
+            <label>
+              <span class="field-label">Аванс, ₽</span>
+              <input type="number" value="20000" class="input mt-1 tabular-nums" />
+            </label>
+            <div>
+              <span class="field-label">Остаток</span>
+              <div class="mt-1 px-3 py-2 rounded-lg bg-arctic-bg ring-1 ring-arctic-border text-arctic-ice font-semibold tabular-nums">32 000 ₽</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-title"><i data-lucide="message-square"></i> Комментарии исполнителей</div>
+          <ul class="space-y-3 text-sm mb-3">
+            <li class="border-l-2 border-arctic-steel pl-3">
+              <div class="text-xs text-arctic-muted flex items-center gap-2">
+                <span class="font-medium text-arctic-ice">Сергей Иванов</span>
+                <span>· замерщик · 12.05 15:20</span>
+              </div>
+              <div class="mt-1">Замер сделан, проём ровный. Аванс 20 000 ₽ получен наличными.</div>
+            </li>
+          </ul>
+          <div class="flex gap-2">
+            <input placeholder="Добавить комментарий..." class="input flex-1" />
+            <button type="button" class="btn-secondary"><i data-lucide="send"></i></button>
+          </div>
+        </section>
+      </div>
+
+      <aside class="space-y-4">
+        <section class="card">
+          <div class="card-title"><i data-lucide="git-branch"></i> Этап</div>
+          <select class="input">
+            <option>1. Новая</option>
+            <option>2. Замер назначен</option>
+            <option>3. Замер сделан, аванс получен</option>
+            <option selected>4. В производстве</option>
+            <option>5. Готова к установке</option>
+            <option>6. Установлена</option>
+            <option>7. Закрыта</option>
+          </select>
+        </section>
+
+        <section class="card space-y-3">
+          <div class="card-title"><i data-lucide="ruler"></i> Замер</div>
+          <label class="block">
+            <span class="field-label">Дата и время</span>
+            <input type="datetime-local" value="2026-05-12T14:00" class="input mt-1" />
+          </label>
+          <label class="block">
+            <span class="field-label">Замерщик</span>
+            <select class="input mt-1">
+              <option value="">— не назначен —</option>
+              <option selected>Сергей Иванов</option>
+              <option>Олег Кузнецов</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="card space-y-3">
+          <div class="card-title"><i data-lucide="wrench"></i> Установка</div>
+          <label class="block">
+            <span class="field-label">Дата и время</span>
+            <input type="datetime-local" class="input mt-1" />
+          </label>
+          <label class="block">
+            <span class="field-label">Установщик</span>
+            <select class="input mt-1">
+              <option value="" selected>— не назначен —</option>
+              <option>Андрей Смирнов</option>
+              <option>Дмитрий Попов</option>
+            </select>
+          </label>
+        </section>
+
+        <button type="submit" class="btn-primary w-full inline-flex items-center justify-center gap-2">
+          <i data-lucide="save"></i> Сохранить
+        </button>
+        <button type="button" class="btn-danger w-full inline-flex items-center justify-center gap-2">
+          <i data-lucide="trash-2"></i> Удалить заказ
+        </button>
+      </aside>
+    </form>
+  </main>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

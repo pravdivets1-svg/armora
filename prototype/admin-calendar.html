@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a1422" />
+  <title>Календарь — СтальДверь</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+      fontFamily: { sans: ['Inter','system-ui','sans-serif'] },
+      colors: { arctic: {
+        bg:'#0a1422', surface:'#142033', surface2:'#1c2a40',
+        border:'#243349', text:'#e6eef9', muted:'#8aa0bd',
+        steel:'#6b95d1', steelHover:'#82a8df', ice:'#d4e4f7',
+      }}
+    }}}
+  </script>
+  <style>
+    body { background:#0a1422; color:#e6eef9; font-family:Inter,system-ui,sans-serif; }
+    body::before { content:''; position:fixed; inset:0; pointer-events:none; z-index:-1;
+      background: radial-gradient(80rem 50rem at 80% -10%, rgba(107,149,209,0.08), transparent 60%),
+                  radial-gradient(60rem 40rem at -10% 110%, rgba(212,228,247,0.04), transparent 60%); }
+    [data-lucide] { width:1em; height:1em; }
+    .input { background:#0e1a2c; border:1px solid #243349; color:#e6eef9; border-radius:0.5rem;
+             padding:0.55rem 0.8rem; font-size:0.9rem; }
+    select.input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238aa0bd' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+                   background-repeat:no-repeat; background-position:right 0.7rem center; padding-right:2rem; }
+    .nav-link { padding:0.4rem 0.85rem; border-radius:0.5rem; font-size:0.875rem; color:#8aa0bd; transition:all .15s; }
+    .nav-link:hover { color:#e6eef9; background:#1c2a40; }
+    .nav-link.active { color:#e6eef9; background:#1c2a40; box-shadow:inset 0 0 0 1px #243349; }
+    .badge { display:inline-flex; align-items:center; gap:0.35rem; padding:0.2rem 0.6rem;
+             border-radius:9999px; font-size:0.72rem; font-weight:500; white-space:nowrap; }
+    .badge-survey { background:rgba(212,228,247,0.10); color:#d4e4f7; box-shadow:inset 0 0 0 1px rgba(212,228,247,0.25); }
+    .badge-install { background:rgba(130,200,180,0.12); color:#9fd9c4; box-shadow:inset 0 0 0 1px rgba(130,200,180,0.30); }
+    .event { display:flex; align-items:center; gap:0.85rem; background:#142033;
+             border:1px solid #243349; border-radius:0.85rem; padding:0.85rem 1rem;
+             transition:border-color .15s, transform .15s;
+             box-shadow:0 1px 0 rgba(255,255,255,0.04) inset; }
+    .event:hover { border-color:rgba(107,149,209,0.5); transform:translateY(-1px); }
+    .event-time { width:3.5rem; font-weight:600; font-size:0.95rem; font-variant-numeric:tabular-nums; color:#d4e4f7; }
+    .day-header { display:flex; align-items:baseline; gap:0.6rem; margin-bottom:0.7rem; }
+    .day-name { font-size:1rem; font-weight:600; }
+    .day-name.today { color:#d4e4f7; }
+    .day-date { font-size:0.85rem; color:#8aa0bd; }
+    .day-pill { font-size:0.7rem; padding:0.1rem 0.5rem; border-radius:9999px;
+                background:rgba(107,149,209,0.20); color:#d4e4f7;
+                box-shadow:inset 0 0 0 1px rgba(107,149,209,0.4); }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <header class="border-b border-arctic-border bg-arctic-surface/60 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-4xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-arctic-steel/15 ring-1 ring-arctic-steel/30 flex items-center justify-center">
+            <i data-lucide="door-closed" class="text-arctic-steel"></i>
+          </div>
+          <div class="font-semibold tracking-tight">СтальДверь</div>
+        </div>
+        <nav class="flex items-center gap-1">
+          <a href="admin-orders.html"   class="nav-link"><i data-lucide="package" class="inline mr-1.5"></i>Заказы</a>
+          <a href="admin-calendar.html" class="nav-link active"><i data-lucide="calendar-days" class="inline mr-1.5"></i>Календарь</a>
+        </nav>
+      </div>
+      <div class="text-sm text-arctic-muted">Анна М. · менеджер</div>
+    </div>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-4 py-6 space-y-5">
+
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-semibold tracking-tight">Замеры и установки</h1>
+        <div class="text-sm text-arctic-muted mt-0.5 flex items-center gap-1.5">
+          <i data-lucide="calendar-clock"></i> Ближайшие 14 дней
+        </div>
+      </div>
+    </div>
+
+    <form class="bg-arctic-surface ring-1 ring-arctic-border rounded-xl p-3">
+      <select name="user" class="input w-full md:w-80">
+        <option value="">Все сотрудники</option>
+        <option>Сергей Иванов (замерщик)</option>
+        <option>Олег Кузнецов (замерщик)</option>
+        <option>Андрей Смирнов (установщик)</option>
+        <option>Дмитрий Попов (установщик)</option>
+      </select>
+    </form>
+
+    <section>
+      <div class="day-header">
+        <h2 class="day-name today">Сегодня</h2>
+        <span class="day-date">29 апреля, среда</span>
+        <span class="day-pill">2 события</span>
+      </div>
+      <div class="space-y-2">
+        <a href="admin-order-card.html" class="event">
+          <div class="event-time">11:00</div>
+          <span class="badge badge-survey"><i data-lucide="ruler"></i>Замер</span>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium truncate">Мария Лебедева <span class="text-arctic-muted font-normal">· № 141</span></div>
+            <div class="text-sm text-arctic-muted truncate flex items-center gap-1.5 mt-0.5">
+              <i data-lucide="map-pin"></i>Москва, Пресненская наб., 6, кв. 102
+              <span class="text-arctic-muted/60 mx-1">·</span>
+              <i data-lucide="user"></i>О.Кузнецов
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="text-arctic-muted"></i>
+        </a>
+        <a href="admin-order-card.html" class="event">
+          <div class="event-time">15:30</div>
+          <span class="badge badge-install"><i data-lucide="wrench"></i>Установка</span>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium truncate">Алексей Карпов <span class="text-arctic-muted font-normal">· № 138</span></div>
+            <div class="text-sm text-arctic-muted truncate flex items-center gap-1.5 mt-0.5">
+              <i data-lucide="map-pin"></i>Москва, Тверская, 15, кв. 7
+              <span class="text-arctic-muted/60 mx-1">·</span>
+              <i data-lucide="user"></i>А.Смирнов
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="text-arctic-muted"></i>
+        </a>
+      </div>
+    </section>
+
+    <section>
+      <div class="day-header">
+        <h2 class="day-name">Завтра</h2>
+        <span class="day-date">30 апреля, четверг</span>
+      </div>
+      <div class="space-y-2">
+        <a href="admin-order-card.html" class="event">
+          <div class="event-time">10:00</div>
+          <span class="badge badge-survey"><i data-lucide="ruler"></i>Замер</span>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium truncate">Виктор Снегирёв <span class="text-arctic-muted font-normal">· № 143</span></div>
+            <div class="text-sm text-arctic-muted truncate flex items-center gap-1.5 mt-0.5">
+              <i data-lucide="map-pin"></i>Химки, ул. Молодёжная, 4
+              <span class="text-arctic-muted/60 mx-1">·</span>
+              <i data-lucide="user"></i>С.Иванов
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="text-arctic-muted"></i>
+        </a>
+      </div>
+    </section>
+
+    <section>
+      <div class="day-header">
+        <h2 class="day-name">12 мая</h2>
+        <span class="day-date">вторник</span>
+      </div>
+      <div class="space-y-2">
+        <a href="admin-order-card.html" class="event">
+          <div class="event-time">14:00</div>
+          <span class="badge badge-survey"><i data-lucide="ruler"></i>Замер</span>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium truncate">Иван Соколов <span class="text-arctic-muted font-normal">· № 142</span></div>
+            <div class="text-sm text-arctic-muted truncate flex items-center gap-1.5 mt-0.5">
+              <i data-lucide="map-pin"></i>Москва, Ленина, 10, кв. 25
+              <span class="text-arctic-muted/60 mx-1">·</span>
+              <i data-lucide="user"></i>С.Иванов
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="text-arctic-muted"></i>
+        </a>
+      </div>
+    </section>
+
+    <section>
+      <div class="day-header">
+        <h2 class="day-name">15 мая</h2>
+        <span class="day-date">пятница</span>
+      </div>
+      <div class="space-y-2">
+        <a href="admin-order-card.html" class="event">
+          <div class="event-time">10:00</div>
+          <span class="badge badge-install"><i data-lucide="wrench"></i>Установка</span>
+          <div class="flex-1 min-w-0">
+            <div class="font-medium truncate">Алексей Карпов <span class="text-arctic-muted font-normal">· № 140</span></div>
+            <div class="text-sm text-arctic-muted truncate flex items-center gap-1.5 mt-0.5">
+              <i data-lucide="map-pin"></i>Балашиха, мкр. Гагарина, 12
+              <span class="text-arctic-muted/60 mx-1">·</span>
+              <i data-lucide="user"></i>А.Смирнов
+            </div>
+          </div>
+          <i data-lucide="chevron-right" class="text-arctic-muted"></i>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

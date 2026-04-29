@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0a1422" />
+  <title>Заказы — СтальДверь</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            arctic: {
+              bg:'#0a1422', surface:'#142033', surface2:'#1c2a40',
+              border:'#243349', text:'#e6eef9', muted:'#8aa0bd',
+              steel:'#6b95d1', steelHover:'#82a8df', ice:'#d4e4f7', silver:'#c0c0c0',
+            }
+          },
+          boxShadow: { card: '0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px -12px rgba(0,0,0,0.6)' }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background:#0a1422; color:#e6eef9; font-family:Inter,system-ui,sans-serif; }
+    body::before {
+      content:''; position:fixed; inset:0; pointer-events:none; z-index:-1;
+      background:
+        radial-gradient(80rem 50rem at 80% -10%, rgba(107,149,209,0.08), transparent 60%),
+        radial-gradient(60rem 40rem at -10% 110%, rgba(212,228,247,0.04), transparent 60%);
+    }
+    [data-lucide] { width:1em; height:1em; }
+    /* Стили статус-бейджей */
+    .badge { display:inline-flex; align-items:center; gap:0.35rem; padding:0.2rem 0.6rem;
+             border-radius:9999px; font-size:0.72rem; font-weight:500; white-space:nowrap;
+             ring:1px; }
+    .badge-new       { background:rgba(192,192,192,0.10); color:#d6d6d6; box-shadow:inset 0 0 0 1px rgba(192,192,192,0.20); }
+    .badge-survey    { background:rgba(212,228,247,0.10); color:#d4e4f7; box-shadow:inset 0 0 0 1px rgba(212,228,247,0.25); }
+    .badge-prod      { background:rgba(107,149,209,0.15); color:#a8c4eb; box-shadow:inset 0 0 0 1px rgba(107,149,209,0.35); }
+    .badge-ready     { background:rgba(130,200,180,0.12); color:#9fd9c4; box-shadow:inset 0 0 0 1px rgba(130,200,180,0.30); }
+    .badge-closed    { background:rgba(138,160,189,0.10); color:#8aa0bd; box-shadow:inset 0 0 0 1px rgba(138,160,189,0.25); }
+
+    .input  { background:#0e1a2c; border:1px solid #243349; color:#e6eef9; border-radius:0.5rem;
+              padding:0.55rem 0.8rem; font-size:0.9rem; transition:border-color .15s, box-shadow .15s; }
+    .input:focus { outline:none; border-color:#6b95d1; box-shadow:0 0 0 3px rgba(107,149,209,0.15); }
+    .btn-primary { background:#6b95d1; color:#0a1422; font-weight:500; padding:0.55rem 1rem;
+                   border-radius:0.5rem; transition:background .15s; }
+    .btn-primary:hover { background:#82a8df; }
+    .btn-ghost { background:transparent; color:#8aa0bd; padding:0.4rem 0.7rem; border-radius:0.5rem; }
+    .btn-ghost:hover { background:#1c2a40; color:#e6eef9; }
+    .nav-link { padding:0.4rem 0.85rem; border-radius:0.5rem; font-size:0.875rem; color:#8aa0bd; transition:all .15s; }
+    .nav-link:hover { color:#e6eef9; background:#1c2a40; }
+    .nav-link.active { color:#e6eef9; background:#1c2a40; box-shadow:inset 0 0 0 1px #243349; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <header class="border-b border-arctic-border bg-arctic-surface/60 backdrop-blur sticky top-0 z-10">
+    <div class="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-lg bg-arctic-steel/15 ring-1 ring-arctic-steel/30 flex items-center justify-center">
+            <i data-lucide="door-closed" class="text-arctic-steel"></i>
+          </div>
+          <div class="font-semibold tracking-tight">СтальДверь</div>
+        </div>
+        <nav class="flex items-center gap-1">
+          <a href="admin-orders.html"   class="nav-link active"><i data-lucide="package" class="inline mr-1.5"></i>Заказы</a>
+          <a href="admin-calendar.html" class="nav-link"><i data-lucide="calendar-days" class="inline mr-1.5"></i>Календарь</a>
+        </nav>
+      </div>
+      <div class="flex items-center gap-3 text-sm">
+        <div class="flex items-center gap-2 text-arctic-muted">
+          <div class="w-7 h-7 rounded-full bg-arctic-steel/20 ring-1 ring-arctic-steel/30 flex items-center justify-center text-xs font-semibold text-arctic-ice">АМ</div>
+          <span>Анна М. · менеджер</span>
+        </div>
+        <a href="#" class="btn-ghost text-sm" title="Выйти"><i data-lucide="log-out"></i></a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-4">
+
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-semibold tracking-tight">Заказы</h1>
+        <div class="text-sm text-arctic-muted mt-0.5">Всего 142 заказа</div>
+      </div>
+      <a href="admin-order-card.html?new=1" class="btn-primary inline-flex items-center gap-2">
+        <i data-lucide="plus"></i> Новый заказ
+      </a>
+    </div>
+
+    <form class="bg-arctic-surface ring-1 ring-arctic-border rounded-xl p-3 grid grid-cols-1 md:grid-cols-4 gap-2">
+      <div class="md:col-span-2 relative">
+        <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 text-arctic-muted"></i>
+        <input type="search" name="q" placeholder="Поиск: телефон или ФИО"
+               class="input w-full pl-9" />
+      </div>
+      <select name="stage" class="input bg-arctic-bg">
+        <option value="">Все этапы</option>
+        <option>Новая</option>
+        <option>Замер назначен</option>
+        <option selected>Замер сделан, аванс получен</option>
+        <option>В производстве</option>
+        <option>Готова к установке</option>
+        <option>Установлена</option>
+        <option>Закрыта</option>
+      </select>
+      <select name="user" class="input bg-arctic-bg">
+        <option value="">Все сотрудники</option>
+        <optgroup label="Замерщики">
+          <option>Сергей Иванов</option>
+          <option>Олег Кузнецов</option>
+        </optgroup>
+        <optgroup label="Установщики">
+          <option>Андрей Смирнов</option>
+          <option>Дмитрий Попов</option>
+        </optgroup>
+      </select>
+    </form>
+
+    <!-- Десктоп-таблица -->
+    <div class="hidden md:block bg-arctic-surface ring-1 ring-arctic-border rounded-xl overflow-hidden shadow-card">
+      <table class="w-full text-sm">
+        <thead class="bg-arctic-bg/50 text-arctic-muted text-left">
+          <tr class="border-b border-arctic-border">
+            <th class="px-4 py-3 font-medium w-16">№</th>
+            <th class="px-4 py-3 font-medium">Клиент</th>
+            <th class="px-4 py-3 font-medium">Телефон</th>
+            <th class="px-4 py-3 font-medium">Этап</th>
+            <th class="px-4 py-3 font-medium">Замер</th>
+            <th class="px-4 py-3 font-medium">Установка</th>
+            <th class="px-4 py-3 font-medium text-right">Сумма</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-arctic-border/60">
+          <tr class="hover:bg-arctic-surface2 cursor-pointer transition" onclick="location.href='admin-order-card.html'">
+            <td class="px-4 py-3 text-arctic-muted tabular-nums">142</td>
+            <td class="px-4 py-3 font-medium">Иван Петрович Соколов</td>
+            <td class="px-4 py-3 text-arctic-muted tabular-nums">+7 916 555-12-34</td>
+            <td class="px-4 py-3"><span class="badge badge-prod"><i data-lucide="hammer"></i>В производстве</span></td>
+            <td class="px-4 py-3 text-arctic-muted">12.05 14:00 · С.Иванов</td>
+            <td class="px-4 py-3 text-arctic-muted/60">—</td>
+            <td class="px-4 py-3 text-right font-medium tabular-nums">52 000 ₽</td>
+          </tr>
+          <tr class="hover:bg-arctic-surface2 cursor-pointer transition" onclick="location.href='admin-order-card.html'">
+            <td class="px-4 py-3 text-arctic-muted tabular-nums">141</td>
+            <td class="px-4 py-3 font-medium">Мария Степановна Лебедева</td>
+            <td class="px-4 py-3 text-arctic-muted tabular-nums">+7 903 222-99-00</td>
+            <td class="px-4 py-3"><span class="badge badge-survey"><i data-lucide="ruler"></i>Замер назначен</span></td>
+            <td class="px-4 py-3 text-arctic-muted">14.05 11:00 · О.Кузнецов</td>
+            <td class="px-4 py-3 text-arctic-muted/60">—</td>
+            <td class="px-4 py-3 text-right text-arctic-muted/60">—</td>
+          </tr>
+          <tr class="hover:bg-arctic-surface2 cursor-pointer transition" onclick="location.href='admin-order-card.html'">
+            <td class="px-4 py-3 text-arctic-muted tabular-nums">140</td>
+            <td class="px-4 py-3 font-medium">Алексей Карпов</td>
+            <td class="px-4 py-3 text-arctic-muted tabular-nums">+7 925 010-77-77</td>
+            <td class="px-4 py-3"><span class="badge badge-ready"><i data-lucide="check-circle-2"></i>Готова к установке</span></td>
+            <td class="px-4 py-3 text-arctic-muted">сделан</td>
+            <td class="px-4 py-3 text-arctic-muted">15.05 10:00 · А.Смирнов</td>
+            <td class="px-4 py-3 text-right font-medium tabular-nums">68 500 ₽</td>
+          </tr>
+          <tr class="hover:bg-arctic-surface2 cursor-pointer transition" onclick="location.href='admin-order-card.html'">
+            <td class="px-4 py-3 text-arctic-muted tabular-nums">139</td>
+            <td class="px-4 py-3 font-medium">Ольга Никитина</td>
+            <td class="px-4 py-3 text-arctic-muted tabular-nums">+7 999 444-11-22</td>
+            <td class="px-4 py-3"><span class="badge badge-closed"><i data-lucide="archive"></i>Закрыта</span></td>
+            <td class="px-4 py-3 text-arctic-muted/60">—</td>
+            <td class="px-4 py-3 text-arctic-muted/60">—</td>
+            <td class="px-4 py-3 text-right font-medium tabular-nums">47 000 ₽</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Мобильные карточки -->
+    <div class="md:hidden space-y-2">
+      <a href="admin-order-card.html" class="block bg-arctic-surface ring-1 ring-arctic-border rounded-xl p-3.5 hover:ring-arctic-steel/40 transition">
+        <div class="flex justify-between items-start gap-3">
+          <div class="min-w-0">
+            <div class="text-xs text-arctic-muted">№ 142</div>
+            <div class="font-medium truncate">Иван Петрович Соколов</div>
+            <div class="text-sm text-arctic-muted tabular-nums">+7 916 555-12-34</div>
+          </div>
+          <span class="badge badge-prod"><i data-lucide="hammer"></i>В производстве</span>
+        </div>
+        <div class="mt-2 text-xs text-arctic-muted flex items-center gap-1.5">
+          <i data-lucide="ruler"></i> 12.05 14:00 · С.Иванов
+        </div>
+      </a>
+      <a href="admin-order-card.html" class="block bg-arctic-surface ring-1 ring-arctic-border rounded-xl p-3.5 hover:ring-arctic-steel/40 transition">
+        <div class="flex justify-between items-start gap-3">
+          <div class="min-w-0">
+            <div class="text-xs text-arctic-muted">№ 141</div>
+            <div class="font-medium truncate">Мария Степановна Лебедева</div>
+            <div class="text-sm text-arctic-muted tabular-nums">+7 903 222-99-00</div>
+          </div>
+          <span class="badge badge-survey"><i data-lucide="ruler"></i>Замер назначен</span>
+        </div>
+        <div class="mt-2 text-xs text-arctic-muted flex items-center gap-1.5">
+          <i data-lucide="ruler"></i> 14.05 11:00 · О.Кузнецов
+        </div>
+      </a>
+    </div>
+
+    <div class="flex justify-between items-center text-sm text-arctic-muted pt-2">
+      <div>Страница 1 из 8</div>
+      <div class="flex gap-1">
+        <button class="btn-ghost ring-1 ring-arctic-border"><i data-lucide="chevron-left"></i></button>
+        <button class="btn-ghost ring-1 ring-arctic-border"><i data-lucide="chevron-right"></i></button>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

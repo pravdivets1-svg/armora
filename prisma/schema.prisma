@@ -1,0 +1,145 @@
+// Prisma schema для «СтальДверь»
+// Таблицы: users, orders, order_comments, company_settings, sessions (NextAuth)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =====================================================================
+// Сотрудники компании (login = email)
+// =====================================================================
+enum Role {
+  director
+  manager
+  surveyor
+  installer
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String   // bcrypt-хеш
+  fullName  String   @map("full_name")
+  phone     String?
+  role      Role
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // обратные связи
+  ordersAsSurveyor  Order[]        @relation("SurveyorOrders")
+  ordersAsInstaller Order[]        @relation("InstallerOrders")
+  ordersCreated     Order[]        @relation("CreatedByOrders")
+  comments          OrderComment[]
+  sessions          Session[]
+
+  @@map("users")
+}
+
+// =====================================================================
+// Заказы
+// =====================================================================
+enum Stage {
+  new                // 1. Новая
+  survey_scheduled   // 2. Замер назначен
+  survey_done        // 3. Замер сделан, аванс получен
+  production         // 4. В производстве
+  ready_to_install   // 5. Готова к установке
+  installed          // 6. Установлена
+  closed             // 7. Закрыта
+}
+
+model Order {
+  id     String @id @default(uuid())
+  number Int    @unique @default(autoincrement()) // человекочитаемый № 142
+
+  // Публичная ссылка для клиента
+  publicToken     String    @unique @map("public_token")
+  tokenExpiresAt  DateTime? @map("token_expires_at") // null = бессрочно (до закрытия)
+
+  // Клиент
+  clientName    String @map("client_name")
+  clientPhone   String @map("client_phone")
+  clientAddress String @map("client_address")
+
+  // Дверь
+  doorComment String  @default("") @map("door_comment")
+  widthMm     Int?    @map("width_mm")
+  heightMm    Int?    @map("height_mm")
+
+  // Деньги (остаток считаем на лету: totalAmount - prepayment)
+  totalAmount Decimal @default(0) @map("total_amount") @db.Decimal(10, 2)
+  prepayment  Decimal @default(0) @map("prepayment")   @db.Decimal(10, 2)
+
+  // Статус
+  stage Stage @default(new)
+
+  // Назначения
+  surveyorId  String?   @map("surveyor_id")
+  installerId String?   @map("installer_id")
+  surveyAt    DateTime? @map("survey_at")
+  installAt   DateTime? @map("install_at")
+
+  // Аудит
+  createdById String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  surveyor  User?          @relation("SurveyorOrders",  fields: [surveyorId],  references: [id])
+  installer User?          @relation("InstallerOrders", fields: [installerId], references: [id])
+  createdBy User           @relation("CreatedByOrders", fields: [createdById], references: [id])
+  comments  OrderComment[]
+
+  // Индексы под типичные запросы
+  @@index([stage])
+  @@index([surveyorId])
+  @@index([installerId])
+  @@index([surveyAt])
+  @@index([installAt])
+  @@map("orders")
+}
+
+// =====================================================================
+// Комментарии замерщика/установщика
+// =====================================================================
+model OrderComment {
+  id        String   @id @default(uuid())
+  orderId   String   @map("order_id")
+  authorId  String   @map("author_id")
+  text      String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  author User  @relation(fields: [authorId], references: [id])
+
+  @@index([orderId])
+  @@map("order_comments")
+}
+
+// =====================================================================
+// Настройки компании (всегда одна строка с id=1)
+// =====================================================================
+model CompanySettings {
+  id           Int    @id @default(1)
+  companyName  String @map("company_name")
+  companyPhone String @map("company_phone")
+
+  @@map("company_settings")
+}
+
+// =====================================================================
+// Сессии NextAuth
+// =====================================================================
+model Session {
+  id           String   @id @default(uuid())
+  sessionToken String   @unique @map("session_token")
+  userId       String   @map("user_id")
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}

@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a1422" />
+  <title>Заказ № 142 — СтальДверь</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    /* Arctic Frost (dark) — общая палитра для всех страниц */
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
+          colors: {
+            arctic: {
+              bg:        '#0a1422',  // фон страницы (арктическая ночь)
+              surface:   '#142033',  // карточки
+              surface2:  '#1c2a40',  // приподнятые элементы / hover
+              border:    '#243349',  // рамки
+              text:      '#e6eef9',  // основной текст
+              muted:     '#8aa0bd',  // приглушённый
+              steel:     '#6b95d1',  // основной акцент (сталь)
+              steelHover:'#82a8df',
+              ice:       '#d4e4f7',  // подсветка активных элементов
+              silver:    '#c0c0c0',
+            }
+          },
+          boxShadow: {
+            card: '0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 24px -12px rgba(0,0,0,0.6)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0a1422; color: #e6eef9; font-family: Inter, system-ui, sans-serif; }
+    /* Тонкое «арктическое» свечение фона */
+    body::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: -1;
+      background:
+        radial-gradient(80rem 50rem at 80% -10%, rgba(107,149,209,0.10), transparent 60%),
+        radial-gradient(60rem 40rem at -10% 110%, rgba(212,228,247,0.05), transparent 60%);
+    }
+    @keyframes fill { from { width: 0 } }
+    .progress-fill { animation: fill .8s ease-out both; }
+    /* Иконки Lucide */
+    [data-lucide] { width: 1em; height: 1em; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Шапка компании -->
+  <header class="border-b border-arctic-border/70 bg-arctic-surface/40 backdrop-blur">
+    <div class="max-w-xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-arctic-steel/15 ring-1 ring-arctic-steel/30 flex items-center justify-center">
+          <i data-lucide="door-closed" class="text-arctic-steel"></i>
+        </div>
+        <div>
+          <div class="text-base font-semibold tracking-tight">СтальДверь</div>
+          <a href="tel:+74951234567" class="text-xs text-arctic-muted hover:text-arctic-text inline-flex items-center gap-1">
+            <i data-lucide="phone" class="text-[0.85em]"></i>
+            +7 (495) 123-45-67
+          </a>
+        </div>
+      </div>
+      <div class="text-xs text-arctic-muted uppercase tracking-wider">Статус заказа</div>
+    </div>
+  </header>
+
+  <main class="max-w-xl mx-auto px-4 py-5 space-y-3">
+
+    <!-- 1. Приветствие + номер -->
+    <section class="rounded-2xl bg-arctic-surface ring-1 ring-arctic-border shadow-card p-5">
+      <div class="text-xs uppercase tracking-wider text-arctic-muted">Заказ № 142</div>
+      <h1 class="text-2xl font-semibold mt-1 tracking-tight">Здравствуйте, Иван Петрович!</h1>
+      <p class="text-sm text-arctic-muted mt-1.5">
+        Здесь вы видите актуальный статус вашей двери.
+      </p>
+    </section>
+
+    <!-- 2. Этап + прогресс -->
+    <section class="rounded-2xl bg-arctic-surface ring-1 ring-arctic-border shadow-card p-5">
+      <div class="flex items-center justify-between">
+        <div class="text-xs uppercase tracking-wider text-arctic-muted">Текущий этап</div>
+        <div class="text-xs text-arctic-muted">Шаг 4 из 7</div>
+      </div>
+      <div class="mt-1.5 flex items-center gap-2">
+        <i data-lucide="hammer" class="text-arctic-steel text-lg"></i>
+        <div class="text-lg font-semibold text-arctic-ice">В производстве</div>
+      </div>
+
+      <div class="mt-4 h-1.5 w-full bg-arctic-bg rounded-full overflow-hidden ring-1 ring-arctic-border">
+        <div class="progress-fill h-full rounded-full"
+             style="width: 57.14%; background: linear-gradient(90deg, #6b95d1, #d4e4f7);"></div>
+      </div>
+
+      <ol class="mt-5 space-y-2.5 text-sm">
+        <li class="flex items-center gap-3 text-arctic-muted">
+          <span class="w-6 h-6 rounded-full bg-arctic-steel/20 text-arctic-ice flex items-center justify-center">
+            <i data-lucide="check" class="text-[0.8em]"></i>
+          </span>
+          <span class="line-through opacity-70">Новая</span>
+        </li>
+        <li class="flex items-center gap-3 text-arctic-muted">
+          <span class="w-6 h-6 rounded-full bg-arctic-steel/20 text-arctic-ice flex items-center justify-center">
+            <i data-lucide="check" class="text-[0.8em]"></i>
+          </span>
+          <span class="line-through opacity-70">Замер назначен</span>
+        </li>
+        <li class="flex items-center gap-3 text-arctic-muted">
+          <span class="w-6 h-6 rounded-full bg-arctic-steel/20 text-arctic-ice flex items-center justify-center">
+            <i data-lucide="check" class="text-[0.8em]"></i>
+          </span>
+          <span class="line-through opacity-70">Замер сделан, аванс получен</span>
+        </li>
+        <li class="flex items-center gap-3 font-medium text-arctic-ice">
+          <span class="w-6 h-6 rounded-full bg-arctic-steel text-arctic-bg flex items-center justify-center text-xs font-bold ring-4 ring-arctic-steel/20">4</span>
+          В производстве
+        </li>
+        <li class="flex items-center gap-3 text-arctic-muted/70">
+          <span class="w-6 h-6 rounded-full bg-arctic-bg ring-1 ring-arctic-border flex items-center justify-center text-xs">5</span>
+          Готова к установке
+        </li>
+        <li class="flex items-center gap-3 text-arctic-muted/70">
+          <span class="w-6 h-6 rounded-full bg-arctic-bg ring-1 ring-arctic-border flex items-center justify-center text-xs">6</span>
+          Установлена
+        </li>
+        <li class="flex items-center gap-3 text-arctic-muted/70">
+          <span class="w-6 h-6 rounded-full bg-arctic-bg ring-1 ring-arctic-border flex items-center justify-center text-xs">7</span>
+          Закрыта
+        </li>
+      </ol>
+    </section>
+
+    <!-- 3. Замер -->
+    <section class="rounded-2xl bg-arctic-surface ring-1 ring-arctic-border shadow-card p-5">
+      <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-arctic-muted">
+        <i data-lucide="ruler"></i> Замер
+      </div>
+      <div class="mt-1.5 text-base font-semibold flex items-center gap-2">
+        <i data-lucide="calendar" class="text-arctic-steel"></i>
+        12 мая 2026, 14:00
+      </div>
+      <div class="mt-4 flex items-center justify-between">
+        <div>
+          <div class="text-xs text-arctic-muted">Замерщик</div>
+          <div class="font-medium mt-0.5">Сергей Иванов</div>
+        </div>
+        <a href="tel:+79161112233"
+           class="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-arctic-steel/15 hover:bg-arctic-steel/25 text-arctic-ice ring-1 ring-arctic-steel/30 text-sm font-medium transition">
+          <i data-lucide="phone"></i> Позвонить
+        </a>
+      </div>
+    </section>
+
+    <!-- 4. Установка (ещё не назначена) -->
+    <section class="rounded-2xl bg-arctic-surface/60 ring-1 ring-dashed ring-arctic-border p-5">
+      <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-arctic-muted">
+        <i data-lucide="wrench"></i> Установка
+      </div>
+      <div class="mt-1.5 text-arctic-muted">
+        Дата будет назначена после готовности двери
+      </div>
+    </section>
+
+    <!-- 5. Оплата -->
+    <section class="rounded-2xl bg-arctic-surface ring-1 ring-arctic-border shadow-card p-5">
+      <div class="flex items-center gap-2 text-xs uppercase tracking-wider text-arctic-muted mb-3">
+        <i data-lucide="wallet"></i> Оплата
+      </div>
+      <dl class="space-y-2.5 text-sm">
+        <div class="flex justify-between">
+          <dt class="text-arctic-muted">Сумма заказа</dt>
+          <dd class="font-medium tabular-nums">52 000 ₽</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt class="text-arctic-muted">Аванс</dt>
+          <dd class="font-medium tabular-nums text-arctic-ice">20 000 ₽</dd>
+        </div>
+        <div class="flex justify-between pt-3 border-t border-arctic-border">
+          <dt class="text-arctic-text">Остаток к оплате</dt>
+          <dd class="font-semibold text-xl tabular-nums text-arctic-ice">32 000 ₽</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- 6. Контакт компании -->
+    <section class="text-center py-4">
+      <div class="text-sm text-arctic-muted">Вопросы по заказу?</div>
+      <a href="tel:+74951234567"
+         class="inline-flex items-center gap-2 mt-3 px-6 py-3 rounded-xl bg-arctic-steel hover:bg-arctic-steelHover text-white font-medium shadow-lg shadow-arctic-steel/20 transition">
+        <i data-lucide="phone"></i> Позвонить в компанию
+      </a>
+      <div class="mt-5 text-xs text-arctic-muted/70">
+        Ссылка действительна до закрытия заказа + 90 дней
+      </div>
+    </section>
+
+  </main>
+
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>

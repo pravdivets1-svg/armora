@@ -40,7 +40,7 @@ export default async function PublicOrderPage({
   const stepNumber = currentStepIndex + 1;
   const percent = (stepNumber / STAGE_ORDER.length) * 100;
 
-  const remaining = Math.max(0, Number(order.totalAmount) - Number(order.prepayment));
+  const remaining = Math.max(0, Number(order.totalAmount) - Number(order.prepayment) - Number(order.finalPayment));
   const firstName = order.clientName.split(/\s+/)[0] ?? order.clientName;
 
   return (

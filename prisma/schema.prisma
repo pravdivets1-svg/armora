@@ -50,7 +50,8 @@ enum Stage {
   production         // 4. В производстве
   ready_to_install   // 5. Готова к установке
   installed          // 6. Установлена
-  closed             // 7. Закрыта
+  pending_closure    // 7. Ожидает подтверждения закрытия (директором)
+  closed             // 8. Закрыта (только директор)
 }
 
 model Order {
@@ -71,9 +72,11 @@ model Order {
   widthMm     Int?    @map("width_mm")
   heightMm    Int?    @map("height_mm")
 
-  // Деньги (остаток считаем на лету: totalAmount - prepayment)
-  totalAmount Decimal @default(0) @map("total_amount") @db.Decimal(10, 2)
-  prepayment  Decimal @default(0) @map("prepayment")   @db.Decimal(10, 2)
+  // Деньги
+  totalAmount  Decimal @default(0) @map("total_amount")  @db.Decimal(10, 2)  // цена по договору
+  prepayment   Decimal @default(0) @map("prepayment")    @db.Decimal(10, 2)  // аванс получен
+  finalPayment Decimal @default(0) @map("final_payment") @db.Decimal(10, 2)  // остаток получен (факт)
+  costAmount   Decimal @default(0) @map("cost_amount")   @db.Decimal(10, 2)  // себестоимость (внутреннее)
 
   // Статус
   stage Stage @default(new)

@@ -74,8 +74,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         action={updateOrderAction.bind(null, order.id)}
         surveyors={surveyors}
         installers={installers}
-        canEditAll={isStaff(me.role)}
-        canDelete={me.role === 'director'}
+        role={me.role}
         mode="edit"
         comments={<CommentsBlock orderId={order.id} comments={order.comments} />}
       />

@@ -11,7 +11,7 @@ import { createOrderAction } from '../actions';
 export const metadata = { title: 'Новый заказ — Armora' };
 
 export default async function NewOrderPage() {
-  await requireRole(['director', 'manager']);
+  const me = await requireRole(['director', 'manager']);
 
   const [surveyors, installers] = await Promise.all([
     prisma.user.findMany({
@@ -44,8 +44,7 @@ export default async function NewOrderPage() {
         action={createOrderAction}
         surveyors={surveyors}
         installers={installers}
-        canEditAll
-        canDelete={false}
+        role={me.role}
         mode="create"
       />
     </main>

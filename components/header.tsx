@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { LogOut } from 'lucide-react';
 import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 import { ROLE_LABEL } from '@/lib/labels';
 import { logoutAction } from '@/app/(auth)/actions';
 import NavLink from './nav-link';
@@ -10,6 +11,12 @@ import NavLink from './nav-link';
 export default async function Header() {
   const session = await auth();
   const user = session?.user;
+
+  // Счётчик «На закрытие» — только для директора
+  const pendingClosures =
+    user?.role === 'director'
+      ? await prisma.order.count({ where: { stage: 'pending_closure' } })
+      : 0;
 
   return (
     <header className="border-b border-white/15 bg-black/30 backdrop-blur-xl sticky top-0 z-10">
@@ -20,7 +27,10 @@ export default async function Header() {
           </Link>
           <nav className="flex items-center gap-1">
             <NavLink href="/orders"   label="Заказы" />
-            <NavLink href="/calendar" label="Календарь" />
+            <NavLink href="/calendar" label="Расписание" />
+            {user?.role === 'director' && (
+              <NavLink href="/closures" label="На закрытие" badge={pendingClosures} />
+            )}
           </nav>
         </div>
 

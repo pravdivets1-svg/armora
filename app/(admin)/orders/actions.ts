@@ -1,6 +1,6 @@
 'use server';
 
-// Server Actions для заказов: create / update / delete / addComment.
+// Server Actions для заказов: create / update / delete / addComment / submitForClosure / approveClosure.
 // Все проверки доступа делаем тут — клиенту нельзя доверять.
 
 import { z } from 'zod';
@@ -11,7 +11,7 @@ import { randomBytes } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/auth-helpers';
 import { isStaff } from '@/lib/auth-helpers';
-import type { Stage } from '@prisma/client';
+import type { Stage, Role } from '@prisma/client';
 
 // =====================================================================
 // Валидация форм
@@ -19,7 +19,7 @@ import type { Stage } from '@prisma/client';
 
 const STAGES = [
   'new', 'survey_scheduled', 'survey_done', 'production',
-  'ready_to_install', 'installed', 'closed',
+  'ready_to_install', 'installed', 'pending_closure', 'closed',
 ] as const;
 
 const orderInputSchema = z.object({
@@ -31,6 +31,8 @@ const orderInputSchema = z.object({
   heightMm:      z.coerce.number().int().min(0).max(5000).optional().or(z.literal('').transform(() => undefined)),
   totalAmount:   z.coerce.number().min(0).max(10_000_000).default(0),
   prepayment:    z.coerce.number().min(0).max(10_000_000).default(0),
+  finalPayment:  z.coerce.number().min(0).max(10_000_000).default(0),
+  costAmount:    z.coerce.number().min(0).max(10_000_000).default(0),
   stage:         z.enum(STAGES).default('new'),
   surveyorId:    z.string().uuid().nullable().or(z.literal('').transform(() => null)),
   installerId:   z.string().uuid().nullable().or(z.literal('').transform(() => null)),
@@ -48,7 +50,6 @@ export type OrderActionState =
 // =====================================================================
 
 function genToken(): string {
-  // 32-символьный hex (~128 бит) — достаточно для непредсказуемой ссылки
   return randomBytes(16).toString('hex');
 }
 
@@ -66,7 +67,6 @@ function applyDateOrNull(s: string | null | undefined): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-// При переходе в closed — выставляем срок действия публичной ссылки (90 дней).
 function tokenExpiresFor(stage: Stage, current: Date | null): Date | null {
   if (stage === 'closed') {
     return current ?? new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
@@ -74,8 +74,7 @@ function tokenExpiresFor(stage: Stage, current: Date | null): Date | null {
   return null;
 }
 
-// Машина состояний: проверка обязательных дат для активных этапов.
-// Возвращает ошибку или null.
+// Проверка обязательных дат для активных этапов
 function validateStageDates(
   stage: Stage,
   surveyAt: string | null | undefined,
@@ -91,6 +90,27 @@ function validateStageDates(
     return {
       error: 'Для этапа «Готова к установке» нужна дата установки',
       fieldErrors: { installAt: 'Укажите дату и время установки' },
+    };
+  }
+  return null;
+}
+
+// Гейт перевода в pending_closure / closed: проверка финансов
+function validateClosureFinances(
+  totalAmount: number,
+  prepayment: number,
+  finalPayment: number,
+  costAmount: number,
+): { error: string; fieldErrors: Record<string, string> } | null {
+  const fieldErrors: Record<string, string> = {};
+  if (totalAmount <= 0)   fieldErrors.totalAmount  = 'Укажите цену по договору';
+  if (prepayment <= 0)    fieldErrors.prepayment   = 'Укажите аванс';
+  if (finalPayment <= 0)  fieldErrors.finalPayment = 'Укажите фактический остаток';
+  if (costAmount <= 0)    fieldErrors.costAmount   = 'Укажите себестоимость';
+  if (Object.keys(fieldErrors).length > 0) {
+    return {
+      error: 'Перед закрытием заполните все 4 финансовых поля: цена, аванс, остаток, себестоимость',
+      fieldErrors,
     };
   }
   return null;
@@ -117,10 +137,19 @@ export async function createOrderAction(
   }
   const d = parsed.data;
 
-  // Машина состояний: даты обязательны для активных этапов
+  // Запрещаем создавать сразу в pending_closure / closed — только через approveClosure
+  if (d.stage === 'closed') {
+    return { ok: false, error: 'Закрыть заказ может только директор через панель «На закрытие»' };
+  }
+
   const stageError = validateStageDates(d.stage, d.surveyAt, d.installAt);
   if (stageError) {
     return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
+  }
+
+  if (d.stage === 'pending_closure') {
+    const fin = validateClosureFinances(d.totalAmount, d.prepayment, d.finalPayment, d.costAmount);
+    if (fin) return { ok: false, error: fin.error, fieldErrors: fin.fieldErrors };
   }
 
   const order = await prisma.order.create({
@@ -134,6 +163,8 @@ export async function createOrderAction(
       heightMm:       d.heightMm ?? null,
       totalAmount:    d.totalAmount,
       prepayment:     d.prepayment,
+      finalPayment:   d.finalPayment,
+      costAmount:     d.costAmount,
       stage:          d.stage,
       surveyorId:     d.surveyorId,
       installerId:    d.installerId,
@@ -162,9 +193,13 @@ export async function updateOrderAction(
   const existing = await prisma.order.findUnique({ where: { id: orderId } });
   if (!existing) return { ok: false, error: 'Заказ не найден' };
 
-  // Полевой работник: только если это его заказ, и только этап + комментарий
   const isMine = existing.surveyorId === me.id || existing.installerId === me.id;
   if (!isStaff(me.role) && !isMine) return { ok: false, error: 'Нет доступа' };
+
+  // После closed редактировать может только директор
+  if (existing.stage === 'closed' && me.role !== 'director') {
+    return { ok: false, error: 'Закрытый заказ может редактировать только директор' };
+  }
 
   const parsed = parseFormData(formData);
   if (!parsed.success) {
@@ -174,42 +209,163 @@ export async function updateOrderAction(
   }
   const d = parsed.data;
 
-  // Машина состояний: для редакторов — даты из формы, для полевых — существующие
-  const surveyAtForCheck  = isStaff(me.role) ? d.surveyAt  : existing.surveyAt?.toISOString()  ?? null;
-  const installAtForCheck = isStaff(me.role) ? d.installAt : existing.installAt?.toISOString() ?? null;
+  // Запрет: только директор может перевести в closed (через approveClosure / direct edit)
+  if (d.stage === 'closed' && existing.stage !== 'closed' && me.role !== 'director') {
+    return {
+      ok: false,
+      error: 'Закрыть заказ может только директор. Используйте этап «Ожидает закрытия».',
+      fieldErrors: { stage: 'Доступ только у директора' },
+    };
+  }
+
+  // Машина состояний: даты для активных этапов
+  const surveyAtForCheck  = isStaff(me.role) ? d.surveyAt  : (existing.surveyAt?.toISOString()  ?? null);
+  const installAtForCheck = isStaff(me.role) ? d.installAt : (existing.installAt?.toISOString() ?? null);
   const stageError = validateStageDates(d.stage, surveyAtForCheck, installAtForCheck);
   if (stageError) {
     return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
   }
 
-  // Полевой работник может менять только этап, остальные данные оставляем как есть
-  const data = isStaff(me.role)
-    ? {
-        clientName:    d.clientName,
-        clientPhone:   d.clientPhone,
-        clientAddress: d.clientAddress,
-        doorComment:   d.doorComment,
-        widthMm:       d.widthMm ?? null,
-        heightMm:      d.heightMm ?? null,
-        totalAmount:   d.totalAmount,
-        prepayment:    d.prepayment,
-        stage:         d.stage,
-        surveyorId:    d.surveyorId,
-        installerId:   d.installerId,
-        surveyAt:      applyDateOrNull(d.surveyAt),
-        installAt:     applyDateOrNull(d.installAt),
-        tokenExpiresAt: tokenExpiresFor(d.stage, existing.tokenExpiresAt),
-      }
-    : {
-        stage: d.stage,
-        tokenExpiresAt: tokenExpiresFor(d.stage, existing.tokenExpiresAt),
-      };
+  // Гейт финансов при переводе в pending_closure или closed
+  if (d.stage === 'pending_closure' || d.stage === 'closed') {
+    // Берём финансы из формы для редакторов / из существующего для полевых
+    const totalForCheck = isStaff(me.role) ? d.totalAmount  : Number(existing.totalAmount);
+    const prepayForCheck = isStaff(me.role) ? d.prepayment   : Number(existing.prepayment);
+    const finalForCheck  = canEditFinal(me.role) ? d.finalPayment : Number(existing.finalPayment);
+    const costForCheck   = canEditCost(me.role)  ? d.costAmount   : Number(existing.costAmount);
+
+    const fin = validateClosureFinances(totalForCheck, prepayForCheck, finalForCheck, costForCheck);
+    if (fin) return { ok: false, error: fin.error, fieldErrors: fin.fieldErrors };
+  }
+
+  // Что разрешено редактировать каждой роли
+  const data = buildUpdatePayload(me.role, existing, d);
 
   await prisma.order.update({ where: { id: orderId }, data });
 
   revalidatePath('/orders');
+  revalidatePath('/closures');
   revalidatePath(`/orders/${orderId}`);
   return { ok: true };
+}
+
+// Может ли роль редактировать «остаток» (finalPayment)
+function canEditFinal(role: Role): boolean {
+  return role === 'director' || role === 'manager' || role === 'installer' || role === 'surveyor';
+}
+// Может ли роль редактировать «себестоимость» (costAmount) — только директор и менеджер
+function canEditCost(role: Role): boolean {
+  return role === 'director' || role === 'manager';
+}
+// Может ли роль редактировать «договор» / «аванс» — только директор и менеджер
+function canEditMainAmounts(role: Role): boolean {
+  return role === 'director' || role === 'manager';
+}
+
+function buildUpdatePayload(
+  role: Role,
+  existing: { totalAmount: any; prepayment: any; finalPayment: any; costAmount: any; tokenExpiresAt: Date | null; surveyAt: Date | null; installAt: Date | null; surveyorId: string | null; installerId: string | null; clientName: string; clientPhone: string; clientAddress: string; doorComment: string; widthMm: number | null; heightMm: number | null },
+  d: z.infer<typeof orderInputSchema>,
+) {
+  const base = {
+    stage: d.stage,
+    tokenExpiresAt: tokenExpiresFor(d.stage, existing.tokenExpiresAt),
+  };
+
+  // Финансы — кто что может
+  const total  = canEditMainAmounts(role) ? d.totalAmount : Number(existing.totalAmount);
+  const prepay = canEditMainAmounts(role) ? d.prepayment  : Number(existing.prepayment);
+  const final  = canEditFinal(role)       ? d.finalPayment : Number(existing.finalPayment);
+  const cost   = canEditCost(role)        ? d.costAmount  : Number(existing.costAmount);
+
+  // Контактные/доорные данные — только staff
+  if (isStaff(role)) {
+    return {
+      ...base,
+      clientName:    d.clientName,
+      clientPhone:   d.clientPhone,
+      clientAddress: d.clientAddress,
+      doorComment:   d.doorComment,
+      widthMm:       d.widthMm ?? null,
+      heightMm:      d.heightMm ?? null,
+      totalAmount:   total,
+      prepayment:    prepay,
+      finalPayment:  final,
+      costAmount:    cost,
+      surveyorId:    d.surveyorId,
+      installerId:   d.installerId,
+      surveyAt:      applyDateOrNull(d.surveyAt),
+      installAt:     applyDateOrNull(d.installAt),
+    };
+  }
+
+  // Полевой работник: stage + finalPayment (если разрешено) + ничего больше
+  return {
+    ...base,
+    finalPayment: final,
+  };
+}
+
+// =====================================================================
+// SUBMIT FOR CLOSURE — менеджер/полевой подаёт заказ на закрытие
+// (просто перевод в pending_closure, гейт финансов сработает в update)
+// =====================================================================
+
+// Реализуется через обычный updateOrderAction со stage = 'pending_closure'.
+
+// =====================================================================
+// APPROVE CLOSURE — директор подтверждает закрытие
+// =====================================================================
+
+export async function approveClosureAction(orderId: string) {
+  const me = await requireUser();
+  if (me.role !== 'director') throw new Error('Forbidden');
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) throw new Error('Not found');
+
+  if (order.stage !== 'pending_closure') {
+    throw new Error('Order is not in pending_closure stage');
+  }
+
+  // Контрольная проверка финансов
+  const fin = validateClosureFinances(
+    Number(order.totalAmount),
+    Number(order.prepayment),
+    Number(order.finalPayment),
+    Number(order.costAmount),
+  );
+  if (fin) throw new Error(fin.error);
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      stage: 'closed',
+      tokenExpiresAt: tokenExpiresFor('closed', order.tokenExpiresAt),
+    },
+  });
+
+  revalidatePath('/orders');
+  revalidatePath('/closures');
+  revalidatePath(`/orders/${orderId}`);
+}
+
+// REJECT CLOSURE — директор возвращает заказ обратно в installed
+export async function rejectClosureAction(orderId: string) {
+  const me = await requireUser();
+  if (me.role !== 'director') throw new Error('Forbidden');
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order || order.stage !== 'pending_closure') return;
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { stage: 'installed' },
+  });
+
+  revalidatePath('/orders');
+  revalidatePath('/closures');
+  revalidatePath(`/orders/${orderId}`);
 }
 
 // =====================================================================
@@ -220,15 +376,15 @@ export async function deleteOrderAction(orderId: string) {
   const me = await requireUser();
   if (me.role !== 'director') throw new Error('Forbidden');
 
-  // Каскад: order_comments удалятся автоматически (onDelete: Cascade в schema)
   await prisma.order.delete({ where: { id: orderId } });
 
   revalidatePath('/orders');
+  revalidatePath('/closures');
   redirect('/orders');
 }
 
 // =====================================================================
-// COMMENTS — добавить
+// COMMENTS
 // =====================================================================
 
 const commentSchema = z.object({
@@ -239,7 +395,7 @@ export async function addCommentAction(orderId: string, formData: FormData) {
   const me = await requireUser();
 
   const parsed = commentSchema.safeParse({ text: formData.get('text') });
-  if (!parsed.success) return; // тихо игнорируем пустой комментарий
+  if (!parsed.success) return;
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) return;

@@ -5,27 +5,30 @@ import type { Stage } from '@prisma/client';
 import { STAGE_LABEL, stageGroup } from '@/lib/labels';
 
 const DOT = {
-  new:    'bg-ink-400',
-  survey: 'bg-blue-500',
-  prod:   'bg-amber-500',
-  ready:  'bg-emerald-500',
-  closed: 'bg-ink-300',
+  new:     'bg-ink-400',
+  survey:  'bg-blue-500',
+  prod:    'bg-amber-500',
+  ready:   'bg-emerald-500',
+  pending: 'bg-violet-500',
+  closed:  'bg-ink-300',
 } as const;
 
 const TEXT = {
-  new:    'text-ink-700',
-  survey: 'text-blue-700',
-  prod:   'text-amber-800',
-  ready:  'text-emerald-700',
-  closed: 'text-ink-400',
+  new:     'text-ink-700',
+  survey:  'text-blue-700',
+  prod:    'text-amber-800',
+  ready:   'text-emerald-700',
+  pending: 'text-violet-700',
+  closed:  'text-ink-400',
 } as const;
 
 const BG = {
-  new:    'bg-ink-900/[0.04]',
-  survey: 'bg-blue-500/10',
-  prod:   'bg-amber-500/10',
-  ready:  'bg-emerald-500/10',
-  closed: 'bg-ink-900/[0.03]',
+  new:     'bg-ink-900/[0.04]',
+  survey:  'bg-blue-500/10',
+  prod:    'bg-amber-500/10',
+  ready:   'bg-emerald-500/10',
+  pending: 'bg-violet-500/10',
+  closed:  'bg-ink-900/[0.03]',
 } as const;
 
 export function StageBadge({

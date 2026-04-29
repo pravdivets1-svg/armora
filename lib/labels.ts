@@ -16,6 +16,7 @@ export const STAGE_LABEL: Record<Stage, string> = {
   production:       'В производстве',
   ready_to_install: 'Готова к установке',
   installed:        'Установлена',
+  pending_closure:  'Ожидает закрытия',
   closed:           'Закрыта',
 };
 
@@ -26,11 +27,12 @@ export const STAGE_ORDER: Stage[] = [
   'production',
   'ready_to_install',
   'installed',
+  'pending_closure',
   'closed',
 ];
 
 // Группировка для CSS-классов бейджа
-export type StageGroup = 'new' | 'survey' | 'prod' | 'ready' | 'closed';
+export type StageGroup = 'new' | 'survey' | 'prod' | 'ready' | 'pending' | 'closed';
 
 export function stageGroup(stage: Stage): StageGroup {
   switch (stage) {
@@ -40,6 +42,7 @@ export function stageGroup(stage: Stage): StageGroup {
     case 'production':       return 'prod';
     case 'ready_to_install':
     case 'installed':        return 'ready';
+    case 'pending_closure':  return 'pending';
     case 'closed':           return 'closed';
   }
 }

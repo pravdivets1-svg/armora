@@ -58,13 +58,13 @@ export default async function CalendarPage({
         </div>
       </div>
 
-      {/* Виджеты */}
+      {/* Виджеты — кликабельные, ведут на список заказов соответствующего этапа */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat icon={<Ruler size={16} />}        label="Замеры"        value={summary.surveysCount}    tone="blue" />
-        <Stat icon={<Hammer size={16} />}       label="Установки"     value={summary.installsCount}   tone="green" />
-        <Stat icon={<CalendarClock size={16} />} label="Сегодня"       value={summary.todayCount}      tone="indigo" />
+        <Stat icon={<Ruler size={16} />}        label="Замеры"        value={summary.surveysCount}    tone="blue"   href="/orders?stage=survey_scheduled" />
+        <Stat icon={<Hammer size={16} />}       label="Установки"     value={summary.installsCount}   tone="green"  href="/orders?stage=ready_to_install" />
+        <Stat icon={<CalendarClock size={16} />} label="Сегодня"       value={summary.todayCount}      tone="indigo" href="#today" />
         {isStaff(me.role) && (
-          <Stat icon={<Factory size={16} />}    label="В производстве" value={summary.productionCount} tone="amber" />
+          <Stat icon={<Factory size={16} />}    label="В производстве" value={summary.productionCount} tone="amber"  href="/orders?stage=production" />
         )}
       </div>
 
@@ -101,7 +101,7 @@ export default async function CalendarPage({
           const dayName = isPast ? 'Просрочено' : isToday ? 'Сегодня' : isTomorrow ? 'Завтра' : null;
 
           return (
-            <section key={key}>
+            <section key={key} id={isToday ? 'today' : undefined}>
               <div className="flex items-baseline gap-3 mb-4">
                 {dayName && (
                   <h2 className={`text-[15px] font-semibold ${isPast ? 'text-bad' : 'text-ink-900'}`}>
@@ -168,16 +168,17 @@ const STAT_TONE = {
 } as const;
 
 function Stat({
-  icon, label, value, tone,
+  icon, label, value, tone, href,
 }: {
   icon: React.ReactNode;
   label: string;
   value: number;
   tone: keyof typeof STAT_TONE;
+  href?: string;
 }) {
   const t = STAT_TONE[tone];
-  return (
-    <div className={`rounded-lg border bg-white p-4 ${t.soft}`}>
+  const inner = (
+    <>
       <div className={`flex items-center gap-2 text-[12px] uppercase tracking-wide font-medium ${t.text}`}>
         {icon}
         {label}
@@ -185,8 +186,13 @@ function Stat({
       <div className="mt-2 text-[28px] font-semibold tabular-nums text-ink-900 leading-none">
         {value}
       </div>
-    </div>
+    </>
   );
+  const cls = `rounded-lg border bg-white p-4 ${t.soft} ${href ? 'block hover:bg-ink-900/[0.02] cursor-pointer' : ''}`;
+  if (href) {
+    return <Link href={href} className={cls}>{inner}</Link>;
+  }
+  return <div className={cls}>{inner}</div>;
 }
 
 function KindBadge({ kind, overdue }: { kind: 'survey' | 'install'; overdue: boolean }) {

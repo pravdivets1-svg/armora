@@ -1,13 +1,10 @@
-// /orders/new — premium redesign.
+// /orders/new — modern.
 
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 import { requireRole } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
-import { logoutAction } from '@/app/(auth)/actions';
-import { Topbar } from '@/components/ds/topbar';
-import { PageEnter } from '@/components/ds/motion';
 import OrderForm from '../[id]/order-form';
 import { createOrderAction } from '../actions';
 
@@ -30,26 +27,27 @@ export default async function NewOrderPage() {
   ]);
 
   return (
-    <>
-      <Topbar title="Новый заказ" subtitle="Заполните данные клиента и двери" onLogout={logoutAction} />
+    <main className="max-w-5xl mx-auto px-6 py-12 space-y-8">
+      <Link
+        href="/orders"
+        className="inline-flex items-center gap-1.5 text-[13px] text-ink-500 hover:text-ink-900"
+      >
+        <ArrowLeft size={14} /> Все заказы
+      </Link>
 
-      <PageEnter className="px-6 py-6 max-w-[1400px] w-full mx-auto space-y-5">
-        <Link
-          href="/orders"
-          className="inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-fg transition-colors duration-150"
-        >
-          <ArrowLeft size={14} strokeWidth={1.75} /> Все заказы
-        </Link>
+      <div>
+        <div className="text-[11px] text-ink-500 uppercase tracking-wide">Создать</div>
+        <h1 className="text-display text-ink-900 mt-1">Новый заказ</h1>
+      </div>
 
-        <OrderForm
-          action={createOrderAction}
-          surveyors={surveyors}
-          installers={installers}
-          canEditAll
-          canDelete={false}
-          mode="create"
-        />
-      </PageEnter>
-    </>
+      <OrderForm
+        action={createOrderAction}
+        surveyors={surveyors}
+        installers={installers}
+        canEditAll
+        canDelete={false}
+        mode="create"
+      />
+    </main>
   );
 }

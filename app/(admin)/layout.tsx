@@ -1,21 +1,13 @@
-// Layout админских роутов: Sidebar (240/64) + контент.
+// Layout для админских роутов (всё, что в группе (admin)).
+// Тут гарантированно есть сессия — middleware уже проверил.
 
-import { auth } from '@/auth';
-import { ROLE_LABEL } from '@/lib/labels';
-import { Sidebar } from '@/components/ds/sidebar';
+import Header from '@/components/header';
 
-export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
-  const user = session?.user
-    ? { fullName: session.user.name ?? '', role: ROLE_LABEL[session.user.role] }
-    : null;
-
+export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex bg-base text-fg">
-      <Sidebar user={user} />
-      <div className="flex-1 min-w-0 flex flex-col">
-        {children}
-      </div>
+    <div className="min-h-screen bg-page">
+      <Header />
+      {children}
     </div>
   );
 }

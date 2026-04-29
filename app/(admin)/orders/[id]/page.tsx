@@ -1,4 +1,4 @@
-// Карточка заказа /orders/[id] — premium redesign.
+// Карточка заказа: /orders/[id] — modern 2026.
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -6,10 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
-import { logoutAction } from '@/app/(auth)/actions';
 import { StageBadge } from '@/components/stage-badge';
-import { Topbar } from '@/components/ds/topbar';
-import { PageEnter } from '@/components/ds/motion';
 import OrderForm from './order-form';
 import PublicLinkBlock from './public-link-block';
 import CommentsBlock from './comments-block';
@@ -53,35 +50,35 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
   const publicUrl = `${baseUrl}/order/${order.publicToken}`;
 
   return (
-    <>
-      <Topbar
-        title={`Заказ № ${order.number}`}
-        subtitle={order.clientName}
-        onLogout={logoutAction}
-        actions={<StageBadge stage={order.stage} />}
+    <main className="max-w-5xl mx-auto px-6 py-12 space-y-8">
+      <Link
+        href="/orders"
+        className="inline-flex items-center gap-1.5 text-[13px] text-ink-500 hover:text-ink-900"
+      >
+        <ArrowLeft size={14} /> Все заказы
+      </Link>
+
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <div className="text-[11px] text-ink-500 uppercase tracking-wide">Заказ</div>
+          <h1 className="text-display text-ink-900 mt-1">№ {order.number}</h1>
+          <div className="mt-3 text-[15px] text-ink-700">{order.clientName}</div>
+        </div>
+        <StageBadge stage={order.stage} size="md" />
+      </div>
+
+      <PublicLinkBlock url={publicUrl} clientPhone={order.clientPhone} />
+
+      <OrderForm
+        order={order}
+        action={updateOrderAction.bind(null, order.id)}
+        surveyors={surveyors}
+        installers={installers}
+        canEditAll={isStaff(me.role)}
+        canDelete={me.role === 'director'}
+        mode="edit"
+        comments={<CommentsBlock orderId={order.id} comments={order.comments} />}
       />
-
-      <PageEnter className="px-6 py-6 max-w-[1400px] w-full mx-auto space-y-5">
-        <Link
-          href="/orders"
-          className="inline-flex items-center gap-1.5 text-[13px] text-muted hover:text-fg transition-colors duration-150"
-        >
-          <ArrowLeft size={14} strokeWidth={1.75} /> Все заказы
-        </Link>
-
-        <PublicLinkBlock url={publicUrl} clientPhone={order.clientPhone} />
-
-        <OrderForm
-          order={order}
-          action={updateOrderAction.bind(null, order.id)}
-          surveyors={surveyors}
-          installers={installers}
-          canEditAll={isStaff(me.role)}
-          canDelete={me.role === 'director'}
-          mode="edit"
-          comments={<CommentsBlock orderId={order.id} comments={order.comments} />}
-        />
-      </PageEnter>
-    </>
+    </main>
   );
 }

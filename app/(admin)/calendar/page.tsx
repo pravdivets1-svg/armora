@@ -1,15 +1,11 @@
-// Календарь — premium redesign.
+// Календарь — modern 2026.
 
 import Link from 'next/link';
-import { ChevronRight, CalendarDays } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { fmtDayLong } from '@/lib/format';
-import { logoutAction } from '@/app/(auth)/actions';
-import { Topbar } from '@/components/ds/topbar';
-import { PageEnter, StaggerList, StaggerItem } from '@/components/ds/motion';
-import { Pill } from '@/components/ds/pill';
 import CalendarUserFilter from './user-filter';
 
 export const dynamic = 'force-dynamic';
@@ -101,93 +97,93 @@ export default async function CalendarPage({
     a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
   return (
-    <>
-      <Topbar
-        title="Календарь"
-        subtitle={`Замеры и установки на ближайшие ${DAYS_AHEAD} дней`}
-        onLogout={logoutAction}
-      />
+    <main className="max-w-4xl mx-auto px-6 py-12 space-y-8">
+      <div>
+        <h1 className="text-display text-ink-900">Календарь</h1>
+        <div className="text-[14px] text-ink-500 mt-2">
+          Замеры и установки на ближайшие {DAYS_AHEAD} дней
+        </div>
+      </div>
 
-      <PageEnter className="px-6 py-6 max-w-[1100px] w-full mx-auto space-y-5">
-        {isStaff(me.role) && assignable.length > 0 && (
-          <CalendarUserFilter
-            users={assignable as { id: string; fullName: string; role: 'surveyor' | 'installer' }[]}
-            selected={searchParams.user ?? ''}
-          />
-        )}
+      {isStaff(me.role) && assignable.length > 0 && (
+        <CalendarUserFilter
+          users={assignable as { id: string; fullName: string; role: 'surveyor' | 'installer' }[]}
+          selected={searchParams.user ?? ''}
+        />
+      )}
 
-        {events.length === 0 && (
-          <div className="rounded-md border border-border border-dashed bg-surface/50 p-12 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-base border border-border text-subtle mb-3">
-              <CalendarDays size={18} strokeWidth={1.75} />
-            </div>
-            <div className="text-[14px] text-fg font-medium">Событий нет</div>
-            <div className="text-[12px] text-muted mt-1">На ближайшие {DAYS_AHEAD} дней ничего не запланировано</div>
-          </div>
-        )}
+      {events.length === 0 && (
+        <div className="bg-white border border-line border-dashed rounded-lg p-12 text-center text-ink-400">
+          На ближайшие {DAYS_AHEAD} дней событий нет
+        </div>
+      )}
 
-        <StaggerList className="space-y-6">
-          {[...byDay.entries()].map(([key, dayEvents]) => {
-            const date = dayEvents[0].at;
-            const isToday = isSameDay(date, today);
-            const isTomorrow = isSameDay(date, tomorrow);
-            const dayName = isToday ? 'Сегодня' : isTomorrow ? 'Завтра' : null;
+      <div className="space-y-8">
+        {[...byDay.entries()].map(([key, dayEvents]) => {
+          const date = dayEvents[0].at;
+          const isToday = isSameDay(date, today);
+          const isTomorrow = isSameDay(date, tomorrow);
+          const dayName = isToday ? 'Сегодня' : isTomorrow ? 'Завтра' : null;
 
-            return (
-              <StaggerItem key={key}>
-                <section>
-                  <div className="flex items-baseline gap-3 mb-3 px-1">
-                    {dayName && (
-                      <h2 className="text-[14px] font-semibold tracking-tight text-fg">{dayName}</h2>
-                    )}
-                    <span className={dayName ? 'text-[12px] text-muted' : 'text-[14px] font-semibold tracking-tight text-fg'}>
-                      {fmtDayLong(date)}
+          return (
+            <section key={key}>
+              <div className="flex items-baseline gap-3 mb-4">
+                {dayName && (
+                  <h2 className="text-[15px] font-semibold text-ink-900">{dayName}</h2>
+                )}
+                <span className={dayName ? 'text-[13px] text-ink-500' : 'text-[15px] font-semibold text-ink-900'}>
+                  {fmtDayLong(date)}
+                </span>
+                {dayEvents.length > 1 && (
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-ink-900/[0.06] text-ink-700">
+                    {dayEvents.length}
+                  </span>
+                )}
+              </div>
+
+              <div className="bg-white border border-line rounded-lg overflow-hidden">
+                {dayEvents.map((e, idx) => (
+                  <Link
+                    key={e.id}
+                    href={`/orders/${e.orderId}`}
+                    className={`flex items-center gap-4 px-5 py-3.5 hover-row group
+                                ${idx > 0 ? 'border-t border-line/60' : ''}`}
+                  >
+                    <div className="w-12 font-semibold text-[15px] tabular-nums text-ink-900">
+                      {String(e.at.getHours()).padStart(2, '0')}:
+                      {String(e.at.getMinutes()).padStart(2, '0')}
+                    </div>
+
+                    <span
+                      className={
+                        e.kind === 'survey'
+                          ? 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-blue-500/10 text-blue-700 whitespace-nowrap'
+                          : 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-emerald-500/10 text-emerald-700 whitespace-nowrap'
+                      }
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${e.kind === 'survey' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                      {e.kind === 'survey' ? 'Замер' : 'Установка'}
                     </span>
-                    {dayEvents.length > 1 && (
-                      <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-fg/8 text-muted">
-                        {dayEvents.length}
-                      </span>
-                    )}
-                  </div>
 
-                  <div className="rounded-md border border-border bg-surface overflow-hidden">
-                    {dayEvents.map((e, idx) => (
-                      <Link
-                        key={e.id}
-                        href={`/orders/${e.orderId}`}
-                        className={`flex items-center gap-4 px-4 py-3 hover-row group
-                                    ${idx > 0 ? 'border-t border-border' : ''}`}
-                      >
-                        <div className="w-12 font-mono tnum text-[14px] font-semibold text-fg">
-                          {String(e.at.getHours()).padStart(2, '0')}:
-                          {String(e.at.getMinutes()).padStart(2, '0')}
-                        </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate text-ink-900 text-[14px]">
+                        {e.clientName}{' '}
+                        <span className="text-ink-500 font-normal">№ {e.number}</span>
+                      </div>
+                      <div className="text-[12px] text-ink-500 truncate mt-0.5">
+                        {e.clientAddress}
+                        {e.worker && <> · {e.worker}</>}
+                      </div>
+                    </div>
 
-                        <Pill tone={e.kind === 'survey' ? 'accent' : 'ok'}>
-                          {e.kind === 'survey' ? 'Замер' : 'Установка'}
-                        </Pill>
-
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate text-fg text-[13.5px]">
-                            {e.clientName}{' '}
-                            <span className="text-muted font-mono font-normal">№ {e.number}</span>
-                          </div>
-                          <div className="text-[12px] text-muted truncate mt-0.5">
-                            {e.clientAddress}
-                            {e.worker && <span className="text-subtle"> · {e.worker}</span>}
-                          </div>
-                        </div>
-
-                        <ChevronRight size={14} strokeWidth={1.75} className="text-subtle shrink-0" />
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              </StaggerItem>
-            );
-          })}
-        </StaggerList>
-      </PageEnter>
-    </>
+                    <ChevronRight size={14} className="text-ink-400 shrink-0" />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
+    </main>
   );
 }

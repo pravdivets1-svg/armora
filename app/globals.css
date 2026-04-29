@@ -2,126 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ──────────────────────────────────────────────────────────────────
-   Design tokens — Armora
-   Все цвета в RGB-каналах, чтобы Tailwind мог применять <alpha-value>.
-   ────────────────────────────────────────────────────────────────── */
-
-:root {
-  /* === LIGHT theme (default) === */
-  --color-base:          250 250 250;   /* #FAFAFA  страница */
-  --color-surface:       255 255 255;   /* #FFFFFF  карточка */
-  --color-elevated:      255 255 255;   /* #FFFFFF  модал */
-  --color-border:        229 231 235;   /* #E5E7EB */
-  --color-border-hover:  209 213 219;   /* #D1D5DB */
-
-  --color-fg:            15  17  21;    /* #0F1115 */
-  --color-muted:         107 114 128;   /* #6B7280 */
-  --color-subtle:        156 163 175;   /* #9CA3AF */
-
-  --color-accent:        91  124 250;   /* #5B7CFA  steel-indigo */
-  --color-accent-2:      139 92 246;    /* #8B5CF6  для градиента */
-  --color-accent-hover:  74  104 235;   /* #4A68EB */
-  --color-accent-soft:   238 242 255;   /* #EEF2FF */
-  --color-accent-fg:     67  56  202;   /* #4338CA  текст на soft */
-
-  --color-ok:   34  197 94;             /* #22C55E */
-  --color-ok-soft:   240 253 244;
-  --color-warn: 245 158 11;             /* #F59E0B */
-  --color-warn-soft: 254 252 232;
-  --color-bad:  239 68  68;             /* #EF4444 */
-  --color-bad-soft:  254 242 242;
-}
-
-.dark {
-  /* === DARK theme === */
-  --color-base:          10  11  13;    /* #0A0B0D  чуть тёплый чёрный */
-  --color-surface:       19  21  25;    /* #131519  карточка */
-  --color-elevated:      26  29  34;    /* #1A1D22  модал */
-  --color-border:        35  39  46;    /* #23272E */
-  --color-border-hover:  51  56  65;    /* #333841 */
-
-  --color-fg:            232 234 237;   /* #E8EAED */
-  --color-muted:         154 160 166;   /* #9AA0A6 */
-  --color-subtle:        108 114 122;   /* #6C727A */
-
-  --color-accent:        91  124 250;
-  --color-accent-2:      139 92  246;
-  --color-accent-hover:  120 148 255;
-  --color-accent-soft:   30  35  60;
-  --color-accent-fg:     147 168 255;
-
-  --color-ok:   34  197 94;
-  --color-ok-soft:   20  35  25;
-  --color-warn: 245 158 11;
-  --color-warn-soft: 40  30  15;
-  --color-bad:  239 68  68;
-  --color-bad-soft:  45  20  20;
-}
-
-/* ──────────────────────────────────────────────────────────────────
-   Base elements
-   ────────────────────────────────────────────────────────────────── */
-
+/* Базовые стили — тёплый кремовый фон, графитовый текст */
 html {
   -webkit-text-size-adjust: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color-scheme: light dark;
 }
-
 body {
-  background: rgb(var(--color-base));
-  color: rgb(var(--color-fg));
+  background: #fafaf7;
+  color: #0f0f0f;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
-  font-variant-ligatures: common-ligatures contextual;
 }
 
-/* tabular numbers для таблиц/денег */
-.tnum, table, [data-tnum] {
-  font-variant-numeric: tabular-nums;
-}
-
-/* Focus outline (premium accent ring) */
-*:focus-visible {
-  outline: 2px solid rgb(var(--color-accent));
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-button:focus-visible,
-a:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-select:focus-visible {
-  outline: none;
-  box-shadow:
-    0 0 0 2px rgb(var(--color-base)),
-    0 0 0 4px rgb(var(--color-accent) / 0.55);
-}
-
-/* Selection */
-::selection {
-  background: rgb(var(--color-accent) / 0.25);
-  color: rgb(var(--color-fg));
-}
-
-/* ──────────────────────────────────────────────────────────────────
-   Scrollbar (тонкий, премиальный)
-   ────────────────────────────────────────────────────────────────── */
-* { scrollbar-width: thin; scrollbar-color: rgb(var(--color-border-hover)) transparent; }
-*::-webkit-scrollbar { width: 10px; height: 10px; }
-*::-webkit-scrollbar-track { background: transparent; }
-*::-webkit-scrollbar-thumb {
-  background: rgb(var(--color-border-hover));
-  border-radius: 999px;
-  border: 2px solid rgb(var(--color-base));
-}
-*::-webkit-scrollbar-thumb:hover { background: rgb(var(--color-muted) / 0.6); }
-
-/* ──────────────────────────────────────────────────────────────────
-   Глобальный фон c картинкой только на /login и публичной /order/{token}
-   ────────────────────────────────────────────────────────────────── */
-
+/* Глобальный фон с картинкой и затемнением.
+   Используется на /login, в (admin), на публичной /order/[token]. */
 .bg-page {
   position: relative;
   background-image: url('/bg.png');
@@ -134,54 +28,29 @@ select:focus-visible {
   content: '';
   position: fixed;
   inset: 0;
-  background: rgba(8, 9, 12, 0.7);
+  background: rgba(15, 15, 15, 0.55);
   pointer-events: none;
   z-index: 0;
 }
-.bg-page > * { position: relative; z-index: 1; }
-
-/* Лёгкая текстура шума на больших surface (используется в .surface-noise) */
-.surface-noise {
-  background-image:
-    linear-gradient(rgb(var(--color-surface)), rgb(var(--color-surface))),
-    url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.018 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
-  background-blend-mode: overlay;
+.bg-page > * {
+  position: relative;
+  z-index: 1;
 }
 
-/* ──────────────────────────────────────────────────────────────────
-   Утилиты
-   ────────────────────────────────────────────────────────────────── */
-
+/* Селекты со шевроном */
 select.field {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239AA0A6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.7rem center;
   padding-right: 2rem;
 }
 
-.hover-row:hover { background: rgb(var(--color-fg) / 0.025); }
-.dark .hover-row:hover { background: rgb(var(--color-fg) / 0.04); }
-
-/* Skeleton shimmer */
-.skeleton {
-  background: linear-gradient(
-    90deg,
-    rgb(var(--color-border) / 0.5) 0%,
-    rgb(var(--color-border-hover) / 0.8) 50%,
-    rgb(var(--color-border) / 0.5) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.4s linear infinite;
-  border-radius: 6px;
+/* Без анимаций */
+*, *::before, *::after {
+  animation: none !important;
+  transition: none !important;
 }
 
-/* Reduced motion respect */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-}
+/* Hover-подсветка строк */
+.hover-row:hover { background: rgba(15,15,15,0.025); }

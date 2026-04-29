@@ -1,16 +1,14 @@
 'use client';
 
-// Универсальная форма заказа на новой дизайн-системе.
+// Универсальная форма заказа, Notion-style.
+// Поля без явных рамок-карточек — иерархия через секции с лейблами.
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { Save, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import type { Stage } from '@prisma/client';
 import { useMemo, useState } from 'react';
-import { motion } from 'framer-motion';
 
-import { Button } from '@/components/ds/button';
-import { Input, Textarea, Select, Field } from '@/components/ds/input';
-import { Card, CardHeader, CardBody, CardTitle } from '@/components/ds/card';
+import { Card, Input, Textarea, Select, Button, FieldLabel } from '@/components/ui';
 import { STAGE_ORDER, STAGE_LABEL } from '@/lib/labels';
 import { fmtMoney } from '@/lib/format';
 import { deleteOrderAction, type OrderActionState } from '../actions';
@@ -43,8 +41,8 @@ function toLocalInputValue(d: Date | null): string {
 function SaveButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending} loading={pending} className="w-full">
-      {!pending && <Save size={14} strokeWidth={2} />} {pending ? 'Сохранение…' : label}
+    <Button type="submit" disabled={pending} className="w-full">
+      <Save size={14} /> {pending ? 'Сохранение…' : label}
     </Button>
   );
 }
@@ -80,93 +78,93 @@ export default function OrderForm({
   return (
     <form action={formAction} className="space-y-4">
       {state && !state.ok && (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-start gap-2 rounded-md bg-bad-soft border border-bad/25 px-3 py-2 text-[13px] text-bad"
-        >
-          <AlertCircle size={14} strokeWidth={2} className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 rounded-md bg-notion-redBg px-3 py-2 text-sm text-notion-red">
+          <AlertCircle size={14} className="mt-0.5 shrink-0" />
           <span>{state.error}</span>
-        </motion.div>
+        </div>
       )}
       {state?.ok && (
-        <motion.div
-          initial={{ opacity: 0, y: -4 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-start gap-2 rounded-md bg-ok-soft border border-ok/25 px-3 py-2 text-[13px] text-ok"
-        >
-          <CheckCircle2 size={14} strokeWidth={2} className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 rounded-md bg-notion-greenBg px-3 py-2 text-sm text-notion-green">
+          <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
           <span>Сохранено</span>
-        </motion.div>
+        </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Левая колонка */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="md:col-span-2 space-y-4">
 
-          <Card>
-            <CardHeader><CardTitle>Клиент</CardTitle></CardHeader>
-            <CardBody className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <Field label="ФИО" error={fe['clientName']}>
-                <Input name="clientName" defaultValue={order?.clientName} disabled={disableNonStage} />
-              </Field>
-              <Field label="Телефон" error={fe['clientPhone']}>
-                <Input name="clientPhone" defaultValue={order?.clientPhone} disabled={disableNonStage} className="font-mono tnum" />
-              </Field>
-              <Field label="Адрес установки" error={fe['clientAddress']} className="md:col-span-2">
-                <Input name="clientAddress" defaultValue={order?.clientAddress} disabled={disableNonStage} />
-              </Field>
-            </CardBody>
+          <Card title="Клиент">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label>
+                <FieldLabel>ФИО</FieldLabel>
+                <Input name="clientName" defaultValue={order?.clientName} disabled={disableNonStage} className="mt-1" />
+                {fe['clientName'] && <span className="text-xs text-notion-red mt-1 block">{fe['clientName']}</span>}
+              </label>
+              <label>
+                <FieldLabel>Телефон</FieldLabel>
+                <Input name="clientPhone" defaultValue={order?.clientPhone} disabled={disableNonStage} className="mt-1 tabular-nums" />
+                {fe['clientPhone'] && <span className="text-xs text-notion-red mt-1 block">{fe['clientPhone']}</span>}
+              </label>
+              <label className="md:col-span-2">
+                <FieldLabel>Адрес установки</FieldLabel>
+                <Input name="clientAddress" defaultValue={order?.clientAddress} disabled={disableNonStage} className="mt-1" />
+                {fe['clientAddress'] && <span className="text-xs text-notion-red mt-1 block">{fe['clientAddress']}</span>}
+              </label>
+            </div>
           </Card>
 
-          <Card>
-            <CardHeader><CardTitle>Дверь</CardTitle></CardHeader>
-            <CardBody className="space-y-3">
-              <Field label="Комментарий по двери">
-                <Textarea
-                  name="doorComment"
-                  rows={3}
-                  defaultValue={order?.doorComment ?? ''}
-                  disabled={disableNonStage}
-                  placeholder="Цвет, фурнитура, особенности..."
-                />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="Ширина, мм">
-                  <Input type="number" name="widthMm" defaultValue={order?.widthMm ?? ''} disabled={disableNonStage} className="font-mono tnum" />
-                </Field>
-                <Field label="Высота, мм">
-                  <Input type="number" name="heightMm" defaultValue={order?.heightMm ?? ''} disabled={disableNonStage} className="font-mono tnum" />
-                </Field>
-              </div>
-            </CardBody>
+          <Card title="Дверь">
+            <label className="block">
+              <FieldLabel>Комментарий по двери</FieldLabel>
+              <Textarea
+                name="doorComment"
+                rows={3}
+                defaultValue={order?.doorComment ?? ''}
+                disabled={disableNonStage}
+                placeholder="Цвет, фурнитура, особенности..."
+                className="mt-1"
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-3 mt-3">
+              <label>
+                <FieldLabel>Ширина, мм</FieldLabel>
+                <Input type="number" name="widthMm" defaultValue={order?.widthMm ?? ''} disabled={disableNonStage} className="mt-1 tabular-nums" />
+              </label>
+              <label>
+                <FieldLabel>Высота, мм</FieldLabel>
+                <Input type="number" name="heightMm" defaultValue={order?.heightMm ?? ''} disabled={disableNonStage} className="mt-1 tabular-nums" />
+              </label>
+            </div>
           </Card>
 
-          <Card>
-            <CardHeader><CardTitle>Оплата</CardTitle></CardHeader>
-            <CardBody className="grid grid-cols-3 gap-3">
-              <Field label="Сумма, ₽">
+          <Card title="Оплата">
+            <div className="grid grid-cols-3 gap-3">
+              <label>
+                <FieldLabel>Сумма, ₽</FieldLabel>
                 <Input
                   type="number" name="totalAmount" defaultValue={Number(order?.totalAmount ?? 0)}
                   disabled={disableNonStage}
                   onChange={(e) => setTotal(Number(e.target.value) || 0)}
-                  className="font-mono tnum" min={0}
+                  className="mt-1 tabular-nums" min={0}
                 />
-              </Field>
-              <Field label="Аванс, ₽">
+              </label>
+              <label>
+                <FieldLabel>Аванс, ₽</FieldLabel>
                 <Input
                   type="number" name="prepayment" defaultValue={Number(order?.prepayment ?? 0)}
                   disabled={disableNonStage}
                   onChange={(e) => setPrepay(Number(e.target.value) || 0)}
-                  className="font-mono tnum" min={0}
+                  className="mt-1 tabular-nums" min={0}
                 />
-              </Field>
-              <Field label="Остаток">
-                <div className="h-9 inline-flex items-center px-3 rounded-md bg-base border border-border text-fg font-mono tnum text-[14px] font-semibold">
+              </label>
+              <div>
+                <FieldLabel>Остаток</FieldLabel>
+                <div className="mt-1 px-3 py-1.5 rounded-md bg-canvas text-ink-900 font-semibold tabular-nums text-sm">
                   {fmtMoney(remaining)}
                 </div>
-              </Field>
-            </CardBody>
+              </div>
+            </div>
           </Card>
 
           {comments}
@@ -174,57 +172,52 @@ export default function OrderForm({
 
         {/* Правая колонка */}
         <aside className="space-y-4">
-          <Card>
-            <CardHeader><CardTitle>Этап</CardTitle></CardHeader>
-            <CardBody>
-              <Select name="stage" defaultValue={order?.stage ?? 'new'}>
-                {STAGE_ORDER.map((s, i) => (
-                  <option key={s} value={s}>{i + 1}. {STAGE_LABEL[s]}</option>
+          <Card title="Этап">
+            <Select name="stage" defaultValue={order?.stage ?? 'new'}>
+              {STAGE_ORDER.map((s, i) => (
+                <option key={s} value={s}>{i + 1}. {STAGE_LABEL[s]}</option>
+              ))}
+            </Select>
+          </Card>
+
+          <Card title="Замер">
+            <label className="block">
+              <FieldLabel>Дата и время</FieldLabel>
+              <Input
+                type="datetime-local" name="surveyAt"
+                defaultValue={toLocalInputValue(order?.surveyAt ?? null)}
+                disabled={disableNonStage} className="mt-1"
+              />
+            </label>
+            <label className="block mt-3">
+              <FieldLabel>Замерщик</FieldLabel>
+              <Select name="surveyorId" defaultValue={order?.surveyorId ?? ''} disabled={disableNonStage} className="mt-1">
+                <option value="">— не назначен —</option>
+                {surveyors.map((u) => (
+                  <option key={u.id} value={u.id}>{u.fullName}</option>
                 ))}
               </Select>
-            </CardBody>
+            </label>
           </Card>
 
-          <Card>
-            <CardHeader><CardTitle>Замер</CardTitle></CardHeader>
-            <CardBody className="space-y-3">
-              <Field label="Дата и время">
-                <Input
-                  type="datetime-local" name="surveyAt"
-                  defaultValue={toLocalInputValue(order?.surveyAt ?? null)}
-                  disabled={disableNonStage}
-                />
-              </Field>
-              <Field label="Замерщик">
-                <Select name="surveyorId" defaultValue={order?.surveyorId ?? ''} disabled={disableNonStage}>
-                  <option value="">— не назначен —</option>
-                  {surveyors.map((u) => (
-                    <option key={u.id} value={u.id}>{u.fullName}</option>
-                  ))}
-                </Select>
-              </Field>
-            </CardBody>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Установка</CardTitle></CardHeader>
-            <CardBody className="space-y-3">
-              <Field label="Дата и время">
-                <Input
-                  type="datetime-local" name="installAt"
-                  defaultValue={toLocalInputValue(order?.installAt ?? null)}
-                  disabled={disableNonStage}
-                />
-              </Field>
-              <Field label="Установщик">
-                <Select name="installerId" defaultValue={order?.installerId ?? ''} disabled={disableNonStage}>
-                  <option value="">— не назначен —</option>
-                  {installers.map((u) => (
-                    <option key={u.id} value={u.id}>{u.fullName}</option>
-                  ))}
-                </Select>
-              </Field>
-            </CardBody>
+          <Card title="Установка">
+            <label className="block">
+              <FieldLabel>Дата и время</FieldLabel>
+              <Input
+                type="datetime-local" name="installAt"
+                defaultValue={toLocalInputValue(order?.installAt ?? null)}
+                disabled={disableNonStage} className="mt-1"
+              />
+            </label>
+            <label className="block mt-3">
+              <FieldLabel>Установщик</FieldLabel>
+              <Select name="installerId" defaultValue={order?.installerId ?? ''} disabled={disableNonStage} className="mt-1">
+                <option value="">— не назначен —</option>
+                {installers.map((u) => (
+                  <option key={u.id} value={u.id}>{u.fullName}</option>
+                ))}
+              </Select>
+            </label>
           </Card>
 
           <SaveButton label={mode === 'create' ? 'Создать' : 'Сохранить'} />
@@ -245,7 +238,7 @@ function DeleteButton({ orderId }: { orderId: string }) {
       }}
     >
       <Button type="submit" variant="danger" className="w-full">
-        <Trash2 size={14} strokeWidth={2} /> Удалить заказ
+        <Trash2 size={14} /> Удалить заказ
       </Button>
     </form>
   );

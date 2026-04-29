@@ -20,19 +20,16 @@ const USERS: Array<{
   password: string;  // 5 символов
 }> = [
   // === Директор ===
-  { login: 'dir001', fullName: 'Иван Иванов',     phone: '+7 495 123-45-67', role: 'director',  password: 'A9k2x' },
+  { login: 'dir001', fullName: 'Владимир Сергеевич', phone: '',  role: 'director',  password: 'a4dvh' },
 
-  // === Менеджеры ===
-  { login: 'mgr001', fullName: 'Анна Михайлова',  phone: '+7 916 100-20-30', role: 'manager',   password: 'B7m4q' },
-  { login: 'mgr002', fullName: 'Елена Петрова',   phone: '+7 916 100-20-31', role: 'manager',   password: 'C3n8r' },
+  // === Менеджер ===
+  { login: 'mgr001', fullName: 'Арина',              phone: '',  role: 'manager',   password: 'DVtVB' },
 
-  // === Замерщики ===
-  { login: 'srv001', fullName: 'Сергей Иванов',   phone: '+7 916 111-22-33', role: 'surveyor',  password: 'D5p2t' },
-  { login: 'srv002', fullName: 'Олег Кузнецов',   phone: '+7 916 111-22-34', role: 'surveyor',  password: 'E8w6v' },
+  // === Замерщик ===
+  { login: 'srv001', fullName: 'Али',                phone: '',  role: 'surveyor',  password: 'Tg5Bs' },
 
-  // === Установщики ===
-  { login: 'ins001', fullName: 'Андрей Смирнов',  phone: '+7 925 444-55-66', role: 'installer', password: 'F4z1y' },
-  { login: 'ins002', fullName: 'Дмитрий Попов',   phone: '+7 925 444-55-67', role: 'installer', password: 'G6h3j' },
+  // === Установщик ===
+  { login: 'ins001', fullName: 'Арсен',              phone: '',  role: 'installer', password: '3acvH' },
 ];
 
 async function main() {

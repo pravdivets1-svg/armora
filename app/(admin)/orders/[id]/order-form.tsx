@@ -12,6 +12,7 @@ import { Card, Input, Textarea, Select, Button, FieldLabel } from '@/components/
 import { STAGE_ORDER, STAGE_LABEL } from '@/lib/labels';
 import { fmtMoney } from '@/lib/format';
 import { deleteOrderAction, type OrderActionState } from '../actions';
+import AddressField from './address-field';
 
 type UserOpt = { id: string; fullName: string };
 
@@ -108,7 +109,7 @@ export default function OrderForm({
               </label>
               <label className="md:col-span-2">
                 <FieldLabel>Адрес установки</FieldLabel>
-                <Input name="clientAddress" defaultValue={order?.clientAddress} disabled={disableNonStage} className="mt-1" />
+                <AddressField defaultValue={order?.clientAddress} disabled={disableNonStage} />
                 {fe['clientAddress'] && <span className="text-xs text-notion-red mt-1 block">{fe['clientAddress']}</span>}
               </label>
             </div>

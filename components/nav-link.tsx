@@ -10,10 +10,10 @@ export default function NavLink({ href, label }: { href: string; label: string }
   return (
     <Link
       href={href}
-      className={`px-3 py-1.5 rounded-md text-[14px] ${
+      className={`px-3 py-1.5 rounded-md text-[15px] drop-shadow ${
         active
-          ? 'text-ink-900 bg-ink-900/[0.06] font-medium'
-          : 'text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.04]'
+          ? 'text-white bg-white/15 font-medium'
+          : 'text-white/80 hover:text-white hover:bg-white/10'
       }`}
     >
       {label}

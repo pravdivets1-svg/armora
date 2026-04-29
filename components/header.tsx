@@ -12,10 +12,10 @@ export default async function Header() {
   const user = session?.user;
 
   return (
-    <header className="border-b border-line bg-white/95 backdrop-blur sticky top-0 z-10">
+    <header className="border-b border-white/15 bg-black/30 backdrop-blur-xl sticky top-0 z-10">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-8">
-          <Link href="/orders" className="font-semibold tracking-tight text-ink-900 text-[15px]">
+          <Link href="/orders" className="font-semibold tracking-tight text-white text-[16px] drop-shadow">
             Armora
           </Link>
           <nav className="flex items-center gap-1">
@@ -26,22 +26,22 @@ export default async function Header() {
 
         <div className="flex items-center gap-3">
           {user && (
-            <div className="hidden sm:flex items-center gap-2.5 text-[13px]">
-              <div className="w-7 h-7 rounded-full bg-ink-900 text-white flex items-center justify-center text-[11px] font-semibold">
+            <div className="hidden sm:flex items-center gap-2.5 text-[14px]">
+              <div className="w-8 h-8 rounded-full bg-white text-ink-900 flex items-center justify-center text-[12px] font-semibold">
                 {user.name?.split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase()}
               </div>
-              <span className="text-ink-700">{user.name}</span>
-              <span className="text-ink-400">·</span>
-              <span className="text-ink-500">{ROLE_LABEL[user.role].toLowerCase()}</span>
+              <span className="text-white font-medium drop-shadow">{user.name}</span>
+              <span className="text-white/50">·</span>
+              <span className="text-white/80">{ROLE_LABEL[user.role].toLowerCase()}</span>
             </div>
           )}
           <form action={logoutAction}>
             <button
               type="submit"
               title="Выйти"
-              className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/5 p-2 rounded-md"
+              className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-md"
             >
-              <LogOut size={15} />
+              <LogOut size={16} />
             </button>
           </form>
         </div>

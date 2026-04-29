@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Link2, Copy, Check, MessageCircle } from 'lucide-react';
-import { Card } from '@/components/ui';
+import { Card, CardHeader, CardBody, CardTitle } from '@/components/ds/card';
 import { phoneDigits } from '@/lib/format';
 
 export default function PublicLinkBlock({
@@ -26,35 +26,40 @@ export default function PublicLinkBlock({
   }
 
   return (
-    <Card title="Ссылка для клиента" icon={<Link2 size={12} />}>
-      <div className="flex flex-col md:flex-row gap-2">
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-1.5">
+          <Link2 size={11} strokeWidth={1.75} /> Ссылка для клиента
+        </CardTitle>
+      </CardHeader>
+      <CardBody className="flex flex-col md:flex-row gap-2">
         <input
           readOnly
           value={url}
           onClick={(e) => (e.target as HTMLInputElement).select()}
-          className="flex-1 bg-canvas border border-line text-ink-700
-                     rounded-md px-3 py-1.5 text-xs font-mono"
+          className="flex-1 bg-base border border-border text-fg/85
+                     rounded-md px-3 h-9 text-[12px] font-mono focus:outline-none focus:border-accent"
         />
         <div className="flex gap-2">
           <button
             type="button"
             onClick={copy}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md
-                       text-sm bg-white hover:bg-canvas text-ink-900 border border-line"
+            className="inline-flex items-center justify-center gap-1.5 px-3 h-9 rounded-md text-[13px]
+                       bg-surface hover:bg-fg/5 text-fg border border-border hover:border-borderHover transition-colors duration-150"
           >
-            {copied ? <><Check size={14} /> Скопировано</> : <><Copy size={14} /> Скопировать</>}
+            {copied ? <><Check size={14} strokeWidth={2} /> Скопировано</> : <><Copy size={14} strokeWidth={2} /> Скопировать</>}
           </button>
           <a
             href={waUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md
-                       text-sm bg-notion-green hover:bg-[#3a6f52] text-white font-medium"
+            className="inline-flex items-center justify-center gap-1.5 px-3 h-9 rounded-md text-[13px]
+                       bg-ok hover:bg-ok/90 text-white font-medium transition-colors duration-150"
           >
-            <MessageCircle size={14} /> WhatsApp
+            <MessageCircle size={14} strokeWidth={2} /> WhatsApp
           </a>
         </div>
-      </div>
+      </CardBody>
     </Card>
   );
 }

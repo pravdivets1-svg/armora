@@ -1,21 +1,32 @@
-// Список заказов — modern 2026 style.
+// Список заказов — premium B2B redesign.
 
 import Link from 'next/link';
-import { Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Plus, Search, ChevronLeft, ChevronRight, Inbox } from 'lucide-react';
 import type { Stage } from '@prisma/client';
 
 import { requireUser } from '@/lib/auth-helpers';
 import { listOrders, listAssignableUsers } from '@/lib/orders';
+import { logoutAction } from '@/app/(auth)/actions';
 import { STAGE_LABEL, STAGE_ORDER, ROLE_LABEL } from '@/lib/labels';
 import { fmtMoney, fmtDateTime, shortName } from '@/lib/format';
 import { StageBadge } from '@/components/stage-badge';
-import { Button } from '@/components/ui';
+import { Button } from '@/components/ds/button';
+import { Topbar } from '@/components/ds/topbar';
+import { PageEnter, StaggerList, StaggerItem } from '@/components/ds/motion';
 
 export const metadata = { title: 'Заказы — Armora' };
 
-type Search = { q?: string; stage?: string; user?: string; page?: string };
+type SearchT = { q?: string; stage?: string; user?: string; page?: string };
 
-export default async function OrdersPage({ searchParams }: { searchParams: Search }) {
+function declOrders(n: number) {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return 'заказ';
+  if ([2, 3, 4].includes(mod10) && ![12, 13, 14].includes(mod100)) return 'заказа';
+  return 'заказов';
+}
+
+export default async function OrdersPage({ searchParams }: { searchParams: SearchT }) {
   const me = await requireUser();
 
   const stage = (STAGE_ORDER as string[]).includes(searchParams.stage ?? '')
@@ -30,181 +41,199 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
   });
 
   const assignable = await listAssignableUsers();
+  const canCreate = me.role === 'director' || me.role === 'manager';
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 space-y-8">
-      {/* Заголовок: большой, с подзаголовком */}
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-display text-ink-900">Заказы</h1>
-          <div className="text-[14px] text-ink-500 mt-2">
-            {total} {total === 1 ? 'заказ' : total < 5 ? 'заказа' : 'заказов'} в работе
+    <>
+      <Topbar
+        title="Заказы"
+        subtitle={`${total} ${declOrders(total)} в работе`}
+        onLogout={logoutAction}
+        actions={
+          canCreate && (
+            <Link href="/orders/new">
+              <Button variant="primary" size="md">
+                <Plus size={14} strokeWidth={2} /> Новый заказ
+              </Button>
+            </Link>
+          )
+        }
+      />
+
+      <PageEnter className="px-6 py-6 max-w-[1400px] w-full mx-auto space-y-5">
+        {/* Фильтры */}
+        <form
+          method="get"
+          className="rounded-md border border-border bg-surface p-1.5 flex flex-col md:flex-row gap-1.5"
+        >
+          <div className="relative flex-1">
+            <Search size={14} strokeWidth={1.75} className="absolute left-3 top-1/2 -translate-y-1/2 text-subtle" />
+            <input
+              type="search"
+              name="q"
+              defaultValue={searchParams.q ?? ''}
+              placeholder="Поиск по ФИО или телефону"
+              className="w-full bg-transparent text-fg rounded-md pl-9 pr-3 py-2 text-[14px] placeholder:text-subtle focus:outline-none"
+            />
           </div>
-        </div>
-        {(me.role === 'director' || me.role === 'manager') && (
-          <Link href="/orders/new">
-            <Button variant="primary">
-              <Plus size={15} /> Новый заказ
-            </Button>
-          </Link>
-        )}
-      </div>
-
-      {/* Фильтры — белая панель */}
-      <form
-        method="get"
-        className="bg-white border border-line rounded-lg p-2 flex flex-col md:flex-row gap-2"
-      >
-        <div className="relative flex-1">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400" />
-          <input
-            type="search"
-            name="q"
-            defaultValue={searchParams.q ?? ''}
-            placeholder="Поиск по ФИО или телефону"
-            className="w-full bg-transparent text-ink-900 rounded-md pl-10 pr-3 py-2 text-[14px]
-                       placeholder:text-ink-400 focus:outline-none"
-          />
-        </div>
-        <select
-          name="stage"
-          defaultValue={searchParams.stage ?? ''}
-          className="field bg-canvas border-0 text-ink-900 rounded-md px-3 py-2 text-[14px]
-                     md:w-52 focus:outline-none"
-        >
-          <option value="">Все этапы</option>
-          {STAGE_ORDER.map((s) => (
-            <option key={s} value={s}>{STAGE_LABEL[s]}</option>
-          ))}
-        </select>
-        <select
-          name="user"
-          defaultValue={searchParams.user ?? ''}
-          className="field bg-canvas border-0 text-ink-900 rounded-md px-3 py-2 text-[14px]
-                     md:w-56 focus:outline-none"
-        >
-          <option value="">Все сотрудники</option>
-          {assignable.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.fullName} ({ROLE_LABEL[u.role].toLowerCase()})
-            </option>
-          ))}
-        </select>
-        <button type="submit" className="hidden" />
-      </form>
-
-      {/* Десктоп-таблица — внутри карточки с тонкой рамкой */}
-      <div className="hidden md:block bg-white border border-line rounded-lg overflow-hidden">
-        <table className="w-full text-[14px]">
-          <thead>
-            <tr className="border-b border-line text-ink-500 text-left">
-              <th className="px-5 py-3 font-medium w-14 text-[12px]">№</th>
-              <th className="px-5 py-3 font-medium text-[12px]">Клиент</th>
-              <th className="px-5 py-3 font-medium text-[12px]">Телефон</th>
-              <th className="px-5 py-3 font-medium text-[12px]">Этап</th>
-              <th className="px-5 py-3 font-medium text-[12px]">Замер</th>
-              <th className="px-5 py-3 font-medium text-[12px]">Установка</th>
-              <th className="px-5 py-3 font-medium text-[12px] text-right">Сумма</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-5 py-20 text-center text-ink-400">
-                  Заказов нет
-                </td>
-              </tr>
-            )}
-            {items.map((o) => (
-              <tr key={o.id} className="border-b border-line/60 last:border-0 hover-row">
-                <td className="px-5 py-3.5 text-ink-500 tabular-nums">
-                  <Link href={`/orders/${o.id}`} className="block">{o.number}</Link>
-                </td>
-                <td className="px-5 py-3.5 font-medium text-ink-900">
-                  <Link href={`/orders/${o.id}`} className="block">{o.clientName}</Link>
-                </td>
-                <td className="px-5 py-3.5 text-ink-700 tabular-nums">{o.clientPhone}</td>
-                <td className="px-5 py-3.5"><StageBadge stage={o.stage} /></td>
-                <td className="px-5 py-3.5 text-ink-700">
-                  {o.surveyAt ? (
-                    <>
-                      {fmtDateTime(o.surveyAt)}
-                      {o.surveyor && <span className="text-ink-500"> · {shortName(o.surveyor.fullName)}</span>}
-                    </>
-                  ) : (
-                    <span className="text-ink-400">—</span>
-                  )}
-                </td>
-                <td className="px-5 py-3.5 text-ink-700">
-                  {o.installAt ? (
-                    <>
-                      {fmtDateTime(o.installAt)}
-                      {o.installer && <span className="text-ink-500"> · {shortName(o.installer.fullName)}</span>}
-                    </>
-                  ) : (
-                    <span className="text-ink-400">—</span>
-                  )}
-                </td>
-                <td className="px-5 py-3.5 text-right font-medium text-ink-900 tabular-nums">
-                  {Number(o.totalAmount) > 0 ? (
-                    fmtMoney(o.totalAmount as unknown as number)
-                  ) : (
-                    <span className="text-ink-400 font-normal">—</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Мобильные карточки */}
-      <div className="md:hidden space-y-2">
-        {items.length === 0 && (
-          <div className="text-center text-ink-400 py-12">Заказов нет</div>
-        )}
-        {items.map((o) => (
-          <Link
-            key={o.id}
-            href={`/orders/${o.id}`}
-            className="block bg-white border border-line rounded-lg p-4"
+          <select
+            name="stage"
+            defaultValue={searchParams.stage ?? ''}
+            className="field bg-base border border-border text-fg rounded-md px-3 py-2 text-[13px] md:w-52 hover:border-borderHover focus:outline-none focus:border-accent"
           >
-            <div className="flex justify-between items-start gap-3">
-              <div className="min-w-0">
-                <div className="text-[11px] text-ink-500 uppercase tracking-wide">№ {o.number}</div>
-                <div className="font-medium truncate text-ink-900 mt-0.5">{o.clientName}</div>
-                <div className="text-[13px] text-ink-500 tabular-nums">{o.clientPhone}</div>
-              </div>
-              <StageBadge stage={o.stage} />
-            </div>
-            {(o.surveyAt || o.installAt) && (
-              <div className="mt-3 text-[12px] text-ink-500 pt-3 border-t border-line">
-                {o.surveyAt && (
-                  <>Замер {fmtDateTime(o.surveyAt)}{o.surveyor && ` · ${shortName(o.surveyor.fullName)}`}</>
-                )}
-                {o.installAt && (
-                  <>{o.surveyAt && <br />}Установка {fmtDateTime(o.installAt)}</>
-                )}
-              </div>
-            )}
-          </Link>
-        ))}
-      </div>
+            <option value="">Все этапы</option>
+            {STAGE_ORDER.map((s) => (
+              <option key={s} value={s}>{STAGE_LABEL[s]}</option>
+            ))}
+          </select>
+          <select
+            name="user"
+            defaultValue={searchParams.user ?? ''}
+            className="field bg-base border border-border text-fg rounded-md px-3 py-2 text-[13px] md:w-56 hover:border-borderHover focus:outline-none focus:border-accent"
+          >
+            <option value="">Все сотрудники</option>
+            {assignable.map((u) => (
+              <option key={u.id} value={u.id}>
+                {u.fullName} ({ROLE_LABEL[u.role].toLowerCase()})
+              </option>
+            ))}
+          </select>
+          <button type="submit" className="hidden" />
+        </form>
 
-      {pageCount > 1 && (
-        <div className="flex justify-between items-center text-[13px] text-ink-500">
-          <div>Страница {page} из {pageCount}</div>
-          <div className="flex gap-1">
-            <PageLink page={page - 1} disabled={page <= 1} searchParams={searchParams}>
-              <ChevronLeft size={14} />
-            </PageLink>
-            <PageLink page={page + 1} disabled={page >= pageCount} searchParams={searchParams}>
-              <ChevronRight size={14} />
-            </PageLink>
-          </div>
+        {/* Десктоп-таблица */}
+        <div className="hidden md:block rounded-md border border-border bg-surface overflow-hidden">
+          <table className="w-full text-[13.5px]">
+            <thead className="bg-base/40 sticky top-14 z-10">
+              <tr className="text-left">
+                <th className="px-4 py-2.5 font-medium text-[11px] uppercase tracking-wider text-muted w-16">№</th>
+                <th className="px-4 py-2.5 font-medium text-[11px] uppercase tracking-wider text-muted">Клиент</th>
+                <th className="px-4 py-2.5 font-medium text-[11px] uppercase tracking-wider text-muted">Телефон</th>
+                <th className="px-4 py-2.5 font-medium text-[11px] uppercase tracking-wider text-muted">Этап</th>
+                <th className="px-4 py-2.5 font-medium text-[11px] uppercase tracking-wider text-muted">Замер</th>
+                <th className="px-4 py-2.5 font-medium text-[11px] uppercase tracking-wider text-muted">Установка</th>
+                <th className="px-4 py-2.5 font-medium text-[11px] uppercase tracking-wider text-muted text-right">Сумма</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-5 py-20 text-center">
+                    <EmptyState />
+                  </td>
+                </tr>
+              )}
+              {items.map((o) => (
+                <tr key={o.id} className="border-t border-border hover-row">
+                  <td className="px-4 py-3 text-muted font-mono text-[12.5px] tnum">
+                    <Link href={`/orders/${o.id}`} className="block">{o.number}</Link>
+                  </td>
+                  <td className="px-4 py-3 font-medium text-fg">
+                    <Link href={`/orders/${o.id}`} className="block">{o.clientName}</Link>
+                  </td>
+                  <td className="px-4 py-3 text-fg/85 font-mono text-[12.5px] tnum">{o.clientPhone}</td>
+                  <td className="px-4 py-3"><StageBadge stage={o.stage} /></td>
+                  <td className="px-4 py-3 text-fg/85">
+                    {o.surveyAt ? (
+                      <>
+                        <span className="text-fg">{fmtDateTime(o.surveyAt)}</span>
+                        {o.surveyor && <span className="text-muted"> · {shortName(o.surveyor.fullName)}</span>}
+                      </>
+                    ) : (
+                      <span className="text-subtle">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-fg/85">
+                    {o.installAt ? (
+                      <>
+                        <span className="text-fg">{fmtDateTime(o.installAt)}</span>
+                        {o.installer && <span className="text-muted"> · {shortName(o.installer.fullName)}</span>}
+                      </>
+                    ) : (
+                      <span className="text-subtle">—</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right font-mono text-fg tnum">
+                    {Number(o.totalAmount) > 0 ? (
+                      fmtMoney(o.totalAmount as unknown as number)
+                    ) : (
+                      <span className="text-subtle font-sans">—</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      )}
-    </main>
+
+        {/* Мобильные карточки */}
+        <StaggerList className="md:hidden space-y-2">
+          {items.length === 0 && (
+            <div className="py-12"><EmptyState /></div>
+          )}
+          {items.map((o) => (
+            <StaggerItem key={o.id}>
+              <Link
+                href={`/orders/${o.id}`}
+                className="block rounded-md border border-border bg-surface p-4 hover:border-borderHover transition-colors duration-150"
+              >
+                <div className="flex justify-between items-start gap-3">
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase tracking-wider text-muted font-mono">№ {o.number}</div>
+                    <div className="font-medium truncate text-fg mt-0.5">{o.clientName}</div>
+                    <div className="text-[13px] text-muted font-mono tnum">{o.clientPhone}</div>
+                  </div>
+                  <StageBadge stage={o.stage} />
+                </div>
+                {(o.surveyAt || o.installAt) && (
+                  <div className="mt-3 text-[12px] text-muted pt-3 border-t border-border space-y-0.5">
+                    {o.surveyAt && (
+                      <div>
+                        <span className="text-subtle">Замер · </span>
+                        <span className="text-fg/85">{fmtDateTime(o.surveyAt)}</span>
+                        {o.surveyor && <span> · {shortName(o.surveyor.fullName)}</span>}
+                      </div>
+                    )}
+                    {o.installAt && (
+                      <div>
+                        <span className="text-subtle">Установка · </span>
+                        <span className="text-fg/85">{fmtDateTime(o.installAt)}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Link>
+            </StaggerItem>
+          ))}
+        </StaggerList>
+
+        {pageCount > 1 && (
+          <div className="flex justify-between items-center text-[13px] text-muted">
+            <div>Страница <span className="text-fg font-mono tnum">{page}</span> из <span className="text-fg font-mono tnum">{pageCount}</span></div>
+            <div className="flex gap-1">
+              <PageLink page={page - 1} disabled={page <= 1} searchParams={searchParams}>
+                <ChevronLeft size={14} />
+              </PageLink>
+              <PageLink page={page + 1} disabled={page >= pageCount} searchParams={searchParams}>
+                <ChevronRight size={14} />
+              </PageLink>
+            </div>
+          </div>
+        )}
+      </PageEnter>
+    </>
+  );
+}
+
+function EmptyState() {
+  return (
+    <div className="text-center">
+      <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-base border border-border text-subtle mb-3">
+        <Inbox size={18} strokeWidth={1.75} />
+      </div>
+      <div className="text-[14px] text-fg font-medium">Заказов нет</div>
+      <div className="text-[12px] text-muted mt-1">По текущим фильтрам ничего не найдено</div>
+    </div>
   );
 }
 
@@ -216,12 +245,12 @@ function PageLink({
 }: {
   page: number;
   disabled?: boolean;
-  searchParams: Search;
+  searchParams: SearchT;
   children: React.ReactNode;
 }) {
   if (disabled) {
     return (
-      <span className="inline-flex items-center justify-center w-8 h-8 rounded-md text-ink-300 border border-line">
+      <span className="inline-flex items-center justify-center w-8 h-8 rounded-md text-subtle border border-border">
         {children}
       </span>
     );
@@ -234,7 +263,7 @@ function PageLink({
   return (
     <Link
       href={`/orders?${sp.toString()}`}
-      className="inline-flex items-center justify-center w-8 h-8 rounded-md text-ink-700 hover:bg-ink-900/[0.04] border border-line"
+      className="inline-flex items-center justify-center w-8 h-8 rounded-md text-fg/80 hover:text-fg hover:bg-fg/5 border border-border hover:border-borderHover transition-colors duration-150"
     >
       {children}
     </Link>

@@ -50,7 +50,6 @@ export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
           autoComplete="username"
           autoCapitalize="off"
           spellCheck={false}
-          placeholder="dir001"
           className="mt-1.5 w-full bg-white border border-line text-ink-900
                      rounded-md px-3.5 py-2 text-[14px] focus:outline-none focus:border-ink-900
                      focus:ring-4 focus:ring-ink-900/5"

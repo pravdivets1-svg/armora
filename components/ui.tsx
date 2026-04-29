@@ -2,13 +2,17 @@
 
 import { forwardRef } from 'react';
 
+// Поля в стиле «soft inset glass»: чуть утопленные в карточку,
+// без backdrop-blur (он бесполезен поверх непрозрачного фона), с лёгкой
+// внутренней тенью сверху — даёт ощущение мягкого вдавленного стекла,
+// читается на любом фоне (белом, тонированном, картинке).
 const inputBase =
   'block w-full min-w-0 max-w-full box-border ' +
-  'bg-white/45 backdrop-blur-md border border-ink-900/10 text-ink-900 rounded-md ' +
-  'shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(15,15,15,0.04)] ' +
+  'bg-ink-900/[0.04] border border-transparent text-ink-900 rounded-md ' +
+  'shadow-[inset_0_1px_2px_rgba(15,15,15,0.06)] ' +
   'px-3.5 py-2 text-[14px] leading-6 placeholder:text-ink-400 ' +
-  'focus:outline-none focus:border-ink-900/40 focus:ring-4 focus:ring-ink-900/5 focus:bg-white/70 ' +
-  'disabled:bg-ink-900/[0.03] disabled:text-ink-500 disabled:backdrop-blur-0';
+  'focus:outline-none focus:bg-white focus:border-ink-900/25 focus:ring-4 focus:ring-ink-900/5 focus:shadow-none ' +
+  'disabled:bg-ink-900/[0.03] disabled:text-ink-500 disabled:shadow-none';
 
 export const FieldLabel = ({ children }: { children: React.ReactNode }) => (
   <span className="text-[11px] tracking-wide text-ink-500 font-medium uppercase">

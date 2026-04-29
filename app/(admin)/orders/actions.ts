@@ -74,6 +74,28 @@ function tokenExpiresFor(stage: Stage, current: Date | null): Date | null {
   return null;
 }
 
+// Машина состояний: проверка обязательных дат для активных этапов.
+// Возвращает ошибку или null.
+function validateStageDates(
+  stage: Stage,
+  surveyAt: string | null | undefined,
+  installAt: string | null | undefined,
+): { error: string; fieldErrors: Record<string, string> } | null {
+  if (stage === 'survey_scheduled' && !surveyAt) {
+    return {
+      error: 'Для этапа «Замер назначен» нужна дата замера',
+      fieldErrors: { surveyAt: 'Укажите дату и время замера' },
+    };
+  }
+  if (stage === 'ready_to_install' && !installAt) {
+    return {
+      error: 'Для этапа «Готова к установке» нужна дата установки',
+      fieldErrors: { installAt: 'Укажите дату и время установки' },
+    };
+  }
+  return null;
+}
+
 // =====================================================================
 // CREATE
 // =====================================================================
@@ -94,6 +116,12 @@ export async function createOrderAction(
     return { ok: false, error: 'Проверьте поля формы', fieldErrors };
   }
   const d = parsed.data;
+
+  // Машина состояний: даты обязательны для активных этапов
+  const stageError = validateStageDates(d.stage, d.surveyAt, d.installAt);
+  if (stageError) {
+    return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
+  }
 
   const order = await prisma.order.create({
     data: {
@@ -145,6 +173,14 @@ export async function updateOrderAction(
     return { ok: false, error: 'Проверьте поля формы', fieldErrors };
   }
   const d = parsed.data;
+
+  // Машина состояний: для редакторов — даты из формы, для полевых — существующие
+  const surveyAtForCheck  = isStaff(me.role) ? d.surveyAt  : existing.surveyAt?.toISOString()  ?? null;
+  const installAtForCheck = isStaff(me.role) ? d.installAt : existing.installAt?.toISOString() ?? null;
+  const stageError = validateStageDates(d.stage, surveyAtForCheck, installAtForCheck);
+  if (stageError) {
+    return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
+  }
 
   // Полевой работник может менять только этап, остальные данные оставляем как есть
   const data = isStaff(me.role)

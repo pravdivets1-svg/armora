@@ -16,7 +16,7 @@ export default async function LoginPage({
   if (session?.user) redirect(searchParams.callbackUrl || '/orders');
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 bg-canvas">
+    <main className="min-h-screen flex items-center justify-center px-4 bg-page">
       <LoginForm callbackUrl={searchParams.callbackUrl ?? '/orders'} />
     </main>
   );

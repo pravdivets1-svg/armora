@@ -12,7 +12,7 @@ export default async function Header() {
   const user = session?.user;
 
   return (
-    <header className="border-b border-line bg-canvas/80 backdrop-blur sticky top-0 z-10">
+    <header className="border-b border-line bg-white/95 backdrop-blur sticky top-0 z-10">
       <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
         <div className="flex items-center gap-8">
           <Link href="/orders" className="font-semibold tracking-tight text-ink-900 text-[15px]">

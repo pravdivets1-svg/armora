@@ -44,8 +44,8 @@ export default async function PublicOrderPage({
   const firstName = order.clientName.split(/\s+/)[0] ?? order.clientName;
 
   return (
-    <main className="min-h-screen bg-canvas">
-      <header className="bg-white border-b border-line">
+    <main className="min-h-screen bg-page">
+      <header className="bg-white/95 backdrop-blur border-b border-line">
         <div className="max-w-xl mx-auto px-5 py-4 flex items-center justify-between">
           <div>
             <div className="text-[15px] font-semibold tracking-tight text-ink-900">{companyName}</div>
@@ -228,7 +228,7 @@ function ExpiredView() {
     process.env.NEXT_PUBLIC_COMPANY_PHONE_DIGITS ?? phoneDigits(companyPhone);
 
   return (
-    <main className="min-h-screen bg-canvas flex items-center justify-center px-5">
+    <main className="min-h-screen bg-page flex items-center justify-center px-5">
       <div className="max-w-sm w-full bg-white border border-line rounded-lg p-7 text-center">
         <Archive size={20} className="mx-auto text-ink-500" />
         <h1 className="mt-4 text-[18px] font-semibold tracking-tight text-ink-900">Срок ссылки истёк</h1>

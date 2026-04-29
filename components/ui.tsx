@@ -3,10 +3,12 @@
 import { forwardRef } from 'react';
 
 const inputBase =
-  'w-full bg-white border border-line text-ink-900 rounded-md ' +
+  'block w-full min-w-0 max-w-full box-border ' +
+  'bg-white/45 backdrop-blur-md border border-ink-900/10 text-ink-900 rounded-md ' +
+  'shadow-[inset_0_1px_0_rgba(255,255,255,0.6),0_1px_2px_rgba(15,15,15,0.04)] ' +
   'px-3.5 py-2 text-[14px] leading-6 placeholder:text-ink-400 ' +
-  'focus:outline-none focus:border-ink-900 focus:ring-4 focus:ring-ink-900/5 ' +
-  'disabled:bg-canvas disabled:text-ink-500';
+  'focus:outline-none focus:border-ink-900/40 focus:ring-4 focus:ring-ink-900/5 focus:bg-white/70 ' +
+  'disabled:bg-ink-900/[0.03] disabled:text-ink-500 disabled:backdrop-blur-0';
 
 export const FieldLabel = ({ children }: { children: React.ReactNode }) => (
   <span className="text-[11px] tracking-wide text-ink-500 font-medium uppercase">

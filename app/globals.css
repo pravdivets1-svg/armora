@@ -57,3 +57,21 @@ select.field {
 
 /* Hover-подсветка строк */
 .hover-row:hover { background: rgba(15,15,15,0.025); }
+
+/* iOS / Safari: datetime-local и time имеют фиксированную внутреннюю ширину
+   и вылезают за пределы контейнера на телефоне. Принудительно ограничиваем. */
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+input[type="date"]::-webkit-date-and-time-value,
+input[type="time"]::-webkit-date-and-time-value,
+input[type="datetime-local"]::-webkit-date-and-time-value {
+  text-align: left;
+}

@@ -27,14 +27,6 @@ body {
   background-attachment: fixed;
   background-repeat: no-repeat;
 }
-.bg-page::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 15, 15, 0.55);
-  pointer-events: none;
-  z-index: 0;
-}
 .bg-page > * {
   position: relative;
   z-index: 1;

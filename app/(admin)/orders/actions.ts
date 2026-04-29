@@ -219,8 +219,8 @@ export async function updateOrderAction(
   }
 
   // Машина состояний: даты для активных этапов
-  const surveyAtForCheck  = isStaff(me.role) ? d.surveyAt  : (existing.surveyAt?.toISOString()  ?? null);
-  const installAtForCheck = isStaff(me.role) ? d.installAt : (existing.installAt?.toISOString() ?? null);
+  const surveyAtForCheck  = canEditAll(me.role) ? d.surveyAt  : (existing.surveyAt?.toISOString()  ?? null);
+  const installAtForCheck = canEditAll(me.role) ? d.installAt : (existing.installAt?.toISOString() ?? null);
   const stageError = validateStageDates(d.stage, surveyAtForCheck, installAtForCheck);
   if (stageError) {
     return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
@@ -228,11 +228,11 @@ export async function updateOrderAction(
 
   // Гейт финансов при переводе в pending_closure или closed
   if (d.stage === 'pending_closure' || d.stage === 'closed') {
-    // Берём финансы из формы для редакторов / из существующего для полевых
-    const totalForCheck = isStaff(me.role) ? d.totalAmount  : Number(existing.totalAmount);
-    const prepayForCheck = isStaff(me.role) ? d.prepayment   : Number(existing.prepayment);
-    const finalForCheck  = canEditFinal(me.role) ? d.finalPayment : Number(existing.finalPayment);
-    const costForCheck   = canEditCost(me.role)  ? d.costAmount   : Number(existing.costAmount);
+    // Берём финансы из формы для редакторов / из существующего для тех, кто поле не видит
+    const totalForCheck  = canEditMainAmounts(me.role) ? d.totalAmount  : Number(existing.totalAmount);
+    const prepayForCheck = canEditMainAmounts(me.role) ? d.prepayment   : Number(existing.prepayment);
+    const finalForCheck  = canEditFinal(me.role)       ? d.finalPayment : Number(existing.finalPayment);
+    const costForCheck   = canEditCost(me.role)        ? d.costAmount   : Number(existing.costAmount);
 
     const fin = validateClosureFinances(totalForCheck, prepayForCheck, finalForCheck, costForCheck);
     if (fin) return { ok: false, error: fin.error, fieldErrors: fin.fieldErrors };
@@ -249,17 +249,22 @@ export async function updateOrderAction(
   return { ok: true };
 }
 
-// Может ли роль редактировать «остаток» (finalPayment)
+// Может ли роль редактировать «остаток» (finalPayment) — все роли
 function canEditFinal(role: Role): boolean {
   return role === 'director' || role === 'manager' || role === 'installer' || role === 'surveyor';
 }
-// Может ли роль редактировать «себестоимость» (costAmount) — только директор и менеджер
+// Может ли роль редактировать «себестоимость» (costAmount) — только директор и замерщик
 function canEditCost(role: Role): boolean {
-  return role === 'director' || role === 'manager';
+  return role === 'director' || role === 'surveyor';
 }
-// Может ли роль редактировать «договор» / «аванс» — только директор и менеджер
+// Может ли роль редактировать «договор» / «аванс» — директор, менеджер, замерщик
 function canEditMainAmounts(role: Role): boolean {
-  return role === 'director' || role === 'manager';
+  return role === 'director' || role === 'manager' || role === 'surveyor';
+}
+// Может ли роль редактировать клиентские данные / даты / назначения / этап
+// (по сути «полный редактор»): директор, менеджер, замерщик. Установщик — нет.
+function canEditAll(role: Role): boolean {
+  return role === 'director' || role === 'manager' || role === 'surveyor';
 }
 
 function buildUpdatePayload(
@@ -278,8 +283,8 @@ function buildUpdatePayload(
   const final  = canEditFinal(role)       ? d.finalPayment : Number(existing.finalPayment);
   const cost   = canEditCost(role)        ? d.costAmount  : Number(existing.costAmount);
 
-  // Контактные/доорные данные — только staff
-  if (isStaff(role)) {
+  // Контактные/доорные данные / даты / назначения — директор, менеджер, замерщик
+  if (canEditAll(role)) {
     return {
       ...base,
       clientName:    d.clientName,

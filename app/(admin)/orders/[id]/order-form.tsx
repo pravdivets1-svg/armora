@@ -52,14 +52,15 @@ function SaveButton({ label }: { label: string }) {
 
 // Что роль может редактировать
 function permsFor(role: Role) {
+  const fullEditor = role === 'director' || role === 'manager' || role === 'surveyor';
   return {
     isStaff:        role === 'director' || role === 'manager',
-    canEditClient:  role === 'director' || role === 'manager',
-    canEditTotal:   role === 'director' || role === 'manager',  // цена + аванс
-    canEditCost:    role === 'director' || role === 'manager',  // себестоимость
-    canSeeCost:     role === 'director' || role === 'manager',  // только директор+менеджер видят
-    canEditFinal:   true,                                       // остаток — все могут
-    canCloseDirect: role === 'director',                        // только директор сразу в closed
+    canEditClient:  fullEditor,                                    // ФИО/телефон/адрес/дверь/даты/назначения
+    canEditTotal:   fullEditor,                                    // цена + аванс
+    canEditCost:    role === 'director' || role === 'surveyor',    // себестоимость — только директор + замерщик
+    canSeeCost:     role === 'director' || role === 'surveyor',    // менеджер НЕ видит себестоимость
+    canEditFinal:   true,                                          // остаток — все могут
+    canCloseDirect: role === 'director',                           // только директор сразу в closed
     canDelete:      role === 'director',
   };
 }

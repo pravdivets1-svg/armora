@@ -127,8 +127,51 @@ export default function OrderForm({
     formRef.current?.requestSubmit();
   }
 
+  // ============================================================
+  // AUTOSAVE для всех остальных полей: 1.2с debounce после
+  // последнего изменения — submit формы целиком. Если за это
+  // время идёт что-то ещё — таймер сбрасывается.
+  //
+  // Только для mode === 'edit' (на create форма ещё не привязана
+  // к существующему orderId, server action ждёт явный сабмит).
+  //
+  // На input/change в любом поле формы — взводим таймер.
+  // На submit (включая stepper-клик) — отменяем pending autosave,
+  // чтобы не было двойного запроса.
+  // ============================================================
+  const autosaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function scheduleAutosave() {
+    if (mode !== 'edit') return;
+    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    autosaveTimer.current = setTimeout(() => {
+      formRef.current?.requestSubmit();
+    }, 1200);
+  }
+  function cancelAutosave() {
+    if (autosaveTimer.current) {
+      clearTimeout(autosaveTimer.current);
+      autosaveTimer.current = null;
+    }
+  }
+  // Чистим таймер на анмаунт, чтобы не сабмитить разрушенную форму
+  useEffect(() => {
+    return () => {
+      if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    };
+  }, []);
+
   return (
-    <form ref={formRef} action={formAction} className="space-y-5">
+    <form
+      ref={formRef}
+      action={formAction}
+      className="space-y-5"
+      // Любое изменение в любом поле формы — взводим таймер autosave.
+      // Используем onInput, потому что onChange на checkbox/select работает,
+      // но для текстовых полей onInput даёт мгновенный отклик при печати.
+      onInput={scheduleAutosave}
+      onChange={scheduleAutosave}
+      onSubmit={cancelAutosave}
+    >
       {/* Stage stepper — главный action в карточке */}
       {mode === 'edit' && order && (
         <div>
@@ -147,12 +190,8 @@ export default function OrderForm({
           <span>{state.error}</span>
         </div>
       )}
-      {state?.ok && (
-        <div className="flex items-start gap-2 rounded-md bg-ok/5 border-l-4 border-l-ok border-y border-r border-y-ok/15 border-r-ok/15 px-4 py-2.5 text-[14px] text-ok">
-          <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
-          <span>Сохранено</span>
-        </div>
-      )}
+      {/* "Сохранено" не показываем большой плашкой — статус autosave виден
+          в sticky-баре снизу. Большая плашка нужна только для ошибок. */}
 
       {negativeMargin && p.canSeeCost && (
         <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border-l-4 border-l-amber-500 border-y border-r border-y-amber-500/20 border-r-amber-500/20 px-4 py-2.5 text-[14px] text-amber-800">
@@ -347,7 +386,9 @@ export default function OrderForm({
         </aside>
       </div>
 
-      {/* Sticky bottom bar: всегда виден на скролле длинной формы */}
+      {/* Sticky bottom bar: всегда виден на скролле длинной формы.
+          В режиме edit — кнопка Сохранить заменена на индикатор autosave;
+          в режиме create — оставлена явная кнопка Создать. */}
       <div className="sticky bottom-0 -mx-6 px-6 py-3 bg-canvas/90 backdrop-blur-md border-t border-line z-10">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-6">
@@ -365,13 +406,48 @@ export default function OrderForm({
               />
             )}
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {mode === 'edit' && <AutosaveStatus state={state} />}
             {p.canDelete && order && <DeleteButton orderId={order.id} />}
-            <SaveButton label={mode === 'create' ? 'Создать' : 'Сохранить'} />
+            {mode === 'create' && <SaveButton label="Создать" />}
           </div>
         </div>
       </div>
     </form>
+  );
+}
+
+// Индикатор autosave в sticky-баре. Три состояния:
+//   - идёт сохранение  → "Сохранение…"
+//   - последняя ok     → "Сохранено"
+//   - ошибка           → "Не сохранено" (текст ошибки сверху в плашке)
+//   - покой            → "Изменения сохраняются автоматически"
+function AutosaveStatus({ state }: { state: OrderActionState }) {
+  const { pending } = useFormStatus();
+  if (pending) {
+    return (
+      <span className="inline-flex items-center gap-2 text-[12px] text-ink-500">
+        <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+        Сохранение…
+      </span>
+    );
+  }
+  if (state?.ok) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[12px] text-ok">
+        <CheckCircle2 size={13} /> Сохранено
+      </span>
+    );
+  }
+  if (state && !state.ok) {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-[12px] text-bad">
+        <AlertCircle size={13} /> Не сохранено
+      </span>
+    );
+  }
+  return (
+    <span className="text-[12px] text-ink-400">Сохраняется автоматически</span>
   );
 }
 

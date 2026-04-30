@@ -156,3 +156,18 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* =====================================================================
+   Density toggle: data-density на <html> регулирует плотность таблиц.
+   Применяется только к таблицам с классом .table-density.
+   ===================================================================== */
+html[data-density="compact"] .table-density tbody td,
+html[data-density="compact"] .table-density tbody th {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 13px;
+}
+html[data-density="compact"] .table-density thead th {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}

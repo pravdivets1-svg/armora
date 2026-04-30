@@ -6,14 +6,19 @@
 // в .bg-page-soft), так что на длинном скролле в iOS Safari нет тормозов
 // от background-attachment: fixed.
 
+import { Suspense } from 'react';
 import Header from '@/components/header';
 import PageTransition from '@/components/page-transition';
+import ToastHost from '@/components/toast-host';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-canvas bg-page-soft">
       <Header />
       <PageTransition>{children}</PageTransition>
+      <Suspense fallback={null}>
+        <ToastHost />
+      </Suspense>
     </div>
   );
 }

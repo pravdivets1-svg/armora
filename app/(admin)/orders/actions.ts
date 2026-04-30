@@ -207,7 +207,7 @@ export async function createOrderAction(
   }));
 
   revalidatePath('/orders');
-  redirect(`/orders/${order.id}`);
+  redirect(`/orders/${order.id}?toast=${encodeURIComponent('Заказ создан')}&type=ok`);
 }
 
 // =====================================================================
@@ -453,7 +453,7 @@ export async function deleteOrderAction(orderId: string) {
 
   revalidatePath('/orders');
   revalidatePath('/closures');
-  redirect('/orders');
+  redirect(`/orders?toast=${encodeURIComponent('Заказ удалён')}&type=ok`);
 }
 
 // =====================================================================

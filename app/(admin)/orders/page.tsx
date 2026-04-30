@@ -12,6 +12,7 @@ import { STAGE_LABEL, STAGE_ORDER, ROLE_LABEL } from '@/lib/labels';
 import { fmtDateTime, shortName } from '@/lib/format';
 import { StageBadge } from '@/components/stage-badge';
 import { EmptyState } from '@/components/empty-state';
+import DensityToggle from '@/components/density-toggle';
 import { Button } from '@/components/ui';
 
 export const metadata = { title: 'Заказы — Armora' };
@@ -46,12 +47,16 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
           </div>
         </div>
         {(me.role === 'director' || me.role === 'manager') && (
-          <Link href="/orders/new">
-            <Button variant="primary">
-              <Plus size={15} /> Новый заказ
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <DensityToggle />
+            <Link href="/orders/new">
+              <Button variant="primary">
+                <Plus size={15} /> Новый заказ
+              </Button>
+            </Link>
+          </div>
         )}
+        {!(me.role === 'director' || me.role === 'manager') && <DensityToggle />}
       </div>
 
       {/* Sticky фильтр-бар. На скролле остаётся под шапкой (h-16=64px). */}
@@ -113,8 +118,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
       </form>
 
       {/* Десктоп-таблица */}
-      <div className="hidden md:block bg-white border border-line rounded-lg overflow-hidden">
-        <table className="w-full text-[14px]">
+      <div className="hidden md:block bg-white border border-line rounded-2xl overflow-hidden shadow-soft">
+        <table className="w-full text-[14px] table-density">
           <thead>
             <tr className="border-b border-line text-left bg-canvas/60">
               <th className="px-5 py-3 font-medium text-[11px] uppercase tracking-wider text-ink-500 w-14">№</th>

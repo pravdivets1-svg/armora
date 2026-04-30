@@ -34,6 +34,11 @@ const credentialsSchema = z.object({
   password: z.string().min(1),
 });
 
+// Фиктивный bcrypt-хеш для защиты от user enumeration по таймингу.
+// Если user не найден — всё равно прогоняем bcrypt, чтобы время ответа
+// было сравнимым с реальной проверкой (~150мс). См. также app/(auth)/actions.ts.
+const DUMMY_HASH = '$2a$10$uZhq6FwW2N/sBe34yKbLdeyK5c4flCzNO5JMWoKUf3CFQCRQSckyy';
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: 'jwt' },
   pages: { signIn: '/login' },
@@ -48,16 +53,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const parsed = credentialsSchema.safeParse(raw);
         if (!parsed.success) return null;
 
-        // Принимаем как просто логин ("dir001"), так и логин@armora.local —
-        // в БД храним длинную форму, поэтому короткий вид нормализуем.
         const input = parsed.data.email.toLowerCase().trim();
         const email = input.includes('@') ? input : `${input}@armora.local`;
 
         const user = await prisma.user.findUnique({ where: { email } });
-        if (!user || !user.isActive) return null;
 
-        const ok = await bcrypt.compare(parsed.data.password, user.password);
-        if (!ok) return null;
+        // ВСЕГДА выполняем bcrypt — даже если user нет — чтобы по тайму
+        // нельзя было определить существование логина.
+        const hashToCheck = user?.password ?? DUMMY_HASH;
+        const ok = await bcrypt.compare(parsed.data.password, hashToCheck);
+
+        if (!user || !user.isActive || !ok) return null;
 
         return {
           id: user.id,

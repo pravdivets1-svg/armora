@@ -11,7 +11,7 @@ import { prisma } from '@/lib/prisma';
 import { ROLE_LABEL } from '@/lib/labels';
 import { logoutAction } from '@/app/(auth)/actions';
 import NavBar from './nav-bar';
-import GlobalSearch from './global-search';
+import CommandPalette from './command-palette';
 import PushToggle from './push-toggle';
 import RoleAvatar from './role-avatar';
 
@@ -26,19 +26,19 @@ export default async function Header() {
       : 0;
 
   return (
-    <header className="sticky top-0 z-30 bg-canvas/85 backdrop-blur-md border-b border-line">
+    <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-line/80">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
         <div className="flex items-center gap-8 min-w-0">
           <Link
             href="/orders"
-            className="font-semibold tracking-tight text-ink-900 text-[17px]
-                       inline-flex items-center gap-2"
+            className="font-display tracking-tight text-ink-900 text-[20px]
+                       inline-flex items-center gap-2.5"
           >
             <span className="inline-flex items-center justify-center w-7 h-7 rounded-md
-                             bg-ink-900 text-white text-[13px] font-bold leading-none">
+                             bg-ink-900 text-white text-[13px] font-sans font-bold leading-none">
               A
             </span>
-            Armora
+            <span className="font-medium">Armora</span>
           </Link>
           <NavBar
             items={[
@@ -52,10 +52,11 @@ export default async function Header() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* useSearchParams внутри клиентского GlobalSearch требует Suspense-границы. */}
-          <Suspense fallback={null}>
-            <GlobalSearch />
-          </Suspense>
+          {user && (
+            <Suspense fallback={null}>
+              <CommandPalette role={user.role} />
+            </Suspense>
+          )}
           {user && (
             <div className="hidden sm:flex items-center gap-2.5 text-[14px] pl-2">
               <RoleAvatar role={user.role} name={user.name} />
@@ -70,7 +71,7 @@ export default async function Header() {
             <button
               type="submit"
               title="Выйти"
-              className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06] p-2 rounded-md"
+              className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06] p-2 rounded-md transition-colors"
             >
               <LogOut size={16} />
             </button>

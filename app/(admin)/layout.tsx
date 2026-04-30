@@ -7,12 +7,13 @@
 // от background-attachment: fixed.
 
 import Header from '@/components/header';
+import PageTransition from '@/components/page-transition';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-canvas bg-page-soft">
       <Header />
-      {children}
+      <PageTransition>{children}</PageTransition>
     </div>
   );
 }

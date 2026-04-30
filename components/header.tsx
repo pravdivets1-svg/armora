@@ -10,7 +10,7 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { ROLE_LABEL } from '@/lib/labels';
 import { logoutAction } from '@/app/(auth)/actions';
-import NavLink from './nav-link';
+import NavBar from './nav-bar';
 import GlobalSearch from './global-search';
 import PushToggle from './push-toggle';
 import RoleAvatar from './role-avatar';
@@ -40,13 +40,15 @@ export default async function Header() {
             </span>
             Armora
           </Link>
-          <nav className="flex items-center gap-1">
-            <NavLink href="/orders"   label="Заказы" />
-            <NavLink href="/calendar" label="Расписание" />
-            {user?.role === 'director' && (
-              <NavLink href="/closures" label="На закрытие" badge={pendingClosures} />
-            )}
-          </nav>
+          <NavBar
+            items={[
+              { href: '/orders',   label: 'Заказы' },
+              { href: '/calendar', label: 'Расписание' },
+              ...(user?.role === 'director'
+                ? [{ href: '/closures', label: 'На закрытие', badge: pendingClosures }]
+                : []),
+            ]}
+          />
         </div>
 
         <div className="flex items-center gap-2">

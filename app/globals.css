@@ -20,8 +20,7 @@ body {
 }
 
 /* =====================================================================
-   Фотофон — ТОЛЬКО для /login и публичной /order/[token].
-   Внутри (admin) фон — простой bg-canvas, без картинки.
+   Фотофон — для /login и публичной /order/[token] (полный, без вуали).
    ===================================================================== */
 .bg-page {
   position: relative;
@@ -38,6 +37,39 @@ body {
 .bg-page > * {
   position: relative;
   z-index: 1;
+}
+
+/* =====================================================================
+   Осветлённый фотофон — для админки.
+   Тот же /bg.jpg, но поверх белая полупрозрачная вуаль (≈70%),
+   чтобы карточки и текст читались, а текстура кирпича оставалась.
+   Без background-attachment: fixed — на длинном скролле админки это
+   тормозит iOS Safari; вместо этого fixed-слой через ::before, который
+   не скроллится с контентом.
+   ===================================================================== */
+.bg-page-soft {
+  position: relative;
+  isolation: isolate;
+}
+.bg-page-soft::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  background-image: url('/bg.jpg');
+  background-image: -webkit-image-set(url('/bg.webp') type('image/webp') 1x, url('/bg.jpg') type('image/jpeg') 1x);
+  background-image:         image-set(url('/bg.webp') type('image/webp') 1x, url('/bg.jpg') type('image/jpeg') 1x);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.bg-page-soft::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  /* Белая вуаль 72% + лёгкий тёплый оттенок canvas сверху */
+  background: linear-gradient(180deg, rgba(250, 250, 247, 0.78) 0%, rgba(255, 255, 255, 0.72) 100%);
 }
 
 /* =====================================================================

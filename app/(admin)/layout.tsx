@@ -1,16 +1,16 @@
 // Layout для админских роутов (всё, что в группе (admin)).
 // Тут гарантированно есть сессия — middleware уже проверил.
 //
-// Фон — простой bg-canvas (тёплый кремовый). Фотофон убран:
-// раньше он лежал под белыми карточками и был не виден, при этом
-// `background-attachment: fixed` тормозил скролл на iOS.
-// Фотофон оставили только на /login и публичной /order/[token].
+// Фон — фотофон с белой вуалью (≈72%): текстура кирпича просвечивает,
+// карточки и текст читаются. Фон лежит на fixed-слое (::before/::after
+// в .bg-page-soft), так что на длинном скролле в iOS Safari нет тормозов
+// от background-attachment: fixed.
 
 import Header from '@/components/header';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-canvas">
+    <div className="min-h-screen bg-canvas bg-page-soft">
       <Header />
       {children}
     </div>

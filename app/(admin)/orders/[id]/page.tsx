@@ -67,7 +67,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="text-[11px] text-ink-500 uppercase tracking-wide">Заказ</div>
-          <h1 className="text-display text-ink-900 mt-1">№ {order.number}</h1>
+          <h1 className="font-display text-[48px] md:text-[56px] leading-[0.95] tracking-tight text-ink-900 mt-1">№ {order.number}</h1>
           <div className="mt-3 text-[15px] text-ink-700">{order.clientName}</div>
         </div>
         <StageBadge stage={order.stage} size="md" />

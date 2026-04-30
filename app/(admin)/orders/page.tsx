@@ -40,7 +40,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
       {/* Заголовок: большой, с подзаголовком и primary CTA */}
       <div className="flex items-end justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-display text-ink-900">Заказы</h1>
+          <h1 className="font-display text-[56px] md:text-[64px] leading-[0.95] tracking-tight text-ink-900">Заказы</h1>
           <div className="text-[14px] text-ink-500 mt-2">
             {total} {total === 1 ? 'заказ' : total < 5 ? 'заказа' : 'заказов'} в работе
           </div>

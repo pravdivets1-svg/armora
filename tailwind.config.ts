@@ -8,7 +8,7 @@ const config: Config = {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['var(--font-display)', 'ui-serif', 'Georgia', 'serif'],
       },
       colors: {
         canvas:    '#fafaf7',  // тёплый кремовый фон страниц
@@ -40,9 +40,20 @@ const config: Config = {
         '2xl': '24px',
       },
       fontSize: {
-        // Display sizes для больших заголовков
-        display: ['44px', { lineHeight: '1.05', letterSpacing: '-0.025em', fontWeight: '600' }],
-        h1: ['28px', { lineHeight: '1.15', letterSpacing: '-0.02em', fontWeight: '600' }],
+        // Display sizes — editorial serif (Playfair Display)
+        // Используются с классом font-display
+        hero:    ['72px', { lineHeight: '0.95', letterSpacing: '-0.035em', fontWeight: '500' }],
+        display: ['56px', { lineHeight: '1.0',  letterSpacing: '-0.03em',  fontWeight: '500' }],
+        h1:      ['40px', { lineHeight: '1.05', letterSpacing: '-0.025em', fontWeight: '500' }],
+        h2:      ['28px', { lineHeight: '1.15', letterSpacing: '-0.02em',  fontWeight: '500' }],
+      },
+      boxShadow: {
+        // Цветные мягкие тени для bento-карточек
+        'soft':       '0 1px 2px rgba(15,15,15,0.04), 0 4px 12px -4px rgba(15,15,15,0.06)',
+        'soft-lg':    '0 2px 4px rgba(15,15,15,0.04), 0 12px 32px -8px rgba(15,15,15,0.10)',
+        'accent-glow':'0 8px 32px -12px rgba(67,56,202,0.35), 0 2px 6px -2px rgba(67,56,202,0.15)',
+        'ok-glow':    '0 8px 32px -12px rgba(21,128,61,0.30)',
+        'bad-glow':   '0 8px 32px -12px rgba(185,28,28,0.30)',
       },
     },
   },

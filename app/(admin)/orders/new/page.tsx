@@ -33,7 +33,7 @@ export default async function NewOrderPage() {
 
       <div>
         <div className="text-[11px] text-ink-500 uppercase tracking-wide">Создать</div>
-        <h1 className="text-display text-ink-900 mt-1">Новый заказ</h1>
+        <h1 className="font-display text-[48px] md:text-[56px] leading-[0.95] tracking-tight text-ink-900 mt-1">Новый заказ</h1>
       </div>
 
       <OrderForm

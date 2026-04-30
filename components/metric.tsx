@@ -5,6 +5,8 @@
 //   sm — 16px, для inline в строках таблиц
 //   md — 24px, для карточек заказа (К доплате, Маржа)
 //   lg — 36px, для дашбордных stat-карточек (счётчики, суммы)
+//   xl — 56px, editorial display serif для bento hero
+//   hero — 72px, editorial display serif для главной метрики страницы
 //
 // Тон:
 //   default — ink-900
@@ -18,9 +20,11 @@
 import type { ReactNode } from 'react';
 
 const SIZE_MAP = {
-  sm: { value: 'text-[16px]',  label: 'text-[10px]' },
-  md: { value: 'text-[24px]',  label: 'text-[11px]' },
-  lg: { value: 'text-[34px]',  label: 'text-[11px]' },
+  sm:   { value: 'text-[16px] font-semibold',                          label: 'text-[10px]' },
+  md:   { value: 'text-[24px] font-semibold',                          label: 'text-[11px]' },
+  lg:   { value: 'text-[34px] font-semibold',                          label: 'text-[11px]' },
+  xl:   { value: 'text-[56px] font-display font-medium tracking-tight',label: 'text-[11px]' },
+  hero: { value: 'text-[72px] font-display font-medium tracking-tight',label: 'text-[12px]' },
 } as const;
 
 const TONE_MAP = {
@@ -61,7 +65,7 @@ export function Metric({
           {label}
         </div>
       )}
-      <div className={`mt-1 font-semibold tabular-nums leading-none ${s.value} ${TONE_MAP[tone]}`}>
+      <div className={`mt-1 tabular-nums leading-none ${s.value} ${TONE_MAP[tone]}`}>
         {value}
       </div>
       {hint && (
@@ -71,22 +75,38 @@ export function Metric({
   );
 }
 
-// Карточка-обёртка для stat-блоков на дашбордах. Минимум хрома —
-// только тонкая граница и hover на cursor:pointer вариантах.
+// Карточка-обёртка для stat-блоков на дашбордах.
+// variant=default — белая с тонкой рамкой и soft shadow
+// variant=accent  — тёмная hero для главной метрики страницы
+// variant=ghost   — без рамки, только padding (для bento-вложенности)
 export function MetricCard({
   href,
   children,
   className = '',
+  variant = 'default',
+  span = 1,
 }: {
   href?: string;
   children: ReactNode;
   className?: string;
+  variant?: 'default' | 'accent' | 'ghost';
+  /** Сколько колонок занимает в bento-сетке (1, 2, 3) */
+  span?: 1 | 2 | 3;
 }) {
-  const cls = `rounded-lg border border-line bg-white p-5 ${
-    href ? 'hover:border-ink-900/20 hover:bg-ink-900/[0.01] cursor-pointer block' : ''
-  } ${className}`;
+  const base =
+    variant === 'accent'
+      ? 'rounded-2xl bg-ink-900 text-white p-6 md:p-7 shadow-soft-lg'
+      : variant === 'ghost'
+        ? 'rounded-2xl p-5'
+        : 'rounded-2xl border border-line bg-white p-5 md:p-6 shadow-soft';
+  const interactive = href
+    ? variant === 'accent'
+      ? 'hover:bg-ink-700 cursor-pointer block transition-colors'
+      : 'hover:border-ink-900/20 hover:shadow-soft-lg cursor-pointer block transition-all'
+    : '';
+  const colSpan = span === 3 ? 'md:col-span-3' : span === 2 ? 'md:col-span-2' : '';
+  const cls = `${base} ${interactive} ${colSpan} ${className}`;
   if (href) {
-    // Используем обычный <a> чтобы не тащить Link сюда — компонент серверный.
     return <a href={href} className={cls}>{children}</a>;
   }
   return <div className={cls}>{children}</div>;

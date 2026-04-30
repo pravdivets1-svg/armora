@@ -1,13 +1,11 @@
-// Hero-карточка маршрута на сегодня для замерщика/установщика.
-// Цели:
-//   - чтобы открыв расписание, исполнитель сразу видел "куда ехать сейчас"
-//   - крупная primary CTA "Открыть маршрут"
-//   - чёткий список точек по времени с расстояниями
+// Маршрут на сегодня: компактная полоса под bento-сеткой.
+// Hero-цифра "Сегодня" уже в bento, тут — список точек по времени
+// и primary CTA на Яндекс.Карты.
 //
 // Формат URL Яндекс.Карт: https://yandex.ru/maps/?rtext=A~B~C&rtt=auto
 
 import Link from 'next/link';
-import { Navigation, ArrowRight, MapPin } from 'lucide-react';
+import { Navigation, ArrowUpRight, MapPin } from 'lucide-react';
 import { fmtTime } from '@/lib/format';
 
 type Point = {
@@ -36,54 +34,55 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
   const lastAt = sorted[sorted.length - 1].at;
 
   return (
-    <section className="rounded-xl border border-line bg-white overflow-hidden">
-      {/* Hero-блок */}
-      <div className="px-5 md:px-6 py-5 md:py-6 bg-ink-900 text-white">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-[12px] uppercase tracking-wider text-white/60">
-              <Navigation size={13} />
-              Маршрут на сегодня
-            </div>
-            <div className="mt-2 flex items-baseline gap-3 flex-wrap">
-              <span className="text-[40px] md:text-[44px] font-semibold tabular-nums leading-none">
-                {sorted.length}
-              </span>
-              <span className="text-[16px] text-white/70">
-                {sorted.length === 1 ? 'точка' : sorted.length < 5 ? 'точки' : 'точек'}
-              </span>
-              <span className="text-[14px] text-white/50 ml-2 tabular-nums">
-                · {fmtTime(firstAt)} – {fmtTime(lastAt)}
-              </span>
-            </div>
+    <section className="rounded-2xl border border-line bg-white overflow-hidden shadow-soft">
+      {/* Editorial-шапка */}
+      <div className="px-6 md:px-7 py-5 flex items-center justify-between gap-4 border-b border-line bg-canvas">
+        <div>
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-ink-500 font-medium">
+            <Navigation size={12} />
+            Маршрут на сегодня
           </div>
-
-          <Link
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-5 py-3 rounded-lg
-                       bg-white text-ink-900 font-semibold text-[14px]
-                       hover:bg-canvas shrink-0"
-          >
-            Открыть в Яндекс.Картах <ArrowRight size={15} />
-          </Link>
+          <div className="mt-2 flex items-baseline gap-3 flex-wrap">
+            <span className="font-display text-[40px] md:text-[48px] tabular-nums leading-none tracking-tight text-ink-900">
+              {sorted.length}
+            </span>
+            <span className="text-[14px] text-ink-500">
+              {sorted.length === 1 ? 'точка' : sorted.length < 5 ? 'точки' : 'точек'}
+              <span className="ml-2 tabular-nums">· {fmtTime(firstAt)} – {fmtTime(lastAt)}</span>
+            </span>
+          </div>
         </div>
+
+        <Link
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-xl
+                     bg-ink-900 text-white font-medium text-[14px]
+                     hover:bg-accent hover:shadow-accent-glow transition-all shrink-0"
+        >
+          В Яндекс.Картах <ArrowUpRight size={15} />
+        </Link>
       </div>
 
-      {/* Список точек: timeline-стиль */}
-      <ol className="divide-y divide-line">
+      {/* Список точек: timeline */}
+      <ol>
         {sorted.map((p, i) => (
-          <li key={`${p.number}-${i}`} className="px-5 md:px-6 py-3 flex items-start gap-4">
-            {/* Номер точки */}
-            <div className="mt-0.5 w-7 h-7 rounded-full bg-ink-900 text-white text-[12px]
+          <li
+            key={`${p.number}-${i}`}
+            className={`px-6 md:px-7 py-4 flex items-start gap-5 ${i > 0 ? 'border-t border-line/60' : ''}`}
+          >
+            {/* Номер точки в кружке */}
+            <div className="mt-1 w-8 h-8 rounded-full bg-ink-900 text-white text-[13px]
                             font-semibold flex items-center justify-center shrink-0 tabular-nums">
               {i + 1}
             </div>
-            {/* Время + тип */}
+            {/* Время display + тип */}
             <div className="w-20 shrink-0">
-              <div className="text-[14px] font-semibold tabular-nums text-ink-900">{fmtTime(p.at)}</div>
-              <div className={`text-[11px] uppercase tracking-wider mt-0.5 font-medium ${
+              <div className="font-display text-[24px] tabular-nums tracking-tight leading-none text-ink-900">
+                {fmtTime(p.at)}
+              </div>
+              <div className={`text-[10px] uppercase tracking-[0.15em] mt-1.5 font-medium ${
                 p.kind === 'survey' ? 'text-blue-700' : 'text-emerald-700'
               }`}>
                 {p.kind === 'survey' ? 'Замер' : 'Установка'}
@@ -91,10 +90,10 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
             </div>
             {/* Клиент + адрес */}
             <div className="min-w-0 flex-1">
-              <div className="text-[14px] text-ink-900 font-medium">
-                {p.clientName} <span className="text-ink-500 font-normal">№ {p.number}</span>
+              <div className="text-[15px] text-ink-900 font-medium">
+                {p.clientName} <span className="text-ink-400 font-normal text-[13px]">№ {p.number}</span>
               </div>
-              <div className="text-[13px] text-ink-500 mt-0.5 flex items-start gap-1">
+              <div className="text-[13px] text-ink-500 mt-1 flex items-start gap-1.5">
                 <MapPin size={12} className="mt-0.5 shrink-0 text-ink-400" />
                 <span>{p.clientAddress}</span>
               </div>

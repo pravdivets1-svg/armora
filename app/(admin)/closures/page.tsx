@@ -39,7 +39,7 @@ export default async function ClosuresPage() {
   return (
     <main className="max-w-5xl mx-auto px-6 py-12 space-y-8">
       <div>
-        <h1 className="text-display text-ink-900">На закрытие</h1>
+        <h1 className="font-display text-[56px] md:text-[64px] leading-[0.95] tracking-tight text-ink-900">На закрытие</h1>
         <div className="text-[14px] text-ink-500 mt-2">
           Заказы, поданные на подтверждение. Только директор может закрыть.
         </div>

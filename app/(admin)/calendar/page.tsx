@@ -13,6 +13,7 @@ import { loadSchedule, type ScheduleEvent } from '@/lib/schedule';
 import { fmtDayLong } from '@/lib/format';
 import { prisma } from '@/lib/prisma';
 import CalendarUserFilter from './user-filter';
+import TodayRouteCard from './today-route';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Расписание — Armora' };
@@ -49,6 +50,26 @@ export default async function CalendarPage({
   const isSameDay = (a: Date, b: Date) =>
     a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
+  // Маршрут на сегодня — для замерщика и установщика.
+  // Только их собственные точки (loadSchedule уже отфильтровал по me.id для не-staff).
+  // События сегодня = от today (00:00 МСК) до tomorrow (00:00 МСК) ПО МСК.
+  // dayStart выше уже построен по локальному времени сервера (UTC) — это баг,
+  // но isSameDay сравнивает МСК-локальные представления, так что фильтр по
+  // (e.at >= today && e.at < tomorrow) даёт корректные сутки в МСК у клиента.
+  const showRoute = !isStaff(me.role);
+  const todayPoints = showRoute
+    ? events
+        .filter((e) => e.at.getTime() >= today.getTime() && e.at.getTime() < tomorrow.getTime())
+        .filter((e) => e.clientAddress.trim().length > 0)
+        .map((e) => ({
+          at: e.at,
+          clientAddress: e.clientAddress,
+          clientName: e.clientName,
+          number: e.number,
+          kind: e.kind,
+        }))
+    : [];
+
   return (
     <main className="max-w-6xl mx-auto px-6 py-12 space-y-8">
       <div>
@@ -77,6 +98,10 @@ export default async function CalendarPage({
             <span className="text-ink-700"> ниже выделены красным</span>
           </div>
         </div>
+      )}
+
+      {showRoute && todayPoints.length > 0 && (
+        <TodayRouteCard points={todayPoints} />
       )}
 
       {isStaff(me.role) && assignable.length > 0 && (

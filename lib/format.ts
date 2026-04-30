@@ -34,6 +34,13 @@ export const fmtDayLong = (d: Date | string) =>
     weekday: 'long',
   }).format(new Date(d));
 
+export const fmtTime = (d: Date | string) =>
+  new Intl.DateTimeFormat('ru-RU', {
+    timeZone: TZ,
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(d));
+
 // Сокращение ФИО до «И. Иванов»
 export function shortName(full: string): string {
   const parts = full.trim().split(/\s+/);

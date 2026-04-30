@@ -6,7 +6,7 @@
 import { useFormState, useFormStatus } from 'react-dom';
 import { Save, Trash2, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
 import type { Stage, Role } from '@prisma/client';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 
 import { Card, Input, Textarea, Select, Button, FieldLabel } from '@/components/ui';
 import { STAGE_ORDER, STAGE_LABEL } from '@/lib/labels';
@@ -327,16 +327,25 @@ export default function OrderForm({
 }
 
 function DeleteButton({ orderId }: { orderId: string }) {
+  // Важно: НЕ оборачиваем в <form> — этот компонент рендерится внутри родительской
+  // <form action={formAction}>, а вложенные формы запрещены HTML-спекой
+  // (браузер их «расплющивает», и сабмит уходит в родительскую форму = updateOrderAction).
+  // Поэтому вызываем server action напрямую через useTransition.
+  const [pending, start] = useTransition();
   return (
-    <form
-      action={async () => {
+    <Button
+      type="button"
+      variant="danger"
+      className="w-full"
+      disabled={pending}
+      onClick={() => {
         if (!confirm('Удалить заказ безвозвратно?')) return;
-        await deleteOrderAction(orderId);
+        start(async () => {
+          await deleteOrderAction(orderId);
+        });
       }}
     >
-      <Button type="submit" variant="danger" className="w-full">
-        <Trash2 size={14} /> Удалить заказ
-      </Button>
-    </form>
+      <Trash2 size={14} /> {pending ? 'Удаление…' : 'Удалить заказ'}
+    </Button>
   );
 }

@@ -101,10 +101,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
               <th className="px-5 py-3 font-medium w-14 text-[12px]">№</th>
               <th className="px-5 py-3 font-medium text-[12px]">Клиент</th>
               <th className="px-5 py-3 font-medium text-[12px]">Телефон</th>
+              <th className="px-5 py-3 font-medium text-[12px]">Адрес</th>
               <th className="px-5 py-3 font-medium text-[12px]">Этап</th>
               <th className="px-5 py-3 font-medium text-[12px]">Замер</th>
               <th className="px-5 py-3 font-medium text-[12px]">Установка</th>
-              <th className="px-5 py-3 font-medium text-[12px] text-right">Сумма</th>
             </tr>
           </thead>
           <tbody>
@@ -124,6 +124,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                   <Link href={`/orders/${o.id}`} className="block">{o.clientName}</Link>
                 </td>
                 <td className="px-5 py-3.5 text-ink-700 tabular-nums">{o.clientPhone}</td>
+                <td className="px-5 py-3.5 text-ink-700 max-w-[260px]">
+                  <span className="block truncate" title={o.clientAddress}>{o.clientAddress}</span>
+                </td>
                 <td className="px-5 py-3.5"><StageBadge stage={o.stage} /></td>
                 <td className="px-5 py-3.5 text-ink-700">
                   {o.surveyAt ? (
@@ -143,13 +146,6 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                     </>
                   ) : (
                     <span className="text-ink-400">—</span>
-                  )}
-                </td>
-                <td className="px-5 py-3.5 text-right font-medium text-ink-900 tabular-nums">
-                  {Number(o.totalAmount) > 0 ? (
-                    fmtMoney(o.totalAmount as unknown as number)
-                  ) : (
-                    <span className="text-ink-400 font-normal">—</span>
                   )}
                 </td>
               </tr>
@@ -173,17 +169,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
               <div className="min-w-0">
                 <div className="text-[11px] text-ink-500 uppercase tracking-wide">№ {o.number}</div>
                 <div className="font-medium truncate text-ink-900 mt-0.5">{o.clientName}</div>
-                <div className="text-[13px] text-ink-500 tabular-nums">{o.clientPhone}</div>
+                <div className="text-[13px] text-ink-500 tabular-nums mt-0.5">{o.clientPhone}</div>
+                <div className="text-[13px] text-ink-500 truncate mt-0.5">{o.clientAddress}</div>
               </div>
               <StageBadge stage={o.stage} />
             </div>
             {(o.surveyAt || o.installAt) && (
-              <div className="mt-3 text-[12px] text-ink-500 pt-3 border-t border-line">
+              <div className="mt-3 text-[12px] text-ink-500 pt-3 border-t border-line space-y-0.5">
                 {o.surveyAt && (
-                  <>Замер {fmtDateTime(o.surveyAt)}{o.surveyor && ` · ${shortName(o.surveyor.fullName)}`}</>
+                  <div>Замер {fmtDateTime(o.surveyAt)}{o.surveyor && ` · ${shortName(o.surveyor.fullName)}`}</div>
                 )}
                 {o.installAt && (
-                  <>{o.surveyAt && <br />}Установка {fmtDateTime(o.installAt)}</>
+                  <div>Установка {fmtDateTime(o.installAt)}{o.installer && ` · ${shortName(o.installer.fullName)}`}</div>
                 )}
               </div>
             )}

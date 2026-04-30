@@ -1,17 +1,25 @@
-// Расписание (бывший /calendar) — переработано под машину состояний.
+// Расписание — modern editorial.
 //
 // Главное правило: один заказ = одна точка.
 //   - В «Замеры» попадают только заказы со stage === 'survey_scheduled'
 //   - В «Установки» — только со stage === 'ready_to_install'
-//   - Завершённые этапы (survey_done, installed, closed) в расписании не показываются.
+//   - Завершённые этапы (survey_done, installed, closed) не показываются.
+//
+// Иерархия:
+//   1. Маршрут на сегодня (hero для surveyor/installer) — самое важное
+//   2. Stat-метрики через единый <Metric>
+//   3. Алерт о просрочке
+//   4. Фильтр по сотруднику для staff
+//   5. Список событий по дням — timeline с цветной полосой слева
 
 import Link from 'next/link';
-import { Ruler, Hammer, CalendarClock, Factory, AlertTriangle, ChevronRight, MapPin } from 'lucide-react';
+import { Ruler, Hammer, CalendarClock, Factory, AlertTriangle, MapPin } from 'lucide-react';
 
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { loadSchedule, type ScheduleEvent } from '@/lib/schedule';
 import { fmtDayLong } from '@/lib/format';
 import { prisma } from '@/lib/prisma';
+import { Metric, MetricCard } from '@/components/metric';
 import CalendarUserFilter from './user-filter';
 import TodayRouteCard from './today-route';
 
@@ -50,12 +58,6 @@ export default async function CalendarPage({
   const isSameDay = (a: Date, b: Date) =>
     a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
-  // Маршрут на сегодня — для замерщика и установщика.
-  // Только их собственные точки (loadSchedule уже отфильтровал по me.id для не-staff).
-  // События сегодня = от today (00:00 МСК) до tomorrow (00:00 МСК) ПО МСК.
-  // dayStart выше уже построен по локальному времени сервера (UTC) — это баг,
-  // но isSameDay сравнивает МСК-локальные представления, так что фильтр по
-  // (e.at >= today && e.at < tomorrow) даёт корректные сутки в МСК у клиента.
   const showRoute = !isStaff(me.role);
   const todayPoints = showRoute
     ? events
@@ -71,7 +73,7 @@ export default async function CalendarPage({
     : [];
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 space-y-8">
+    <main className="max-w-6xl mx-auto px-6 py-10 space-y-6">
       <div>
         <h1 className="text-display text-ink-900">Расписание</h1>
         <div className="text-[14px] text-ink-500 mt-2">
@@ -79,29 +81,59 @@ export default async function CalendarPage({
         </div>
       </div>
 
-      {/* Виджеты — кликабельные, ведут на список заказов соответствующего этапа */}
+      {/* Маршрут на сегодня — hero для surveyor/installer */}
+      {showRoute && todayPoints.length > 0 && (
+        <TodayRouteCard points={todayPoints} />
+      )}
+
+      {/* Stat-ряд через единый Metric. Без цветных tint-фонов. */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat icon={<Ruler size={16} />}        label="Замеры"        value={summary.surveysCount}    tone="blue"   href="/orders?stage=survey_scheduled" />
-        <Stat icon={<Hammer size={16} />}       label="Установки"     value={summary.installsCount}   tone="green"  href="/orders?stage=ready_to_install" />
-        <Stat icon={<CalendarClock size={16} />} label="Сегодня"       value={summary.todayCount}      tone="indigo" href="#today" />
+        <MetricCard href="/orders?stage=survey_scheduled">
+          <Metric
+            label="Замеры"
+            value={summary.surveysCount}
+            size="lg"
+            icon={<Ruler size={12} />}
+          />
+        </MetricCard>
+        <MetricCard href="/orders?stage=ready_to_install">
+          <Metric
+            label="Установки"
+            value={summary.installsCount}
+            size="lg"
+            icon={<Hammer size={12} />}
+          />
+        </MetricCard>
+        <MetricCard href="#today">
+          <Metric
+            label="Сегодня"
+            value={summary.todayCount}
+            size="lg"
+            tone="accent"
+            icon={<CalendarClock size={12} />}
+          />
+        </MetricCard>
         {isStaff(me.role) && (
-          <Stat icon={<Factory size={16} />}    label="В производстве" value={summary.productionCount} tone="amber"  href="/orders?stage=production" />
+          <MetricCard href="/orders?stage=production">
+            <Metric
+              label="В производстве"
+              value={summary.productionCount}
+              size="lg"
+              icon={<Factory size={12} />}
+            />
+          </MetricCard>
         )}
       </div>
 
       {summary.overdueCount > 0 && (
-        <div className="flex items-center gap-3 rounded-lg bg-bad/5 border border-bad/20 px-4 py-3 text-[14px]">
+        <div className="flex items-center gap-3 rounded-md bg-bad/5 border-l-4 border-l-bad border-y border-r border-y-bad/15 border-r-bad/15 px-4 py-3 text-[14px]">
           <AlertTriangle size={16} className="text-bad shrink-0" />
           <div className="text-ink-900">
             <span className="font-semibold text-bad">{summary.overdueCount}</span>{' '}
-            {summary.overdueCount === 1 ? 'просроченное событие' : 'просроченных событий'} —
-            <span className="text-ink-700"> ниже выделены красным</span>
+            {summary.overdueCount === 1 ? 'просроченное событие' : 'просроченных событий'}
+            <span className="text-ink-500"> — выделены красным ниже</span>
           </div>
         </div>
-      )}
-
-      {showRoute && todayPoints.length > 0 && (
-        <TodayRouteCard points={todayPoints} />
       )}
 
       {isStaff(me.role) && assignable.length > 0 && (
@@ -112,12 +144,14 @@ export default async function CalendarPage({
       )}
 
       {events.length === 0 && (
-        <div className="bg-white border border-line border-dashed rounded-lg p-12 text-center text-ink-400">
-          На ближайшие 30 дней активных событий нет
+        <div className="bg-white border border-line rounded-lg p-16 text-center">
+          <CalendarClock size={28} className="mx-auto text-ink-300 mb-4" />
+          <div className="text-ink-900 font-medium">На ближайшие 30 дней событий нет</div>
+          <div className="text-ink-500 text-[13px] mt-1">Назначьте замер или установку из карточки заказа</div>
         </div>
       )}
 
-      <div className="space-y-8">
+      <div className="space-y-6">
         {[...byDay.entries()].map(([key, dayEvents]) => {
           const date = dayEvents[0].at;
           const isToday = isSameDay(date, today);
@@ -127,17 +161,17 @@ export default async function CalendarPage({
 
           return (
             <section key={key} id={isToday ? 'today' : undefined}>
-              <div className="flex items-baseline gap-3 mb-4">
+              <div className="flex items-baseline gap-3 mb-3">
                 {dayName && (
-                  <h2 className={`text-[15px] font-semibold ${isPast ? 'text-bad' : 'text-ink-900'}`}>
+                  <h2 className={`text-[16px] font-semibold ${isPast ? 'text-bad' : 'text-ink-900'}`}>
                     {dayName}
                   </h2>
                 )}
-                <span className={dayName ? 'text-[13px] text-ink-500' : 'text-[15px] font-semibold text-ink-900'}>
+                <span className={dayName ? 'text-[13px] text-ink-500' : 'text-[16px] font-semibold text-ink-900'}>
                   {fmtDayLong(date)}
                 </span>
                 {dayEvents.length > 1 && (
-                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-ink-900/[0.06] text-ink-700">
+                  <span className="text-[11px] px-2 py-0.5 rounded-full bg-ink-900/[0.06] text-ink-700 font-medium tabular-nums">
                     {dayEvents.length}
                   </span>
                 )}
@@ -148,30 +182,60 @@ export default async function CalendarPage({
                   <Link
                     key={e.id}
                     href={`/orders/${e.orderId}`}
-                    className={`flex items-center gap-4 px-5 py-3.5 hover-row group
-                                ${idx > 0 ? 'border-t border-line/60' : ''}
-                                ${e.isOverdue ? 'bg-bad/[0.02]' : ''}`}
+                    className={`group relative flex flex-col md:flex-row md:items-center gap-2 md:gap-4 px-5 py-3.5 hover-row
+                                ${idx > 0 ? 'border-t border-line/60' : ''}`}
                   >
-                    <div className={`w-12 font-semibold text-[15px] tabular-nums ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
-                      {String(e.at.getHours()).padStart(2, '0')}:
-                      {String(e.at.getMinutes()).padStart(2, '0')}
+                    {/* Цветная вертикальная полоса слева — единственный цветной акцент строки */}
+                    <span
+                      className={`absolute left-0 top-0 bottom-0 w-[3px] ${
+                        e.isOverdue ? 'bg-bad' : e.kind === 'survey' ? 'bg-blue-500' : 'bg-emerald-500'
+                      }`}
+                    />
+
+                    {/* Десктоп: время в фиксированной колонке */}
+                    <div className="hidden md:block w-12 shrink-0">
+                      <div className={`font-semibold text-[15px] tabular-nums leading-none ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
+                        {String(e.at.getHours()).padStart(2, '0')}:
+                        {String(e.at.getMinutes()).padStart(2, '0')}
+                      </div>
+                      <div className={`mt-1 text-[10px] uppercase tracking-wider font-medium ${
+                        e.isOverdue ? 'text-bad' : e.kind === 'survey' ? 'text-blue-700' : 'text-emerald-700'
+                      }`}>
+                        {e.kind === 'survey' ? 'Замер' : 'Установка'}
+                      </div>
                     </div>
 
-                    <KindBadge kind={e.kind} overdue={e.isOverdue} />
+                    {/* Мобайл: время+тип одной строкой сверху */}
+                    <div className="md:hidden flex items-center gap-2 text-[12px]">
+                      <span className={`font-semibold tabular-nums ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
+                        {String(e.at.getHours()).padStart(2, '0')}:
+                        {String(e.at.getMinutes()).padStart(2, '0')}
+                      </span>
+                      <span className={`uppercase tracking-wider font-medium ${
+                        e.isOverdue ? 'text-bad' : e.kind === 'survey' ? 'text-blue-700' : 'text-emerald-700'
+                      }`}>
+                        · {e.kind === 'survey' ? 'Замер' : 'Установка'}
+                      </span>
+                      {e.isOverdue && (
+                        <span className="ml-auto text-bad font-medium">просрочено</span>
+                      )}
+                    </div>
 
+                    {/* Клиент + адрес */}
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate text-ink-900 text-[14px]">
+                      <div className="font-medium text-ink-900 text-[14px]">
                         {e.clientName}{' '}
                         <span className="text-ink-500 font-normal">№ {e.number}</span>
                       </div>
-                      <div className="text-[12px] text-ink-500 truncate mt-0.5 flex items-center gap-1">
-                        <MapPin size={11} className="shrink-0 text-ink-400" />
+                      <div className="text-[12px] text-ink-500 mt-0.5 flex items-start gap-1">
+                        <MapPin size={11} className="mt-0.5 shrink-0 text-ink-400" />
                         <span className="truncate">{e.clientAddress}</span>
-                        {e.worker && <span className="text-ink-400 ml-1">· {e.worker.fullName}</span>}
+                        {e.worker && <span className="text-ink-400 ml-1 hidden md:inline">· {e.worker.fullName}</span>}
                       </div>
+                      {e.worker && (
+                        <div className="md:hidden text-[11px] text-ink-400 mt-0.5">{e.worker.fullName}</div>
+                      )}
                     </div>
-
-                    <ChevronRight size={14} className="text-ink-400 shrink-0" />
                   </Link>
                 ))}
               </div>
@@ -180,65 +244,5 @@ export default async function CalendarPage({
         })}
       </div>
     </main>
-  );
-}
-
-// =====================================================================
-
-const STAT_TONE = {
-  blue:   { dot: 'bg-blue-500',    text: 'text-blue-700',    soft: 'bg-blue-500/5 border-blue-500/15' },
-  green:  { dot: 'bg-emerald-500', text: 'text-emerald-700', soft: 'bg-emerald-500/5 border-emerald-500/15' },
-  indigo: { dot: 'bg-indigo-500',  text: 'text-indigo-700',  soft: 'bg-indigo-500/5 border-indigo-500/15' },
-  amber:  { dot: 'bg-amber-500',   text: 'text-amber-700',   soft: 'bg-amber-500/5 border-amber-500/15' },
-} as const;
-
-function Stat({
-  icon, label, value, tone, href,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: number;
-  tone: keyof typeof STAT_TONE;
-  href?: string;
-}) {
-  const t = STAT_TONE[tone];
-  const inner = (
-    <>
-      <div className={`flex items-center gap-2 text-[12px] uppercase tracking-wide font-medium ${t.text}`}>
-        {icon}
-        {label}
-      </div>
-      <div className="mt-2 text-[28px] font-semibold tabular-nums text-ink-900 leading-none">
-        {value}
-      </div>
-    </>
-  );
-  const cls = `rounded-lg border bg-white p-4 ${t.soft} ${href ? 'block hover:bg-ink-900/[0.02] cursor-pointer' : ''}`;
-  if (href) {
-    return <Link href={href} className={cls}>{inner}</Link>;
-  }
-  return <div className={cls}>{inner}</div>;
-}
-
-function KindBadge({ kind, overdue }: { kind: 'survey' | 'install'; overdue: boolean }) {
-  if (overdue) {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-bad/10 text-bad whitespace-nowrap">
-        <span className="w-1.5 h-1.5 rounded-full bg-bad" />
-        Просрочено · {kind === 'survey' ? 'замер' : 'установка'}
-      </span>
-    );
-  }
-  return (
-    <span
-      className={
-        kind === 'survey'
-          ? 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-blue-500/10 text-blue-700 whitespace-nowrap'
-          : 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-emerald-500/10 text-emerald-700 whitespace-nowrap'
-      }
-    >
-      <span className={`w-1.5 h-1.5 rounded-full ${kind === 'survey' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
-      {kind === 'survey' ? 'Замер' : 'Установка'}
-    </span>
   );
 }

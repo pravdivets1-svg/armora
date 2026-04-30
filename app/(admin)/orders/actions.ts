@@ -12,6 +12,7 @@ import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/auth-helpers';
 import { isStaff } from '@/lib/auth-helpers';
 import { isStageTransitionAllowed, transitionErrorMessage } from '@/lib/stage-transitions';
+import { notifyOrderChanges, notifySafe } from '@/lib/push';
 import type { Stage, Role } from '@prisma/client';
 
 // =====================================================================
@@ -192,6 +193,19 @@ export async function createOrderAction(
     },
   });
 
+  // Триггер пушей: для нового заказа before=null
+  void notifySafe(() => notifyOrderChanges(null, {
+    id: order.id,
+    number: order.number,
+    clientName: order.clientName,
+    clientAddress: order.clientAddress,
+    surveyorId: order.surveyorId,
+    installerId: order.installerId,
+    surveyAt: order.surveyAt,
+    installAt: order.installAt,
+    stage: order.stage,
+  }));
+
   revalidatePath('/orders');
   redirect(`/orders/${order.id}`);
 }
@@ -267,7 +281,33 @@ export async function updateOrderAction(
   // Что разрешено редактировать каждой роли
   const data = buildUpdatePayload(me.role, existing, d);
 
-  await prisma.order.update({ where: { id: orderId }, data });
+  const updated = await prisma.order.update({ where: { id: orderId }, data });
+
+  // Триггер пушей: сравниваем before/after
+  void notifySafe(() => notifyOrderChanges(
+    {
+      id: existing.id,
+      number: existing.number,
+      clientName: existing.clientName,
+      clientAddress: existing.clientAddress,
+      surveyorId: existing.surveyorId,
+      installerId: existing.installerId,
+      surveyAt: existing.surveyAt,
+      installAt: existing.installAt,
+      stage: existing.stage,
+    },
+    {
+      id: updated.id,
+      number: updated.number,
+      clientName: updated.clientName,
+      clientAddress: updated.clientAddress,
+      surveyorId: updated.surveyorId,
+      installerId: updated.installerId,
+      surveyAt: updated.surveyAt,
+      installAt: updated.installAt,
+      stage: updated.stage,
+    },
+  ));
 
   revalidatePath('/orders');
   revalidatePath('/closures');

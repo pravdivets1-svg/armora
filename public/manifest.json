@@ -1,0 +1,20 @@
+{
+  "name": "Armora",
+  "short_name": "Armora",
+  "description": "Учёт заказов металлических входных дверей",
+  "start_url": "/orders",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#0f0f0f",
+  "lang": "ru",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

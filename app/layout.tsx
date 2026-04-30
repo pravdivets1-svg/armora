@@ -13,6 +13,17 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'Armora',
   description: 'Учёт заказов металлических входных дверей',
+  manifest: '/manifest.json',
+  applicationName: 'Armora',
+  appleWebApp: {
+    capable: true,
+    title: 'Armora',
+    statusBarStyle: 'default',
+  },
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export const viewport: Viewport = {

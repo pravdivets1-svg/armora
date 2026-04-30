@@ -36,6 +36,7 @@ model User {
   ordersCreated     Order[]        @relation("CreatedByOrders")
   comments          OrderComment[]
   sessions          Session[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -157,6 +158,26 @@ model LoginAttempt {
   @@index([login, createdAt])
   @@index([ip, createdAt])
   @@map("login_attempts")
+}
+
+// =====================================================================
+// Push-уведомления (Web Push API)
+// =====================================================================
+// Каждый user может иметь несколько подписок (телефон + ноутбук, например).
+// При каждой подписке браузер выдаёт уникальный endpoint — он и ключ.
+model PushSubscription {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  endpoint  String   @unique
+  p256dh    String                              // public key из браузера (base64url)
+  auth      String                              // auth secret из браузера (base64url)
+  userAgent String?  @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 // =====================================================================

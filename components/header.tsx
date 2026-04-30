@@ -9,6 +9,7 @@ import { ROLE_LABEL } from '@/lib/labels';
 import { logoutAction } from '@/app/(auth)/actions';
 import NavLink from './nav-link';
 import GlobalSearch from './global-search';
+import PushToggle from './push-toggle';
 
 export default async function Header() {
   const session = await auth();
@@ -52,6 +53,7 @@ export default async function Header() {
               <span className="text-white/80">{ROLE_LABEL[user.role].toLowerCase()}</span>
             </div>
           )}
+          <PushToggle />
           <form action={logoutAction}>
             <button
               type="submit"

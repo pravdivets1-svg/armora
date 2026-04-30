@@ -135,6 +135,23 @@ model CompanySettings {
 }
 
 // =====================================================================
+// Аудит попыток входа + лимит брутфорса
+// =====================================================================
+model LoginAttempt {
+  id        String   @id @default(uuid())
+  login     String                            // нормализованный логин (lowercase, как введено)
+  ip        String?
+  userAgent String?  @map("user_agent")
+  ok        Boolean                           // true = успех, false = провал
+  reason    String?                           // ok | bad_password | not_found | inactive | blocked
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([login, createdAt])
+  @@index([ip, createdAt])
+  @@map("login_attempts")
+}
+
+// =====================================================================
 // Сессии NextAuth
 // =====================================================================
 model Session {

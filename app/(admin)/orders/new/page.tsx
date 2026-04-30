@@ -13,18 +13,14 @@ export const metadata = { title: 'Новый заказ — Armora' };
 export default async function NewOrderPage() {
   const me = await requireRole(['director', 'manager']);
 
-  const [surveyors, installers] = await Promise.all([
-    prisma.user.findMany({
-      where: { isActive: true, role: 'surveyor' },
-      select: { id: true, fullName: true },
-      orderBy: { fullName: 'asc' },
-    }),
-    prisma.user.findMany({
-      where: { isActive: true, role: 'installer' },
-      select: { id: true, fullName: true },
-      orderBy: { fullName: 'asc' },
-    }),
-  ]);
+  // Один запрос вместо двух — фильтруем по двум ролям сразу.
+  const assignable = await prisma.user.findMany({
+    where: { isActive: true, role: { in: ['surveyor', 'installer'] } },
+    select: { id: true, fullName: true, role: true },
+    orderBy: { fullName: 'asc' },
+  });
+  const surveyors  = assignable.filter((u) => u.role === 'surveyor');
+  const installers = assignable.filter((u) => u.role === 'installer');
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-12 space-y-8">

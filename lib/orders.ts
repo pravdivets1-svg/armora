@@ -42,11 +42,16 @@ export function buildOrderWhere(
   if (f.q) {
     const q = f.q.trim();
     // Поиск по: номеру заказа (если введено число), ФИО, телефону, адресу.
+    // Телефон ищем по нормализованному полю clientPhoneDigits (без пробелов/скобок),
+    // в запросе тоже выкидываем всё кроме цифр — формат ввода не важен.
     const ors: Prisma.OrderWhereInput[] = [
       { clientName:    { contains: q, mode: 'insensitive' } },
-      { clientPhone:   { contains: q } },
       { clientAddress: { contains: q, mode: 'insensitive' } },
     ];
+    const qDigits = q.replace(/\D/g, '');
+    if (qDigits.length >= 3) {
+      ors.push({ clientPhoneDigits: { contains: qDigits } });
+    }
     const asNumber = Number(q.replace(/^#/, ''));
     if (Number.isInteger(asNumber) && asNumber > 0) {
       ors.push({ number: asNumber });

@@ -84,6 +84,12 @@ function tokenExpiresFor(stage: Stage, current: Date | null): Date | null {
   return null;
 }
 
+// Только цифры из телефона — для индексированного поиска
+// независимо от формата ввода ("+7 (495) 123-45-67" → "74951234567").
+function phoneDigits(s: string): string {
+  return (s ?? '').replace(/\D/g, '');
+}
+
 // Проверка обязательных дат для активных этапов
 function validateStageDates(
   stage: Stage,
@@ -167,6 +173,7 @@ export async function createOrderAction(
       publicToken:    genToken(),
       clientName:     d.clientName,
       clientPhone:    d.clientPhone,
+      clientPhoneDigits: phoneDigits(d.clientPhone),
       clientAddress:  d.clientAddress,
       doorComment:    d.doorComment,
       widthMm:        d.widthMm ?? null,
@@ -268,9 +275,10 @@ export async function updateOrderAction(
   return { ok: true };
 }
 
-// Может ли роль редактировать «остаток» (finalPayment) — все роли
-function canEditFinal(role: Role): boolean {
-  return role === 'director' || role === 'manager' || role === 'installer' || role === 'surveyor';
+// Может ли роль редактировать «остаток» (finalPayment) — все 4 роли.
+// (установщик принимает деньги на месте, поэтому ему тоже нужно)
+function canEditFinal(_role: Role): boolean {
+  return true;
 }
 // Может ли роль редактировать «себестоимость» (costAmount) — только директор и замерщик
 function canEditCost(role: Role): boolean {
@@ -308,6 +316,7 @@ function buildUpdatePayload(
       ...base,
       clientName:    d.clientName,
       clientPhone:   d.clientPhone,
+      clientPhoneDigits: phoneDigits(d.clientPhone),
       clientAddress: d.clientAddress,
       doorComment:   d.doorComment,
       widthMm:       d.widthMm ?? null,
@@ -412,24 +421,36 @@ export async function deleteOrderAction(orderId: string) {
 // =====================================================================
 
 const commentSchema = z.object({
-  text: z.string().trim().min(1).max(2000),
+  text: z.string().trim().min(1, 'Комментарий не может быть пустым').max(2000, 'Слишком длинный комментарий'),
 });
 
-export async function addCommentAction(orderId: string, formData: FormData) {
+export type CommentActionState = { ok: true } | { ok: false; error: string } | undefined;
+
+export async function addCommentAction(
+  orderId: string,
+  _prev: CommentActionState,
+  formData: FormData,
+): Promise<CommentActionState> {
   const me = await requireUser();
 
   const parsed = commentSchema.safeParse({ text: formData.get('text') });
-  if (!parsed.success) return;
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Некорректный комментарий' };
+  }
 
-  const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order) return;
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { id: true, surveyorId: true, installerId: true },
+  });
+  if (!order) return { ok: false, error: 'Заказ не найден' };
 
   const isMine = order.surveyorId === me.id || order.installerId === me.id;
-  if (!isStaff(me.role) && !isMine) throw new Error('Forbidden');
+  if (!isStaff(me.role) && !isMine) return { ok: false, error: 'Нет доступа' };
 
   await prisma.orderComment.create({
     data: { orderId, authorId: me.id, text: parsed.data.text },
   });
 
   revalidatePath(`/orders/${orderId}`);
+  return { ok: true };
 }

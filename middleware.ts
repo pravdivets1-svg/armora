@@ -4,11 +4,18 @@
 // - /order/[token]    — публичный, пускаем всех
 // - /login            — публичный
 // - /api/auth/*       — публичный (NextAuth сам управляет)
+// - /closures         — только director
 // - всё остальное     — нужна сессия; иначе редирект на /login
-// - /(role-guarded)   — роль проверяется отдельно в layout/page (ниже)
 
 import { auth } from '@/auth';
 import { NextResponse } from 'next/server';
+
+// Маршруты, доступные только определённым ролям.
+// Точное соответствие или префикс с "/" — чтобы /closures-foo не считался /closures.
+const ROLE_GUARDED: Array<{ prefix: string; roles: ReadonlyArray<string> }> = [
+  { prefix: '/closures', roles: ['director'] },
+  { prefix: '/orders/new', roles: ['director', 'manager'] },
+];
 
 export default auth((req) => {
   const { pathname } = req.nextUrl;
@@ -26,6 +33,17 @@ export default auth((req) => {
     const url = new URL('/login', req.url);
     url.searchParams.set('callbackUrl', pathname);
     return NextResponse.redirect(url);
+  }
+
+  // Роль-чек на edge: дешевле, чем грузить страницу и отбивать в layout.
+  // Окончательная защита всё равно в page.tsx (requireRole) — это второй уровень.
+  const role = (req.auth.user as { role?: string } | undefined)?.role;
+  for (const guard of ROLE_GUARDED) {
+    if (pathname === guard.prefix || pathname.startsWith(guard.prefix + '/')) {
+      if (!role || !guard.roles.includes(role)) {
+        return NextResponse.redirect(new URL('/orders', req.url));
+      }
+    }
   }
 
   return NextResponse.next();

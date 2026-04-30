@@ -15,17 +15,25 @@ export const metadata = { title: 'На закрытие — Armora' };
 export default async function ClosuresPage() {
   await requireRole(['director']);
 
-  const orders = await prisma.order.findMany({
-    where: { stage: 'pending_closure' },
-    orderBy: { updatedAt: 'asc' },
-    include: {
-      surveyor:  { select: { fullName: true } },
-      installer: { select: { fullName: true } },
-    },
-  });
+  // Параллельно: список заказов + агрегаты в БД (а не reduce в JS).
+  const [orders, agg] = await Promise.all([
+    prisma.order.findMany({
+      where: { stage: 'pending_closure' },
+      orderBy: { updatedAt: 'asc' },
+      include: {
+        surveyor:  { select: { fullName: true } },
+        installer: { select: { fullName: true } },
+      },
+    }),
+    prisma.order.aggregate({
+      where: { stage: 'pending_closure' },
+      _sum: { totalAmount: true, costAmount: true },
+    }),
+  ]);
 
-  const totalSum = orders.reduce((s, o) => s + Number(o.totalAmount), 0);
-  const totalMargin = orders.reduce((s, o) => s + (Number(o.totalAmount) - Number(o.costAmount)), 0);
+  const totalSum    = Number(agg._sum.totalAmount ?? 0);
+  const totalCost   = Number(agg._sum.costAmount ?? 0);
+  const totalMargin = totalSum - totalCost;
 
   return (
     <main className="max-w-5xl mx-auto px-6 py-12 space-y-8">

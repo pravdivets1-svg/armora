@@ -1,13 +1,13 @@
 'use client';
 
-import { useRef } from 'react';
-import { useFormStatus } from 'react-dom';
-import { MessageSquare, Send } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
+import { MessageSquare, Send, AlertCircle } from 'lucide-react';
 import type { Role } from '@prisma/client';
 import { Card } from '@/components/ui';
 import { ROLE_LABEL } from '@/lib/labels';
 import { fmtDateTime } from '@/lib/format';
-import { addCommentAction } from '../actions';
+import { addCommentAction, type CommentActionState } from '../actions';
 
 type Comment = {
   id: string;
@@ -41,10 +41,15 @@ export default function CommentsBlock({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
 
-  async function handleAction(formData: FormData) {
-    await addCommentAction(orderId, formData);
-    formRef.current?.reset();
-  }
+  // Биндим orderId в server action; форма получает (state, fd)
+  const action = addCommentAction.bind(null, orderId);
+  const [state, formAction] = useFormState<CommentActionState, FormData>(action, undefined);
+
+  // При успешной отправке чистим форму. Если ошибка — оставляем текст,
+  // чтобы пользователь не потерял написанное.
+  useEffect(() => {
+    if (state?.ok) formRef.current?.reset();
+  }, [state]);
 
   return (
     <Card title="Комментарии исполнителей" icon={<MessageSquare size={12} />}>
@@ -64,7 +69,14 @@ export default function CommentsBlock({
         </ul>
       )}
 
-      <form ref={formRef} action={handleAction} className="flex gap-2">
+      {state && !state.ok && (
+        <div className="mb-2 flex items-start gap-2 rounded-md bg-bad/5 border border-bad/20 px-3 py-1.5 text-[13px] text-bad">
+          <AlertCircle size={13} className="mt-0.5 shrink-0" />
+          <span>{state.error}</span>
+        </div>
+      )}
+
+      <form ref={formRef} action={formAction} className="flex gap-2">
         <input
           name="text"
           required

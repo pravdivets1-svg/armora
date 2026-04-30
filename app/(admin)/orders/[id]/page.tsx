@@ -17,34 +17,40 @@ export const dynamic = 'force-dynamic';
 export default async function OrderPage({ params }: { params: { id: string } }) {
   const me = await requireUser();
 
-  const order = await prisma.order.findUnique({
+  // 1) Сначала дешёвая проверка доступа: только id назначенцев — без полных данных.
+  //    Чужой пользователь получает 404 и НЕ грузит клиентские данные/комментарии.
+  const access = await prisma.order.findUnique({
     where: { id: params.id },
-    include: {
-      surveyor:  { select: { id: true, fullName: true, phone: true } },
-      installer: { select: { id: true, fullName: true, phone: true } },
-      comments: {
-        include: { author: { select: { fullName: true, role: true } } },
-        orderBy: { createdAt: 'asc' },
-      },
-    },
+    select: { id: true, surveyorId: true, installerId: true },
   });
-  if (!order) notFound();
-
-  const isMine = order.surveyorId === me.id || order.installerId === me.id;
+  if (!access) notFound();
+  const isMine = access.surveyorId === me.id || access.installerId === me.id;
   if (!isStaff(me.role) && !isMine) notFound();
 
-  const [surveyors, installers] = await Promise.all([
-    prisma.user.findMany({
-      where: { isActive: true, role: 'surveyor' },
-      select: { id: true, fullName: true },
-      orderBy: { fullName: 'asc' },
+  // 2) Полная выборка + список назначаемых сотрудников ПАРАЛЛЕЛЬНО.
+  //    Также один запрос вместо двух за surveyors/installers — фильтруем в JS.
+  const [order, assignableUsers] = await Promise.all([
+    prisma.order.findUnique({
+      where: { id: params.id },
+      include: {
+        surveyor:  { select: { id: true, fullName: true, phone: true } },
+        installer: { select: { id: true, fullName: true, phone: true } },
+        comments: {
+          include: { author: { select: { fullName: true, role: true } } },
+          orderBy: { createdAt: 'asc' },
+        },
+      },
     }),
     prisma.user.findMany({
-      where: { isActive: true, role: 'installer' },
-      select: { id: true, fullName: true },
+      where: { isActive: true, role: { in: ['surveyor', 'installer'] } },
+      select: { id: true, fullName: true, role: true },
       orderBy: { fullName: 'asc' },
     }),
   ]);
+  if (!order) notFound();
+
+  const surveyors  = assignableUsers.filter((u) => u.role === 'surveyor');
+  const installers = assignableUsers.filter((u) => u.role === 'installer');
 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
   const publicUrl = `${baseUrl}/order/${order.publicToken}`;

@@ -1,6 +1,7 @@
 // Шапка: floating-pill стиль — навигация в центре, действия справа.
 
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { LogOut } from 'lucide-react';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
@@ -36,7 +37,11 @@ export default async function Header() {
         </div>
 
         <div className="flex items-center gap-3">
-          <GlobalSearch />
+          {/* useSearchParams внутри клиентского GlobalSearch требует Suspense-границы,
+              иначе Next ругается на CSR-bailout всей страницы. */}
+          <Suspense fallback={null}>
+            <GlobalSearch />
+          </Suspense>
           {user && (
             <div className="hidden sm:flex items-center gap-2.5 text-[14px]">
               <div className="w-8 h-8 rounded-full bg-white text-ink-900 flex items-center justify-center text-[12px] font-semibold">

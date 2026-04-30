@@ -63,9 +63,12 @@ model Order {
   tokenExpiresAt  DateTime? @map("token_expires_at") // null = бессрочно (до закрытия)
 
   // Клиент
-  clientName    String @map("client_name")
-  clientPhone   String @map("client_phone")
-  clientAddress String @map("client_address")
+  clientName         String @map("client_name")
+  clientPhone        String @map("client_phone")
+  // Только цифры из телефона — для быстрого поиска по любому формату ввода.
+  // Заполняется автоматически на create/update в actions.ts.
+  clientPhoneDigits  String @default("") @map("client_phone_digits")
+  clientAddress      String @map("client_address")
 
   // Дверь
   doorComment String  @default("") @map("door_comment")
@@ -103,6 +106,11 @@ model Order {
   @@index([installerId])
   @@index([surveyAt])
   @@index([installAt])
+  // Composite-индексы под фильтры расписания
+  @@index([stage, surveyAt])
+  @@index([stage, installAt])
+  // Поиск по нормализованному телефону
+  @@index([clientPhoneDigits])
   @@map("orders")
 }
 

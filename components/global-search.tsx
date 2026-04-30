@@ -32,9 +32,12 @@ export default function GlobalSearch() {
       const tag = target?.tagName;
       const typingInField =
         tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable;
+      // Если фокус уже в нашем поле — Cmd+K только селектит, не перехватываем стандарт
+      const inOurField = target === inputRef.current;
 
-      // Cmd/Ctrl+K — всегда
+      // Cmd/Ctrl+K — только если не печатаем в чужом поле
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        if (typingInField && !inOurField) return;
         e.preventDefault();
         inputRef.current?.focus();
         inputRef.current?.select();

@@ -9,6 +9,7 @@
 //   - Лейбл «приватно» вместо «(внутри)»
 
 import { useFormState, useFormStatus } from 'react-dom';
+import { flushSync } from 'react-dom';
 import { Save, Trash2, AlertCircle, CheckCircle2, AlertTriangle, Lock } from 'lucide-react';
 import type { Stage, Role } from '@prisma/client';
 import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
@@ -119,11 +120,12 @@ export default function OrderForm({
   const disableFinal  = !p.canEditFinal  || lockedClosed;
 
   // Клик по сегменту stepper'а: меняем stage в стейте → сабмитим форму.
-  // Скрытое поле name="stage" внутри stepper-секции сабмитится как этап;
-  // на сайдбаре уже есть Select с тем же name — он перезапишет значение тем же.
-  // Если форма не валидна — сервер вернёт fieldErrors как обычно.
+  // ВАЖНО: flushSync нужен потому что setState в React 18 батчится и
+  // hidden input <input name="stage" value={stage}> обновляется ПОСЛЕ
+  // выхода из обработчика. Без flushSync requestSubmit() читает DOM со
+  // старым значением → server получает старый stage → БД не меняется.
   function handleStageClick(next: Stage) {
-    setStage(next);
+    flushSync(() => setStage(next));
     formRef.current?.requestSubmit();
   }
 

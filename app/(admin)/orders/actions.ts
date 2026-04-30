@@ -11,6 +11,7 @@ import { randomBytes } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/auth-helpers';
 import { isStaff } from '@/lib/auth-helpers';
+import { isStageTransitionAllowed, transitionErrorMessage } from '@/lib/stage-transitions';
 import type { Stage, Role } from '@prisma/client';
 
 // =====================================================================
@@ -224,6 +225,15 @@ export async function updateOrderAction(
       ok: false,
       error: 'Закрыть заказ может только директор. Используйте этап «Ожидает закрытия».',
       fieldErrors: { stage: 'Доступ только у директора' },
+    };
+  }
+
+  // Машина состояний: проверяем допустимость перехода from -> to
+  if (!isStageTransitionAllowed(me.role, existing.stage, d.stage)) {
+    return {
+      ok: false,
+      error: transitionErrorMessage(me.role, existing.stage, d.stage),
+      fieldErrors: { stage: 'Переход недопустим' },
     };
   }
 

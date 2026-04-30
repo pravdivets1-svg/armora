@@ -224,8 +224,11 @@ export default function OrderForm({
                 {fe['finalPayment'] && <span className="text-xs text-bad mt-1 block">{fe['finalPayment']}</span>}
               </label>
 
-              {/* Себестоимость — только для staff (директор/менеджер) */}
-              {p.canSeeCost ? (
+              {/* Себестоимость — только для тех, кому положено (директор/замерщик).
+                  ВАЖНО: для остальных ролей поле в DOM НЕ рендерим вообще —
+                  иначе значение видно в DevTools (утечка финансовых данных).
+                  Сервер всё равно подставит значение из БД через canEditCost(). */}
+              {p.canSeeCost && (
                 <label>
                   <FieldLabel>Себестоимость, ₽ <span className="normal-case text-ink-400">(внутри)</span></FieldLabel>
                   <Input
@@ -236,9 +239,6 @@ export default function OrderForm({
                   />
                   {fe['costAmount'] && <span className="text-xs text-bad mt-1 block">{fe['costAmount']}</span>}
                 </label>
-              ) : (
-                /* Скрытое поле, чтобы значение не потерялось */
-                <input type="hidden" name="costAmount" value={Number(order?.costAmount ?? 0)} />
               )}
 
               <div>

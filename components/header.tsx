@@ -1,4 +1,7 @@
-// Шапка: floating-pill стиль — навигация в центре, действия справа.
+// Шапка: light editorial.
+// Раньше была тёмная glass-плёнка (bg-black/30) поверх фотофона. Сейчас фон
+// в (admin) светлый, поэтому шапка — тоже светлая, sticky с лёгким back-blur,
+// и тонкой нижней линией. Никаких drop-shadow на тексте.
 
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -10,6 +13,7 @@ import { logoutAction } from '@/app/(auth)/actions';
 import NavLink from './nav-link';
 import GlobalSearch from './global-search';
 import PushToggle from './push-toggle';
+import RoleAvatar from './role-avatar';
 
 export default async function Header() {
   const session = await auth();
@@ -22,10 +26,18 @@ export default async function Header() {
       : 0;
 
   return (
-    <header className="border-b border-white/15 bg-black/30 backdrop-blur-xl sticky top-0 z-10">
-      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
-        <div className="flex items-center gap-8">
-          <Link href="/orders" className="font-semibold tracking-tight text-white text-[16px] drop-shadow">
+    <header className="sticky top-0 z-30 bg-canvas/85 backdrop-blur-md border-b border-line">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-8 min-w-0">
+          <Link
+            href="/orders"
+            className="font-semibold tracking-tight text-ink-900 text-[17px]
+                       inline-flex items-center gap-2"
+          >
+            <span className="inline-flex items-center justify-center w-7 h-7 rounded-md
+                             bg-ink-900 text-white text-[13px] font-bold leading-none">
+              A
+            </span>
             Armora
           </Link>
           <nav className="flex items-center gap-1">
@@ -37,20 +49,18 @@ export default async function Header() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
-          {/* useSearchParams внутри клиентского GlobalSearch требует Suspense-границы,
-              иначе Next ругается на CSR-bailout всей страницы. */}
+        <div className="flex items-center gap-2">
+          {/* useSearchParams внутри клиентского GlobalSearch требует Suspense-границы. */}
           <Suspense fallback={null}>
             <GlobalSearch />
           </Suspense>
           {user && (
-            <div className="hidden sm:flex items-center gap-2.5 text-[14px]">
-              <div className="w-8 h-8 rounded-full bg-white text-ink-900 flex items-center justify-center text-[12px] font-semibold">
-                {user.name?.split(/\s+/).map(p => p[0]).slice(0, 2).join('').toUpperCase()}
+            <div className="hidden sm:flex items-center gap-2.5 text-[14px] pl-2">
+              <RoleAvatar role={user.role} name={user.name} />
+              <div className="flex flex-col leading-tight">
+                <span className="text-ink-900 font-medium">{user.name}</span>
+                <span className="text-ink-500 text-[12px]">{ROLE_LABEL[user.role].toLowerCase()}</span>
               </div>
-              <span className="text-white font-medium drop-shadow">{user.name}</span>
-              <span className="text-white/50">·</span>
-              <span className="text-white/80">{ROLE_LABEL[user.role].toLowerCase()}</span>
             </div>
           )}
           <PushToggle />
@@ -58,7 +68,7 @@ export default async function Header() {
             <button
               type="submit"
               title="Выйти"
-              className="text-white/80 hover:text-white hover:bg-white/10 p-2 rounded-md"
+              className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06] p-2 rounded-md"
             >
               <LogOut size={16} />
             </button>

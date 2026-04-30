@@ -116,13 +116,19 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
               </tr>
             )}
             {items.map((o) => (
-              <tr key={o.id} className="border-b border-line/60 last:border-0 hover-row">
+              <tr key={o.id} className="relative border-b border-line/60 last:border-0 hover-row group">
                 <td className="px-5 py-3.5 text-ink-500 tabular-nums">
-                  <Link href={`/orders/${o.id}`} className="block">{o.number}</Link>
+                  {/* Невидимая ссылка-оверлей: делает всю строку кликабельной.
+                      Конкретный текст «№» виден сверху, ссылка лежит под ним
+                      по всей ширине tr через absolute inset-0. */}
+                  <Link
+                    href={`/orders/${o.id}`}
+                    className="absolute inset-0 z-10"
+                    aria-label={`Заказ № ${o.number}, ${o.clientName}`}
+                  />
+                  <span className="relative">{o.number}</span>
                 </td>
-                <td className="px-5 py-3.5 font-medium text-ink-900">
-                  <Link href={`/orders/${o.id}`} className="block">{o.clientName}</Link>
-                </td>
+                <td className="px-5 py-3.5 font-medium text-ink-900">{o.clientName}</td>
                 <td className="px-5 py-3.5 text-ink-700 tabular-nums">{o.clientPhone}</td>
                 <td className="px-5 py-3.5 text-ink-700 max-w-[260px]">
                   <span className="block truncate" title={o.clientAddress}>{o.clientAddress}</span>

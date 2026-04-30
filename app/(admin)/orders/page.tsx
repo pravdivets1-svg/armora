@@ -16,6 +16,10 @@ import DensityToggle from '@/components/density-toggle';
 import { Button } from '@/components/ui';
 
 export const metadata = { title: 'Заказы — Armora' };
+// Всегда свежий список: после смены этапа в карточке заказа
+// revalidatePath('/orders') должен мгновенно обновить таблицу.
+// Без force-dynamic Next.js кэширует страницу и показывает старые этапы.
+export const dynamic = 'force-dynamic';
 
 type Search = { q?: string; stage?: string; user?: string; page?: string };
 

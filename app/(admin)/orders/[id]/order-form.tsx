@@ -11,7 +11,7 @@
 import { useFormState, useFormStatus } from 'react-dom';
 import { Save, Trash2, AlertCircle, CheckCircle2, AlertTriangle, Lock } from 'lucide-react';
 import type { Stage, Role } from '@prisma/client';
-import { useMemo, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import { Card, Input, Textarea, Select, Button, FieldLabel } from '@/components/ui';
 import { fmtMoney } from '@/lib/format';
 import { Metric } from '@/components/metric';
@@ -88,6 +88,23 @@ export default function OrderForm({
   const [prepay, setPrepay] = useState<number>(Number(order?.prepayment ?? 0));
   const [finalPay, setFinalPay] = useState<number>(Number(order?.finalPayment ?? 0));
   const [cost, setCost] = useState<number>(Number(order?.costAmount ?? 0));
+
+  // Синхронизация локального stage с серверным после revalidate.
+  // Без этого: при ошибке валидации (БД не обновилась, но setStage уже вызвали)
+  // или после успешного сохранения через любой другой путь — stepper рисовал бы
+  // current не там, где он на сервере. Источник истины — order.stage из props.
+  useEffect(() => {
+    if (order?.stage) setStage(order.stage);
+  }, [order?.stage]);
+
+  // Откат локального stage при ошибке server action.
+  // useFormState возвращает { ok:false, fieldErrors } если переход недопустим —
+  // в этом случае БД не менялась, и локальный state должен совпасть с props.
+  useEffect(() => {
+    if (state && !state.ok && order?.stage) {
+      setStage(order.stage);
+    }
+  }, [state, order?.stage]);
 
   const remaining = useMemo(() => Math.max(0, total - prepay - finalPay), [total, prepay, finalPay]);
   const margin = useMemo(() => total - cost, [total, cost]);

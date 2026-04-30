@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma';
 import { ROLE_LABEL } from '@/lib/labels';
 import { logoutAction } from '@/app/(auth)/actions';
 import NavLink from './nav-link';
+import GlobalSearch from './global-search';
 
 export default async function Header() {
   const session = await auth();
@@ -35,6 +36,7 @@ export default async function Header() {
         </div>
 
         <div className="flex items-center gap-3">
+          <GlobalSearch />
           {user && (
             <div className="hidden sm:flex items-center gap-2.5 text-[14px]">
               <div className="w-8 h-8 rounded-full bg-white text-ink-900 flex items-center justify-center text-[12px] font-semibold">

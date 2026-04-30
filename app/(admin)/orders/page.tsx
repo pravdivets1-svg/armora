@@ -61,7 +61,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             type="search"
             name="q"
             defaultValue={searchParams.q ?? ''}
-            placeholder="Поиск по ФИО или телефону"
+            placeholder="Поиск: № / ФИО / телефон / адрес"
             className="w-full bg-transparent text-ink-900 rounded-md pl-10 pr-3 py-2 text-[14px]
                        placeholder:text-ink-400 focus:outline-none"
           />

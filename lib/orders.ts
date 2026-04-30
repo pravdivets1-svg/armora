@@ -41,12 +41,17 @@ export function buildOrderWhere(
 
   if (f.q) {
     const q = f.q.trim();
-    const search: Prisma.OrderWhereInput = {
-      OR: [
-        { clientName:  { contains: q, mode: 'insensitive' } },
-        { clientPhone: { contains: q } },
-      ],
-    };
+    // Поиск по: номеру заказа (если введено число), ФИО, телефону, адресу.
+    const ors: Prisma.OrderWhereInput[] = [
+      { clientName:    { contains: q, mode: 'insensitive' } },
+      { clientPhone:   { contains: q } },
+      { clientAddress: { contains: q, mode: 'insensitive' } },
+    ];
+    const asNumber = Number(q.replace(/^#/, ''));
+    if (Number.isInteger(asNumber) && asNumber > 0) {
+      ors.push({ number: asNumber });
+    }
+    const search: Prisma.OrderWhereInput = { OR: ors };
     where.AND = ([] as Prisma.OrderWhereInput[]).concat(where.AND ?? [], [search]);
   }
 

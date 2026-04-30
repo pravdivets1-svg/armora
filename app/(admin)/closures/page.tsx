@@ -8,6 +8,7 @@ import { requireRole } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { fmtMoney, fmtDateTime } from '@/lib/format';
 import { Metric, MetricCard } from '@/components/metric';
+import { EmptyState } from '@/components/empty-state';
 import { approveAction, rejectAction } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -45,11 +46,11 @@ export default async function ClosuresPage() {
       </div>
 
       {orders.length === 0 ? (
-        <div className="bg-white border border-line rounded-lg p-16 text-center">
-          <CheckCircle2 size={28} className="mx-auto text-emerald-500 mb-4" />
-          <div className="text-ink-900 font-medium">Очередь пустая</div>
-          <div className="text-ink-500 text-[13px] mt-1">Нет заказов, ожидающих закрытия</div>
-        </div>
+        <EmptyState
+          icon={CheckCircle2}
+          title="Очередь пустая"
+          description="Нет заказов, ожидающих закрытия"
+        />
       ) : (
         <>
           {/* Stat-ряд: единый стиль через MetricCard, без 3 разных цветных tinted-фонов */}

@@ -3,7 +3,7 @@
 // единая иерархия: title → meta → action.
 
 import Link from 'next/link';
-import { Plus, Search, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { Plus, Search, ChevronLeft, ChevronRight, X, Inbox } from 'lucide-react';
 import type { Stage } from '@prisma/client';
 
 import { requireUser } from '@/lib/auth-helpers';
@@ -11,6 +11,7 @@ import { listOrders, listAssignableUsers } from '@/lib/orders';
 import { STAGE_LABEL, STAGE_ORDER, ROLE_LABEL } from '@/lib/labels';
 import { fmtDateTime, shortName } from '@/lib/format';
 import { StageBadge } from '@/components/stage-badge';
+import { EmptyState } from '@/components/empty-state';
 import { Button } from '@/components/ui';
 
 export const metadata = { title: 'Заказы — Armora' };
@@ -128,8 +129,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
           <tbody>
             {items.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-5 py-20 text-center text-ink-400">
-                  Заказов нет
+                <td colSpan={7}>
+                  <EmptyState
+                    icon={Inbox}
+                    variant="compact"
+                    title="Заказов нет"
+                    description={searchParams.q || stage || searchParams.user ? 'Попробуйте сбросить фильтры' : undefined}
+                  />
                 </td>
               </tr>
             )}

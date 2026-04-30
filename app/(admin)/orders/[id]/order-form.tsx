@@ -38,7 +38,12 @@ type OrderData = {
 function toLocalInputValue(d: Date | null): string {
   if (!d) return '';
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  // Принудительно МСК (UTC+3) — иначе на Timeweb-сервере (UTC) при SSR
+  // d.getHours() вернёт UTC-час, и поле покажет 14:00 вместо 17:00.
+  // На клиенте в России getHours() и так вернёт МСК — результат совпадёт.
+  const t = d.getTime() + 3 * 3600 * 1000;
+  const u = new Date(t);
+  return `${u.getUTCFullYear()}-${pad(u.getUTCMonth() + 1)}-${pad(u.getUTCDate())}T${pad(u.getUTCHours())}:${pad(u.getUTCMinutes())}`;
 }
 
 function SaveButton({ label }: { label: string }) {

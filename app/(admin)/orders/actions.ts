@@ -63,6 +63,15 @@ function parseFormData(formData: FormData) {
 
 function applyDateOrNull(s: string | null | undefined): Date | null {
   if (!s) return null;
+  // <input type="datetime-local"> отдаёт "YYYY-MM-DDTHH:mm" без таймзоны.
+  // Сервер Timeweb работает в UTC, поэтому new Date(s) интерпретирует строку
+  // как UTC → 17:00 МСК становится 17:00 UTC = 20:00 МСК. Принудительно
+  // трактуем ввод как Europe/Moscow (UTC+3, без DST в России).
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (m) {
+    const [, y, mo, da, h, mi] = m;
+    return new Date(Date.UTC(+y, +mo - 1, +da, +h - 3, +mi));
+  }
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
 }

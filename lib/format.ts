@@ -1,10 +1,15 @@
-// Форматтеры для отображения. Все используют ru-RU.
+// Форматтеры для отображения. Все используют ru-RU + Europe/Moscow.
+// Принудительный timeZone нужен потому, что прод-сервер Timeweb работает в UTC,
+// а бизнес ведётся в МСК — без явного таймзона SSR показал бы UTC-время.
+
+const TZ = 'Europe/Moscow';
 
 export const fmtMoney = (n: number | string) =>
   new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Number(n)) + ' ₽';
 
 export const fmtDateTime = (d: Date | string) =>
   new Intl.DateTimeFormat('ru-RU', {
+    timeZone: TZ,
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
@@ -13,6 +18,7 @@ export const fmtDateTime = (d: Date | string) =>
 
 export const fmtFullDateTime = (d: Date | string) =>
   new Intl.DateTimeFormat('ru-RU', {
+    timeZone: TZ,
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -22,6 +28,7 @@ export const fmtFullDateTime = (d: Date | string) =>
 
 export const fmtDayLong = (d: Date | string) =>
   new Intl.DateTimeFormat('ru-RU', {
+    timeZone: TZ,
     day: 'numeric',
     month: 'long',
     weekday: 'long',

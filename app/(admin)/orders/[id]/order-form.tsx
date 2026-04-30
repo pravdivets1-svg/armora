@@ -1,16 +1,21 @@
 'use client';
 
-// Универсальная форма заказа.
-// Финансовые поля — с разграничением по ролям и алармом маржи.
+// Универсальная форма заказа — обновлённый визуал.
+// Главные изменения:
+//   - StageStepper сверху: один клик = переход этапа (вместо select+save)
+//   - Sticky bottom bar с превью «К доплате» и Save/Delete — всегда виден
+//   - Алерты с border-left (toast-like)
+//   - Метрики «К доплате» / «Маржа» через единый <Metric>
+//   - Лейбл «приватно» вместо «(внутри)»
 
 import { useFormState, useFormStatus } from 'react-dom';
-import { Save, Trash2, AlertCircle, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Save, Trash2, AlertCircle, CheckCircle2, AlertTriangle, Lock } from 'lucide-react';
 import type { Stage, Role } from '@prisma/client';
-import { useMemo, useState, useTransition } from 'react';
-
+import { useMemo, useRef, useState, useTransition } from 'react';
 import { Card, Input, Textarea, Select, Button, FieldLabel } from '@/components/ui';
-import { STAGE_ORDER, STAGE_LABEL } from '@/lib/labels';
 import { fmtMoney } from '@/lib/format';
+import { Metric } from '@/components/metric';
+import StageStepper from '@/components/stage-stepper';
 import { deleteOrderAction, type OrderActionState } from '../actions';
 import AddressField from './address-field';
 
@@ -38,34 +43,21 @@ type OrderData = {
 function toLocalInputValue(d: Date | null): string {
   if (!d) return '';
   const pad = (n: number) => String(n).padStart(2, '0');
-  // Принудительно МСК (UTC+3) — иначе на Timeweb-сервере (UTC) при SSR
-  // d.getHours() вернёт UTC-час, и поле покажет 14:00 вместо 17:00.
-  // На клиенте в России getHours() и так вернёт МСК — результат совпадёт.
   const t = d.getTime() + 3 * 3600 * 1000;
   const u = new Date(t);
   return `${u.getUTCFullYear()}-${pad(u.getUTCMonth() + 1)}-${pad(u.getUTCDate())}T${pad(u.getUTCHours())}:${pad(u.getUTCMinutes())}`;
 }
 
-function SaveButton({ label }: { label: string }) {
-  const { pending } = useFormStatus();
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      <Save size={14} /> {pending ? 'Сохранение…' : label}
-    </Button>
-  );
-}
-
-// Что роль может редактировать
 function permsFor(role: Role) {
   const fullEditor = role === 'director' || role === 'manager' || role === 'surveyor';
   return {
     isStaff:        role === 'director' || role === 'manager',
-    canEditClient:  fullEditor,                                    // ФИО/телефон/адрес/дверь/даты/назначения
-    canEditTotal:   fullEditor,                                    // цена + аванс
-    canEditCost:    role === 'director' || role === 'surveyor',    // себестоимость — только директор + замерщик
-    canSeeCost:     role === 'director' || role === 'surveyor',    // менеджер НЕ видит себестоимость
-    canEditFinal:   true,                                          // остаток — все могут
-    canCloseDirect: role === 'director',                           // только директор сразу в closed
+    canEditClient:  fullEditor,
+    canEditTotal:   fullEditor,
+    canEditCost:    role === 'director' || role === 'surveyor',
+    canSeeCost:     role === 'director' || role === 'surveyor',
+    canEditFinal:   true,
+    canCloseDirect: role === 'director',
     canDelete:      role === 'director',
   };
 }
@@ -89,51 +81,64 @@ export default function OrderForm({
 }) {
   const [state, formAction] = useFormState<OrderActionState, FormData>(action, undefined);
   const p = permsFor(role);
+  const formRef = useRef<HTMLFormElement>(null);
 
+  const [stage, setStage] = useState<Stage>(order?.stage ?? 'new');
   const [total, setTotal] = useState<number>(Number(order?.totalAmount ?? 0));
   const [prepay, setPrepay] = useState<number>(Number(order?.prepayment ?? 0));
   const [finalPay, setFinalPay] = useState<number>(Number(order?.finalPayment ?? 0));
   const [cost, setCost] = useState<number>(Number(order?.costAmount ?? 0));
 
-  // Остаток к оплате клиентом = договор - аванс - факт остаток
   const remaining = useMemo(() => Math.max(0, total - prepay - finalPay), [total, prepay, finalPay]);
-  // Маржа = договор - себестоимость
   const margin = useMemo(() => total - cost, [total, cost]);
   const negativeMargin = total > 0 && cost > 0 && cost > total;
 
   const fe = (state && !state.ok ? state.fieldErrors : undefined) ?? {};
 
-  // Какие этапы доступны в селекте (закрыть может только директор)
-  const availableStages: Stage[] = STAGE_ORDER.filter((s) => {
-    if (s === 'closed' && !p.canCloseDirect) return false;
-    return true;
-  });
-
-  // Disabled-флаг для общих полей: если этап closed — может только директор
   const lockedClosed = order?.stage === 'closed' && role !== 'director';
   const disableClient = !p.canEditClient || lockedClosed;
   const disableTotal  = !p.canEditTotal  || lockedClosed;
   const disableCost   = !p.canEditCost   || lockedClosed;
   const disableFinal  = !p.canEditFinal  || lockedClosed;
-  const disableStage  = lockedClosed;
+
+  // Клик по сегменту stepper'а: меняем stage в стейте → сабмитим форму.
+  // Скрытое поле name="stage" внутри stepper-секции сабмитится как этап;
+  // на сайдбаре уже есть Select с тем же name — он перезапишет значение тем же.
+  // Если форма не валидна — сервер вернёт fieldErrors как обычно.
+  function handleStageClick(next: Stage) {
+    setStage(next);
+    formRef.current?.requestSubmit();
+  }
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form ref={formRef} action={formAction} className="space-y-5">
+      {/* Stage stepper — главный action в карточке */}
+      {mode === 'edit' && order && (
+        <div>
+          <StageStepper
+            current={stage}
+            role={role}
+            disabled={lockedClosed}
+            onStageClick={handleStageClick}
+          />
+        </div>
+      )}
+
       {state && !state.ok && (
-        <div className="flex items-start gap-2 rounded-md bg-bad/5 border border-bad/20 px-3 py-2 text-[14px] text-bad">
+        <div className="flex items-start gap-2 rounded-md bg-bad/5 border-l-4 border-l-bad border-y border-r border-y-bad/15 border-r-bad/15 px-4 py-2.5 text-[14px] text-bad">
           <AlertCircle size={14} className="mt-0.5 shrink-0" />
           <span>{state.error}</span>
         </div>
       )}
       {state?.ok && (
-        <div className="flex items-start gap-2 rounded-md bg-ok/5 border border-ok/20 px-3 py-2 text-[14px] text-ok">
+        <div className="flex items-start gap-2 rounded-md bg-ok/5 border-l-4 border-l-ok border-y border-r border-y-ok/15 border-r-ok/15 px-4 py-2.5 text-[14px] text-ok">
           <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
           <span>Сохранено</span>
         </div>
       )}
 
       {negativeMargin && p.canSeeCost && (
-        <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border border-amber-500/30 px-3 py-2 text-[14px] text-amber-800">
+        <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border-l-4 border-l-amber-500 border-y border-r border-y-amber-500/20 border-r-amber-500/20 px-4 py-2.5 text-[14px] text-amber-800">
           <AlertTriangle size={14} className="mt-0.5 shrink-0" />
           <span>
             <strong>Внимание:</strong> себестоимость ({fmtMoney(cost)}) выше цены по договору ({fmtMoney(total)}).
@@ -190,7 +195,7 @@ export default function OrderForm({
             </div>
           </Card>
 
-          {/* Финансы */}
+          {/* Финансы: 3 поля + сводка */}
           <Card title="Финансы">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               <label>
@@ -224,13 +229,16 @@ export default function OrderForm({
                 {fe['finalPayment'] && <span className="text-xs text-bad mt-1 block">{fe['finalPayment']}</span>}
               </label>
 
-              {/* Себестоимость — только для тех, кому положено (директор/замерщик).
-                  ВАЖНО: для остальных ролей поле в DOM НЕ рендерим вообще —
-                  иначе значение видно в DevTools (утечка финансовых данных).
-                  Сервер всё равно подставит значение из БД через canEditCost(). */}
               {p.canSeeCost && (
                 <label>
-                  <FieldLabel>Себестоимость, ₽ <span className="normal-case text-ink-400">(внутри)</span></FieldLabel>
+                  <FieldLabel>
+                    <span className="inline-flex items-center gap-1">
+                      Себестоимость, ₽
+                      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-ink-900/[0.06] text-ink-700 text-[9px] tracking-wider normal-case">
+                        <Lock size={8} /> приватно
+                      </span>
+                    </span>
+                  </FieldLabel>
                   <Input
                     type="number" name="costAmount" defaultValue={Number(order?.costAmount ?? 0)}
                     disabled={disableCost}
@@ -240,23 +248,25 @@ export default function OrderForm({
                   {fe['costAmount'] && <span className="text-xs text-bad mt-1 block">{fe['costAmount']}</span>}
                 </label>
               )}
+            </div>
 
-              <div>
-                <FieldLabel>К доплате клиентом</FieldLabel>
-                <div className="mt-1 px-3 py-2 rounded-md bg-canvas text-ink-900 font-semibold tabular-nums text-[14px]">
-                  {fmtMoney(remaining)}
-                </div>
-              </div>
-
+            {/* Сводка вычисляемых: единый блок, выделен фоном — это не инпуты */}
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 px-4 py-3 rounded-md bg-canvas border border-line">
+              <Metric label="К доплате клиентом" value={fmtMoney(remaining)} size="md" />
               {p.canSeeCost && (
-                <div>
-                  <FieldLabel>Маржа <span className="normal-case text-ink-400">(внутри)</span></FieldLabel>
-                  <div className={`mt-1 px-3 py-2 rounded-md font-semibold tabular-nums text-[14px] ${
-                    margin >= 0 ? 'bg-ok/10 text-ok' : 'bg-bad/10 text-bad'
-                  }`}>
-                    {margin >= 0 ? '+' : ''}{fmtMoney(margin)}
-                  </div>
-                </div>
+                <Metric
+                  label={
+                    <span className="inline-flex items-center gap-1">
+                      Маржа
+                      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-ink-900/[0.06] text-ink-700 text-[9px] tracking-wider normal-case">
+                        <Lock size={8} /> приватно
+                      </span>
+                    </span>
+                  }
+                  value={(margin >= 0 ? '+' : '') + fmtMoney(margin)}
+                  tone={margin >= 0 ? 'ok' : 'bad'}
+                  size="md"
+                />
               )}
             </div>
           </Card>
@@ -266,18 +276,30 @@ export default function OrderForm({
 
         {/* Правая колонка */}
         <aside className="space-y-4">
-          <Card title="Этап">
-            <Select name="stage" defaultValue={order?.stage ?? 'new'} disabled={disableStage}>
-              {availableStages.map((s, i) => (
-                <option key={s} value={s}>{i + 1}. {STAGE_LABEL[s]}</option>
-              ))}
+          {/* Этап в сайдбаре — fallback select для мобильных и доступности.
+              На десктопе главное действие — stepper выше. */}
+          <Card title="Этап (резервный)">
+            <Select
+              name="stage"
+              value={stage}
+              onChange={(e) => {
+                setStage(e.target.value as Stage);
+              }}
+              disabled={lockedClosed}
+            >
+              {/* Дублирует stepper, но на старых браузерах / без JS работает */}
+              {(['new','survey_scheduled','survey_done','production','ready_to_install','installed','pending_closure'] as Stage[])
+                .concat(p.canCloseDirect ? (['closed'] as Stage[]) : [])
+                .map((s, i) => (
+                  <option key={s} value={s}>{i + 1}. {s}</option>
+                ))}
             </Select>
+            {fe['stage'] && <span className="text-xs text-bad mt-1 block">{fe['stage']}</span>}
             {!p.canCloseDirect && order?.stage !== 'closed' && (
               <div className="mt-2 text-[12px] text-ink-500">
-                Чтобы закрыть заказ — выбери «Ожидает закрытия». Директор подтвердит в панели.
+                Чтобы закрыть заказ — выберите «Ожидает закрытия». Директор подтвердит в панели.
               </div>
             )}
-            {fe['stage'] && <span className="text-xs text-bad mt-1 block">{fe['stage']}</span>}
           </Card>
 
           <Card title="Замер">
@@ -321,27 +343,52 @@ export default function OrderForm({
               </Select>
             </label>
           </Card>
-
-          <SaveButton label={mode === 'create' ? 'Создать' : 'Сохранить'} />
-
-          {p.canDelete && order && <DeleteButton orderId={order.id} />}
         </aside>
+      </div>
+
+      {/* Sticky bottom bar: всегда виден на скролле длинной формы */}
+      <div className="sticky bottom-0 -mx-6 px-6 py-3 bg-canvas/90 backdrop-blur-md border-t border-line z-10">
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-6">
+            <Metric
+              label="К доплате клиентом"
+              value={fmtMoney(remaining)}
+              size="sm"
+            />
+            {p.canSeeCost && (
+              <Metric
+                label="Маржа"
+                value={(margin >= 0 ? '+' : '') + fmtMoney(margin)}
+                tone={margin >= 0 ? 'ok' : 'bad'}
+                size="sm"
+              />
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {p.canDelete && order && <DeleteButton orderId={order.id} />}
+            <SaveButton label={mode === 'create' ? 'Создать' : 'Сохранить'} />
+          </div>
+        </div>
       </div>
     </form>
   );
 }
 
+function SaveButton({ label }: { label: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" disabled={pending}>
+      <Save size={14} /> {pending ? 'Сохранение…' : label}
+    </Button>
+  );
+}
+
 function DeleteButton({ orderId }: { orderId: string }) {
-  // Важно: НЕ оборачиваем в <form> — этот компонент рендерится внутри родительской
-  // <form action={formAction}>, а вложенные формы запрещены HTML-спекой
-  // (браузер их «расплющивает», и сабмит уходит в родительскую форму = updateOrderAction).
-  // Поэтому вызываем server action напрямую через useTransition.
   const [pending, start] = useTransition();
   return (
     <Button
       type="button"
       variant="danger"
-      className="w-full"
       disabled={pending}
       onClick={() => {
         if (!confirm('Удалить заказ безвозвратно?')) return;
@@ -350,7 +397,7 @@ function DeleteButton({ orderId }: { orderId: string }) {
         });
       }}
     >
-      <Trash2 size={14} /> {pending ? 'Удаление…' : 'Удалить заказ'}
+      <Trash2 size={14} /> {pending ? 'Удаление…' : 'Удалить'}
     </Button>
   );
 }

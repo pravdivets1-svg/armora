@@ -276,31 +276,15 @@ export default function OrderForm({
 
         {/* Правая колонка */}
         <aside className="space-y-4">
-          {/* Этап в сайдбаре — fallback select для мобильных и доступности.
-              На десктопе главное действие — stepper выше. */}
-          <Card title="Этап (резервный)">
-            <Select
-              name="stage"
-              value={stage}
-              onChange={(e) => {
-                setStage(e.target.value as Stage);
-              }}
-              disabled={lockedClosed}
-            >
-              {/* Дублирует stepper, но на старых браузерах / без JS работает */}
-              {(['new','survey_scheduled','survey_done','production','ready_to_install','installed','pending_closure'] as Stage[])
-                .concat(p.canCloseDirect ? (['closed'] as Stage[]) : [])
-                .map((s, i) => (
-                  <option key={s} value={s}>{i + 1}. {s}</option>
-                ))}
-            </Select>
-            {fe['stage'] && <span className="text-xs text-bad mt-1 block">{fe['stage']}</span>}
-            {!p.canCloseDirect && order?.stage !== 'closed' && (
-              <div className="mt-2 text-[12px] text-ink-500">
-                Чтобы закрыть заказ — выберите «Ожидает закрытия». Директор подтвердит в панели.
-              </div>
-            )}
-          </Card>
+          {/* Этап управляется только через горизонтальный StageStepper выше.
+              Селект убран как избыточный — здесь только скрытое поле, чтобы
+              значение stage уходило в server action при сабмите формы. */}
+          <input type="hidden" name="stage" value={stage} />
+          {fe['stage'] && (
+            <div className="rounded-md bg-bad/5 border-l-4 border-l-bad px-3 py-2 text-[12px] text-bad">
+              {fe['stage']}
+            </div>
+          )}
 
           <Card title="Замер">
             <label className="block">

@@ -133,7 +133,7 @@ export default function PushToggle() {
       <button
         type="button"
         title="Уведомления заблокированы. Разрешите их в настройках браузера для этого сайта."
-        className="text-amber-700 hover:text-amber-800 hover:bg-amber-500/10 p-2 rounded-md"
+        className="text-amber-700 hover:text-amber-800 hover:bg-amber-500/10 w-10 h-10 inline-flex items-center justify-center rounded-md"
       >
         <BellOff size={16} />
       </button>
@@ -146,7 +146,7 @@ export default function PushToggle() {
         type="button"
         onClick={unsubscribe}
         title="Уведомления включены. Нажмите, чтобы отключить."
-        className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-500/10 p-2 rounded-md"
+        className="text-emerald-700 hover:text-emerald-800 hover:bg-emerald-500/10 w-10 h-10 inline-flex items-center justify-center rounded-md"
       >
         <BellRing size={16} />
       </button>
@@ -159,7 +159,7 @@ export default function PushToggle() {
       onClick={subscribe}
       disabled={state === 'busy'}
       title="Включить уведомления о новых задачах"
-      className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06] p-2 rounded-md disabled:opacity-50"
+      className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06] w-10 h-10 inline-flex items-center justify-center rounded-md disabled:opacity-50"
     >
       <Bell size={16} />
     </button>

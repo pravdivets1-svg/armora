@@ -1,7 +1,7 @@
 // Шапка: light editorial.
-// Раньше была тёмная glass-плёнка (bg-black/30) поверх фотофона. Сейчас фон
-// в (admin) светлый, поэтому шапка — тоже светлая, sticky с лёгким back-blur,
-// и тонкой нижней линией. Никаких drop-shadow на тексте.
+// Адаптивная раскладка:
+//   < md (мобилка): лого | гамбургер-меню | поиск | push | logout — всё помещается
+//   md+:            лого | nav-pills | поиск | имя+аватар (lg+) | push | logout
 
 import Link from 'next/link';
 import { Suspense } from 'react';
@@ -33,18 +33,19 @@ export default async function Header() {
 
   return (
     <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-line/80">
-      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-8 min-w-0">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-2 sm:gap-3">
+        {/* Лого + nav слева */}
+        <div className="flex items-center gap-3 md:gap-6 min-w-0 flex-1">
           <Link
             href="/orders"
             className="font-display tracking-tight text-ink-900 text-[20px]
-                       inline-flex items-center gap-2.5"
+                       inline-flex items-center gap-2 shrink-0"
           >
             <span className="inline-flex items-center justify-center w-7 h-7 rounded-md
                              bg-ink-900 text-white text-[13px] font-sans font-bold leading-none">
               A
             </span>
-            <span className="font-medium">Armora</span>
+            <span className="font-medium hidden sm:inline">Armora</span>
           </Link>
           <NavBar
             items={[
@@ -63,17 +64,18 @@ export default async function Header() {
           />
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Действия справа */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           {user && (
             <Suspense fallback={null}>
               <CommandPalette role={user.role} />
             </Suspense>
           )}
           {user && (
-            <div className="hidden sm:flex items-center gap-2.5 text-[14px] pl-2">
+            <div className="hidden xl:flex items-center gap-2.5 text-[14px] pl-2">
               <RoleAvatar role={user.role} name={user.name} />
               <div className="flex flex-col leading-tight">
-                <span className="text-ink-900 font-medium">{user.name}</span>
+                <span className="text-ink-900 font-medium truncate max-w-[140px]">{user.name}</span>
                 <span className="text-ink-500 text-[12px]">{ROLE_LABEL[user.role].toLowerCase()}</span>
               </div>
             </div>

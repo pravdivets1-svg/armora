@@ -7,11 +7,17 @@
 // от background-attachment: fixed.
 
 import { Suspense } from 'react';
+import { auth } from '@/auth';
 import Header from '@/components/header';
 import PageTransition from '@/components/page-transition';
 import ToastHost from '@/components/toast-host';
+import FaviconBadge from '@/components/favicon-badge';
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const session = await auth();
+  const role = session?.user?.role;
+  const showLeadBadge = role === 'director' || role === 'manager';
+
   return (
     <div className="min-h-screen bg-canvas bg-page-soft">
       <Header />
@@ -19,6 +25,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <Suspense fallback={null}>
         <ToastHost />
       </Suspense>
+      <FaviconBadge enabled={showLeadBadge} />
     </div>
   );
 }

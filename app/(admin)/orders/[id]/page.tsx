@@ -8,9 +8,11 @@ import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { StageBadge } from '@/components/stage-badge';
 import { PageBack, PageHeader } from '@/components/page-shell';
+import KeyboardShortcuts from '@/components/keyboard-shortcuts';
 import OrderForm from './order-form';
 import PublicLinkBlock from './public-link-block';
 import CommentsBlock from './comments-block';
+import EventLog from './event-log';
 import { updateOrderAction } from '../actions';
 
 export const dynamic = 'force-dynamic';
@@ -30,7 +32,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
 
   // 2) Полная выборка + список назначаемых сотрудников ПАРАЛЛЕЛЬНО.
   //    Также один запрос вместо двух за surveyors/installers — фильтруем в JS.
-  const [order, assignableUsers] = await Promise.all([
+  const [order, assignableUsers, events] = await Promise.all([
     prisma.order.findUnique({
       where: { id: params.id },
       include: {
@@ -46,6 +48,12 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
       where: { isActive: true, role: { in: ['surveyor', 'installer'] } },
       select: { id: true, fullName: true, role: true },
       orderBy: { fullName: 'asc' },
+    }),
+    prisma.orderEvent.findMany({
+      where: { orderId: params.id },
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: { author: { select: { fullName: true, role: true } } },
     }),
   ]);
   if (!order) notFound();
@@ -78,6 +86,14 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         mode="edit"
         comments={<CommentsBlock orderId={order.id} comments={order.comments} />}
       />
+
+      {/* Лента событий — только для staff (исполнителям не показываем
+          финансовые изменения в истории). */}
+      {isStaff(me.role) && (
+        <EventLog events={events} />
+      )}
+
+      <KeyboardShortcuts />
     </main>
   );
 }

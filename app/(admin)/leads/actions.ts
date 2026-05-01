@@ -72,8 +72,47 @@ export async function deleteLeadAction(leadId: string) {
 }
 
 // =====================================================================
-// Конверсия в Order
+// Bulk actions
 // =====================================================================
+
+const ALLOWED_BULK_STAGES: LeadStage[] = ['contacted', 'scheduled', 'rejected', 'spam', 'new'];
+
+export async function bulkSetLeadStageAction(formData: FormData) {
+  const me = await requireUser();
+  if (!isStaff(me.role)) throw new Error('Forbidden');
+
+  const stage = String(formData.get('stage') ?? '') as LeadStage;
+  if (!ALLOWED_BULK_STAGES.includes(stage)) throw new Error('Invalid stage');
+
+  const idsRaw = String(formData.get('ids') ?? '');
+  const ids = idsRaw.split(',').map((s) => s.trim()).filter(Boolean);
+  if (ids.length === 0) return;
+  // Защита от случайной массовой переразметки converted (там convertedOrderId)
+  await prisma.lead.updateMany({
+    where: { id: { in: ids }, stage: { not: 'converted' } },
+    data: { stage },
+  });
+
+  revalidatePath('/leads');
+  redirect(`/leads?toast=${encodeURIComponent(`Обновлено: ${ids.length}`)}&type=ok`);
+}
+
+export async function bulkDeleteLeadsAction(formData: FormData) {
+  const me = await requireUser();
+  if (me.role !== 'director') throw new Error('Forbidden');
+
+  const idsRaw = String(formData.get('ids') ?? '');
+  const ids = idsRaw.split(',').map((s) => s.trim()).filter(Boolean);
+  if (ids.length === 0) return;
+
+  // Не удаляем converted (с заказом) — иначе ломаем FK convertedOrderId
+  await prisma.lead.deleteMany({
+    where: { id: { in: ids }, stage: { not: 'converted' } },
+  });
+
+  revalidatePath('/leads');
+  redirect(`/leads?toast=${encodeURIComponent(`Удалено: ${ids.length}`)}&type=ok`);
+}
 // Берём данные лида + создаём заказ + связываем lead↔order атомарно.
 // Если в форме что-то правится — клиент вызывает createOrderAction обычным
 // путём, передав ?fromLead=<id>; здесь же — быстрая «прямая» конверсия

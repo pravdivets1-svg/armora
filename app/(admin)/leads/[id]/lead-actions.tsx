@@ -8,6 +8,7 @@ import { CheckCircle2, Phone, CalendarClock, X, AlertOctagon, Trash2, Sparkles, 
 import type { LeadStage } from '@prisma/client';
 
 import { Card, Button, Input, Select, FieldLabel } from '@/components/ui';
+import UndoDeleteButton from '@/components/undo-delete-button';
 import { fmtMoney } from '@/lib/format';
 import {
   setLeadStageAction,
@@ -87,20 +88,14 @@ export default function LeadActions({
         )}
       </Card>
 
-      {/* Удаление — только директор */}
+      {/* Удаление — только директор. Undo-toast вместо confirm() */}
       {isDirector && (
-        <form action={deleteLeadAction.bind(null, leadId)}>
-          <button
-            type="submit"
-            onClick={(e) => {
-              if (!confirm('Удалить заявку? Действие необратимо.')) e.preventDefault();
-            }}
-            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md
-                       text-bad hover:bg-bad/5 text-[13px] font-medium"
-          >
-            <Trash2 size={13} /> Удалить заявку
-          </button>
-        </form>
+        <UndoDeleteButton
+          action={() => deleteLeadAction(leadId)}
+          successMessage="Заявка удалена"
+          label="Удалить заявку"
+          className="w-full"
+        />
       )}
     </div>
   );

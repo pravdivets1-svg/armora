@@ -146,18 +146,6 @@ input[type="datetime-local"]::-webkit-date-and-time-value {
 }
 
 /* =====================================================================
-   Утилита: тонкая sticky-шапка с back-blur
-   ===================================================================== */
-.sticky-bar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  background: rgba(250, 250, 247, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
-/* =====================================================================
    Density toggle: data-density на <html> регулирует плотность таблиц.
    Применяется только к таблицам с классом .table-density.
    ===================================================================== */
@@ -170,4 +158,39 @@ html[data-density="compact"] .table-density tbody th {
 html[data-density="compact"] .table-density thead th {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
+}
+
+/* =====================================================================
+   Skeleton-shimmer — для loading.tsx во всех list-страницах.
+   Использование: <div className="skeleton h-4 w-32" />
+   ===================================================================== */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(15, 15, 15, 0.05);
+  border-radius: 6px;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.55),
+    transparent
+  );
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* =====================================================================
+   Анимация появления плавающего action-bar (bulk select)
+   ===================================================================== */
+@keyframes bar-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
 }

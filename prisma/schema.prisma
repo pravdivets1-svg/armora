@@ -38,6 +38,7 @@ model User {
   sessions          Session[]
   pushSubscriptions PushSubscription[]
   assignedLeads     Lead[]         @relation("AssignedLeads")
+  events            OrderEvent[]
 
   @@map("users")
 }
@@ -101,6 +102,7 @@ model Order {
   installer User?          @relation("InstallerOrders", fields: [installerId], references: [id])
   createdBy User           @relation("CreatedByOrders", fields: [createdById], references: [id])
   comments  OrderComment[]
+  events    OrderEvent[]
   fromLead  Lead?          @relation("ConvertedFromLead")
 
   // Индексы под типичные запросы
@@ -132,6 +134,52 @@ model OrderComment {
 
   @@index([orderId])
   @@map("order_comments")
+}
+
+// =====================================================================
+// События по заказу (audit log)
+// =====================================================================
+// Каждое значимое изменение пишется отдельной записью. Вмещаем:
+//   - смены этапа (kind=stage)
+//   - смены назначений (kind=assign_surveyor / assign_installer)
+//   - смены дат (kind=date_survey / date_install)
+//   - изменения финансов (kind=money_total / money_prepay / money_final / money_cost)
+//   - комментарии тоже регистрируем как event (kind=comment) — для единой ленты
+// Поля before/after — JSON, чтобы не делать миллион колонок.
+
+enum OrderEventKind {
+  created
+  stage
+  assign_surveyor
+  assign_installer
+  date_survey
+  date_install
+  money_total
+  money_prepay
+  money_final
+  money_cost
+  client_data
+  comment
+  closed
+}
+
+model OrderEvent {
+  id        String         @id @default(uuid())
+  orderId   String         @map("order_id")
+  authorId  String?        @map("author_id")
+  kind      OrderEventKind
+  // Краткое описание для UI: "Замер: 14.05 17:00 → 15.05 12:00"
+  summary   String         @default("")
+  // Старое и новое значение (любого типа). Для comment.before=null, after={text}
+  before    Json?
+  after     Json?
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([orderId, createdAt])
+  @@map("order_events")
 }
 
 // =====================================================================

@@ -13,6 +13,7 @@ import { requireUser } from '@/lib/auth-helpers';
 import { isStaff } from '@/lib/auth-helpers';
 import { isStageTransitionAllowed, transitionErrorMessage } from '@/lib/stage-transitions';
 import { notifyOrderChanges, notifySafe } from '@/lib/push';
+import { diffOrderEvents, snapshotFromOrder } from '@/lib/order-events';
 import type { Stage, Role } from '@prisma/client';
 
 // =====================================================================
@@ -193,6 +194,17 @@ export async function createOrderAction(
     },
   });
 
+  // Audit log: запись о создании
+  await prisma.orderEvent.create({
+    data: {
+      orderId:  order.id,
+      authorId: me.id,
+      kind:     'created',
+      summary:  `Заказ создан · ${order.clientName}`,
+      after:    snapshotFromOrder(order) as any,
+    },
+  });
+
   // Триггер пушей: для нового заказа before=null
   void notifySafe(() => notifyOrderChanges(null, {
     id: order.id,
@@ -282,6 +294,42 @@ export async function updateOrderAction(
   const data = buildUpdatePayload(me.role, existing, d);
 
   const updated = await prisma.order.update({ where: { id: orderId }, data });
+
+  // Audit log: вычисляем дельту и пишем createMany
+  try {
+    const before = snapshotFromOrder(existing);
+    const after  = snapshotFromOrder(updated);
+    // Имена пользователей для красивых summary (берём только нужные id)
+    const userIds = new Set<string>();
+    for (const id of [before.surveyorId, before.installerId, after.surveyorId, after.installerId]) {
+      if (id) userIds.add(id);
+    }
+    let nameMap: Record<string, string> = {};
+    if (userIds.size > 0) {
+      const users = await prisma.user.findMany({
+        where: { id: { in: [...userIds] } },
+        select: { id: true, fullName: true },
+      });
+      nameMap = Object.fromEntries(users.map((u) => [u.id, u.fullName]));
+    }
+    const events = diffOrderEvents({
+      orderId, authorId: me.id, before, after, userNameMap: nameMap,
+    });
+    if (events.length > 0) {
+      await prisma.orderEvent.createMany({
+        data: events.map((e) => ({
+          orderId:  e.orderId,
+          authorId: e.authorId,
+          kind:     e.kind,
+          summary:  e.summary,
+          before:   (e.before ?? null) as any,
+          after:    (e.after ?? null) as any,
+        })),
+      });
+    }
+  } catch (e) {
+    console.warn('[audit] failed to write order events', e);
+  }
 
   // Триггер пушей: сравниваем before/after
   void notifySafe(() => notifyOrderChanges(
@@ -489,6 +537,17 @@ export async function addCommentAction(
 
   await prisma.orderComment.create({
     data: { orderId, authorId: me.id, text: parsed.data.text },
+  });
+
+  // Audit log: комментарий тоже event
+  await prisma.orderEvent.create({
+    data: {
+      orderId,
+      authorId: me.id,
+      kind: 'comment',
+      summary: parsed.data.text.length > 80 ? parsed.data.text.slice(0, 80) + '…' : parsed.data.text,
+      after: { text: parsed.data.text } as any,
+    },
   });
 
   revalidatePath(`/orders/${orderId}`);

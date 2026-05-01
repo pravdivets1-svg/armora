@@ -15,6 +15,7 @@ import { EmptyState } from '@/components/empty-state';
 import DensityToggle from '@/components/density-toggle';
 import { Button, Input, Select } from '@/components/ui';
 import { PageShell, PageHeader, Toolbar } from '@/components/page-shell';
+import SavedViews from '@/components/saved-views';
 
 export const metadata = { title: 'Заказы — Armora' };
 // Всегда свежий список: после смены этапа в карточке заказа
@@ -117,6 +118,12 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
         {/* Скрытая form-элемент, к которой привязаны Input/Select через атрибут form */}
         <form id="orders-filter" method="get" className="hidden" />
       </Toolbar>
+
+      {/* Saved views — закреплённые комбинации фильтров */}
+      <SavedViews
+        stageLabels={STAGE_LABEL as Record<string, string>}
+        userMap={Object.fromEntries(assignable.map((u) => [u.id, u.fullName]))}
+      />
 
       {/* Десктоп-таблица */}
       <div className="hidden md:block bg-white border border-line rounded-2xl overflow-hidden shadow-soft">

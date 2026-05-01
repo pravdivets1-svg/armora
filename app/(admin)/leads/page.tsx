@@ -13,6 +13,7 @@ import { EmptyState } from '@/components/empty-state';
 import { Metric, MetricCard } from '@/components/metric';
 import { Input } from '@/components/ui';
 import { PageHeader } from '@/components/page-shell';
+import LeadsBulkBar from './bulk-bar';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Заявки — Armora' };
@@ -108,55 +109,77 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
           description={q || stage ? 'По текущему фильтру ничего не найдено' : 'Когда придёт первая заявка с сайта — она появится тут'}
         />
       ) : (
-        <div className="space-y-2">
-          {leads.map((lead) => (
-            <Link
-              key={lead.id}
-              href={`/leads/${lead.id}`}
-              className="block bg-white border border-line rounded-lg px-5 py-4
-                         hover:border-ink-900/20 hover:shadow-soft transition-all"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px]
-                                      uppercase tracking-wider font-semibold ${LEAD_STAGE_TONE[lead.stage]}`}>
-                      {LEAD_STAGE_LABEL[lead.stage]}
-                    </span>
-                    <span className="text-[11px] text-ink-500 uppercase tracking-wider">
-                      №{lead.number}
-                    </span>
-                    <span className="text-[11px] text-ink-400 inline-flex items-center gap-1">
-                      <Clock size={11} /> {fmtDateTime(lead.createdAt)}
-                    </span>
-                  </div>
-                  <div className="font-semibold text-ink-900 truncate">{lead.clientName}</div>
-                  <div className="text-[13px] text-ink-700 inline-flex items-center gap-3 mt-0.5 flex-wrap">
-                    <span className="inline-flex items-center gap-1 tabular-nums">
-                      <Phone size={12} className="text-ink-400" /> {lead.clientPhone}
-                    </span>
-                    {lead.clientAddress && (
-                      <span className="inline-flex items-center gap-1 truncate">
-                        <MapPin size={12} className="text-ink-400" /> {lead.clientAddress}
+        <LeadsBulkBar isDirector={me.role === 'director'}>
+          <div className="space-y-2">
+            {leads.map((lead) => (
+              <div
+                key={lead.id}
+                className="relative bg-white border border-line rounded-lg pl-12 pr-5 py-4
+                           hover:border-ink-900/20 hover:shadow-soft transition-all
+                           has-[input:checked]:border-accent has-[input:checked]:bg-accent-soft/30"
+              >
+                {/* Чекбокс — поверх карточки слева */}
+                <label
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 cursor-pointer p-1
+                             text-ink-400 hover:text-ink-900"
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={`Выбрать заявку №${lead.number}`}
+                >
+                  <input
+                    type="checkbox"
+                    data-lead-id={lead.id}
+                    className="w-4 h-4 accent-accent cursor-pointer"
+                  />
+                </label>
+
+                <Link
+                  href={`/leads/${lead.id}`}
+                  className="absolute inset-0 z-0 rounded-lg"
+                  aria-label={`Открыть заявку №${lead.number} от ${lead.clientName}`}
+                />
+
+                <div className="relative z-[1] flex items-start justify-between gap-4 pointer-events-none">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px]
+                                        uppercase tracking-wider font-semibold ${LEAD_STAGE_TONE[lead.stage]}`}>
+                        {LEAD_STAGE_LABEL[lead.stage]}
                       </span>
+                      <span className="text-[11px] text-ink-500 uppercase tracking-wider">
+                        №{lead.number}
+                      </span>
+                      <span className="text-[11px] text-ink-400 inline-flex items-center gap-1">
+                        <Clock size={11} /> {fmtDateTime(lead.createdAt)}
+                      </span>
+                    </div>
+                    <div className="font-semibold text-ink-900 truncate">{lead.clientName}</div>
+                    <div className="text-[13px] text-ink-700 inline-flex items-center gap-3 mt-0.5 flex-wrap">
+                      <span className="inline-flex items-center gap-1 tabular-nums">
+                        <Phone size={12} className="text-ink-400" /> {lead.clientPhone}
+                      </span>
+                      {lead.clientAddress && (
+                        <span className="inline-flex items-center gap-1 truncate">
+                          <MapPin size={12} className="text-ink-400" /> {lead.clientAddress}
+                        </span>
+                      )}
+                    </div>
+                    {(lead.widthMm || lead.heightMm) && (
+                      <div className="text-[12px] text-ink-500 mt-0.5">
+                        Размер: {lead.widthMm ?? '?'} × {lead.heightMm ?? '?'} мм
+                      </div>
+                    )}
+                    {lead.assignedTo && (
+                      <div className="text-[12px] text-ink-500 mt-0.5">
+                        Ведёт: {lead.assignedTo.fullName}
+                      </div>
                     )}
                   </div>
-                  {(lead.widthMm || lead.heightMm) && (
-                    <div className="text-[12px] text-ink-500 mt-0.5">
-                      Размер: {lead.widthMm ?? '?'} × {lead.heightMm ?? '?'} мм
-                    </div>
-                  )}
-                  {lead.assignedTo && (
-                    <div className="text-[12px] text-ink-500 mt-0.5">
-                      Ведёт: {lead.assignedTo.fullName}
-                    </div>
-                  )}
+                  <ChevronRight size={16} className="text-ink-400 mt-1 shrink-0" />
                 </div>
-                <ChevronRight size={16} className="text-ink-400 mt-1 shrink-0" />
               </div>
-            </Link>
-          ))}
-        </div>
+            ))}
+          </div>
+        </LeadsBulkBar>
       )}
     </main>
   );

@@ -10,6 +10,7 @@ import { prisma } from '@/lib/prisma';
 import { fmtDateTime, fmtMoney } from '@/lib/format';
 import { LEAD_STAGE_LABEL, LEAD_STAGE_TONE } from '@/lib/lead-labels';
 import { Card, Button } from '@/components/ui';
+import { PageBack, PageHeader } from '@/components/page-shell';
 import { setLeadStageAction, deleteLeadAction, assignLeadAction, convertLeadToOrderAction } from '../actions';
 import LeadActions from './lead-actions';
 
@@ -51,33 +52,22 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-6 py-12 space-y-6">
-      <Link
-        href="/leads"
-        className="inline-flex items-center gap-1.5 text-[13px] text-ink-500 hover:text-ink-900"
-      >
-        <ArrowLeft size={14} /> Все заявки
-      </Link>
+    <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+      <PageBack href="/leads" label="Все заявки" />
 
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <div className="flex items-center gap-2 mb-2">
+      <PageHeader
+        kicker={
+          <span className="inline-flex items-center gap-2">
             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px]
-                              uppercase tracking-wider font-semibold ${LEAD_STAGE_TONE[lead.stage]}`}>
+                              uppercase tracking-wider font-semibold normal-case ${LEAD_STAGE_TONE[lead.stage]}`}>
               {LEAD_STAGE_LABEL[lead.stage]}
             </span>
-            <span className="text-[11px] text-ink-500 uppercase tracking-wider">
-              Заявка №{lead.number}
-            </span>
-          </div>
-          <h1 className="font-display text-[40px] md:text-[48px] leading-[0.95] tracking-tight text-ink-900">
-            {lead.clientName}
-          </h1>
-          <div className="text-[13px] text-ink-500 mt-2">
-            Поступила {fmtDateTime(lead.createdAt)} · источник: {lead.source}
-          </div>
-        </div>
-      </div>
+            Заявка №{lead.number}
+          </span>
+        }
+        title={lead.clientName}
+        sub={`Поступила ${fmtDateTime(lead.createdAt)} · источник: ${lead.source}`}
+      />
 
       {/* Уже создан заказ — баннер */}
       {lead.convertedOrder && (

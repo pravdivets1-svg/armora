@@ -33,14 +33,17 @@ export default function PublicLinkBlock({
           value={url}
           onClick={(e) => (e.target as HTMLInputElement).select()}
           className="flex-1 bg-canvas border border-line text-ink-700
-                     rounded-md px-3 py-1.5 text-xs font-mono"
+                     rounded-md px-3 py-2 text-[12px] font-mono
+                     focus:outline-none focus:border-ink-900/25 focus:ring-4 focus:ring-ink-900/5"
+          aria-label="Ссылка для клиента"
         />
         <div className="flex gap-2">
           <button
             type="button"
             onClick={copy}
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md
-                       text-sm bg-white hover:bg-canvas text-ink-900 border border-line"
+            className="inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-md
+                       text-[13px] bg-white hover:bg-canvas text-ink-900 border border-line
+                       hover:border-ink-900/20 transition-colors"
           >
             {copied ? <><Check size={14} /> Скопировано</> : <><Copy size={14} /> Скопировать</>}
           </button>
@@ -48,8 +51,9 @@ export default function PublicLinkBlock({
             href={waUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md
-                       text-sm bg-notion-green hover:bg-[#3a6f52] text-white font-medium"
+            className="inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-md
+                       text-[13px] bg-whatsapp hover:bg-whatsapp-hover text-white font-medium
+                       transition-colors"
           >
             <MessageCircle size={14} /> WhatsApp
           </a>

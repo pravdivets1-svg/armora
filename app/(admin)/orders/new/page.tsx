@@ -1,12 +1,10 @@
 // /orders/new — modern.
 
-import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
-
 import { requireRole } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import OrderForm from '../[id]/order-form';
 import { createOrderAction } from '../actions';
+import { PageBack, PageHeader } from '@/components/page-shell';
 
 export const metadata = { title: 'Новый заказ — Armora' };
 
@@ -23,18 +21,9 @@ export default async function NewOrderPage() {
   const installers = assignable.filter((u) => u.role === 'installer');
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-12 space-y-8">
-      <Link
-        href="/orders"
-        className="inline-flex items-center gap-1.5 text-[13px] text-ink-500 hover:text-ink-900"
-      >
-        <ArrowLeft size={14} /> Все заказы
-      </Link>
-
-      <div>
-        <div className="text-[11px] text-ink-500 uppercase tracking-wide">Создать</div>
-        <h1 className="font-display text-[48px] md:text-[56px] leading-[0.95] tracking-tight text-ink-900 mt-1">Новый заказ</h1>
-      </div>
+    <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+      <PageBack href="/orders" label="Все заказы" />
+      <PageHeader kicker="Создать" title="Новый заказ" />
 
       <OrderForm
         action={createOrderAction}

@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import UserForm from '../user-form';
 import { updateUserAction } from '../actions';
 import { ROLE_LABEL } from '@/lib/labels';
+import { PageHeader } from '@/components/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Сотрудник — Armora' };
@@ -23,15 +24,8 @@ export default async function EditUserPage({ params }: { params: { id: string } 
   const isSelf = user.id === me.id;
 
   return (
-    <main className="max-w-3xl mx-auto px-6 py-12 space-y-8">
-      <div>
-        <div className="text-[11px] text-ink-500 uppercase tracking-wide">
-          {ROLE_LABEL[user.role]}
-        </div>
-        <h1 className="font-display text-[48px] md:text-[56px] leading-[0.95] tracking-tight text-ink-900 mt-1">
-          {user.fullName}
-        </h1>
-      </div>
+    <main className="max-w-3xl mx-auto px-6 py-10 space-y-8">
+      <PageHeader kicker={ROLE_LABEL[user.role]} title={user.fullName} />
 
       <UserForm
         mode="edit"

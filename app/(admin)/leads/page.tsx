@@ -11,6 +11,8 @@ import { LEAD_STAGE_LABEL, LEAD_STAGE_ORDER, LEAD_STAGE_TONE } from '@/lib/lead-
 import { fmtDateTime } from '@/lib/format';
 import { EmptyState } from '@/components/empty-state';
 import { Metric, MetricCard } from '@/components/metric';
+import { Input } from '@/components/ui';
+import { PageHeader } from '@/components/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Заявки — Armora' };
@@ -57,15 +59,11 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
   const convertedCount = countByStage.converted ?? 0;
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 space-y-8">
-      <div>
-        <h1 className="font-display text-[56px] md:text-[64px] leading-[0.95] tracking-tight text-ink-900">
-          Заявки
-        </h1>
-        <div className="text-[14px] text-ink-500 mt-2">
-          Входящие обращения с сайта и калькулятора
-        </div>
-      </div>
+    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+      <PageHeader
+        title="Заявки"
+        sub="Входящие обращения с сайта и калькулятора"
+      />
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         <MetricCard variant={newCount > 0 ? 'accent' : 'default'}>
@@ -93,12 +91,12 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
         ))}
         <form action="/leads" className="ml-auto">
           {stage && <input type="hidden" name="stage" value={stage} />}
-          <input
+          <Input
             name="q"
             defaultValue={q}
             placeholder="Поиск по имени или телефону"
-            className="bg-white border border-line rounded-md px-3 py-1.5 text-[13px] w-72
-                       focus:outline-none focus:border-ink-900/25 focus:ring-4 focus:ring-ink-900/5"
+            aria-label="Поиск по заявкам"
+            className="w-full md:w-72 h-10"
           />
         </form>
       </div>

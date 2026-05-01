@@ -9,6 +9,8 @@ import { prisma } from '@/lib/prisma';
 import { fmtMoney, fmtDateTime } from '@/lib/format';
 import { Metric, MetricCard } from '@/components/metric';
 import { EmptyState } from '@/components/empty-state';
+import { Button } from '@/components/ui';
+import { PageHeader } from '@/components/page-shell';
 import { approveAction, rejectAction } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -37,13 +39,11 @@ export default async function ClosuresPage() {
   const totalMargin = totalSum - totalCost;
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-12 space-y-8">
-      <div>
-        <h1 className="font-display text-[56px] md:text-[64px] leading-[0.95] tracking-tight text-ink-900">На закрытие</h1>
-        <div className="text-[14px] text-ink-500 mt-2">
-          Заказы, поданные на подтверждение. Только директор может закрыть.
-        </div>
-      </div>
+    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+      <PageHeader
+        title="На закрытие"
+        sub="Заказы, поданные на подтверждение. Только директор может закрыть."
+      />
 
       {orders.length === 0 ? (
         <EmptyState
@@ -124,13 +124,13 @@ export default async function ClosuresPage() {
                         </div>
                       )}
                       {negativeMargin && (
-                        <div className="flex items-center gap-2 text-[12px] text-amber-700">
+                        <div className="flex items-center gap-2 text-[12px] text-warn-softText">
                           <AlertTriangle size={12} />
                           Себестоимость выше цены — заказ убыточен на {fmtMoney(Number(o.costAmount) - Number(o.totalAmount))}
                         </div>
                       )}
                       {remainingForClient > 0 && (
-                        <div className="flex items-center gap-2 text-[12px] text-amber-700">
+                        <div className="flex items-center gap-2 text-[12px] text-warn-softText">
                           <AlertTriangle size={12} />
                           Клиент должен ещё {fmtMoney(remainingForClient)}
                         </div>
@@ -142,7 +142,7 @@ export default async function ClosuresPage() {
                   <div className="px-5 py-2.5 text-[12px] text-ink-500 flex items-center gap-2 flex-wrap">
                     <span>Замер: <span className="text-ink-700">{o.surveyor?.fullName ?? '—'}</span></span>
                     {o.surveyAt && <span className="text-ink-400">· {fmtDateTime(o.surveyAt)}</span>}
-                    <span className="text-ink-300">|</span>
+                    <span className="text-ink-400">|</span>
                     <span>Установка: <span className="text-ink-700">{o.installer?.fullName ?? '—'}</span></span>
                     {o.installAt && <span className="text-ink-400">· {fmtDateTime(o.installAt)}</span>}
                     <Link
@@ -156,25 +156,23 @@ export default async function ClosuresPage() {
                   {/* Действия — sticky-стиль bottom bar */}
                   <div className="px-5 py-3 border-t border-line bg-canvas/40 flex gap-2">
                     <form action={approveAction.bind(null, o.id)} className="flex-1">
-                      <button
+                      <Button
                         type="submit"
+                        variant="success"
                         disabled={incompleteFinances}
-                        className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md
-                                   bg-ok hover:bg-[#166534] text-white font-medium text-[14px]
-                                   disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="w-full"
                       >
                         <CheckCircle2 size={14} /> Подтвердить и закрыть
-                      </button>
+                      </Button>
                     </form>
                     <form action={rejectAction.bind(null, o.id)}>
-                      <button
+                      <Button
                         type="submit"
+                        variant="secondary"
                         title="Вернуть в «Установлена» для доработки"
-                        className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md
-                                   bg-white hover:bg-canvas text-ink-700 border border-line text-[14px]"
                       >
                         <XCircle size={14} /> Вернуть
-                      </button>
+                      </Button>
                     </form>
                   </div>
                 </div>

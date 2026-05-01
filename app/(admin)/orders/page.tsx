@@ -13,7 +13,8 @@ import { fmtDateTime, shortName } from '@/lib/format';
 import { StageBadge } from '@/components/stage-badge';
 import { EmptyState } from '@/components/empty-state';
 import DensityToggle from '@/components/density-toggle';
-import { Button } from '@/components/ui';
+import { Button, Input, Select } from '@/components/ui';
+import { PageShell, PageHeader, Toolbar } from '@/components/page-shell';
 
 export const metadata = { title: 'Заказы — Armora' };
 // Всегда свежий список: после смены этапа в карточке заказа
@@ -41,85 +42,81 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
   const activeFilters = [searchParams.q, stage, searchParams.user].filter(Boolean).length;
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-6">
-      {/* Заголовок: большой, с подзаголовком и primary CTA */}
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display text-[56px] md:text-[64px] leading-[0.95] tracking-tight text-ink-900">Заказы</h1>
-          <div className="text-[14px] text-ink-500 mt-2">
-            {total} {total === 1 ? 'заказ' : total < 5 ? 'заказа' : 'заказов'} в работе
-          </div>
-        </div>
-        {(me.role === 'director' || me.role === 'manager') && (
-          <div className="flex items-center gap-2">
+    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+      {/* Заголовок */}
+      <PageHeader
+        title="Заказы"
+        sub={`${total} ${total === 1 ? 'заказ' : total < 5 ? 'заказа' : 'заказов'} в работе`}
+        actions={
+          <>
             <DensityToggle />
-            <Link href="/orders/new">
-              <Button variant="primary">
-                <Plus size={15} /> Новый заказ
-              </Button>
-            </Link>
-          </div>
-        )}
-        {!(me.role === 'director' || me.role === 'manager') && <DensityToggle />}
-      </div>
+            {(me.role === 'director' || me.role === 'manager') && (
+              <Link href="/orders/new">
+                <Button variant="primary">
+                  <Plus size={15} /> Новый заказ
+                </Button>
+              </Link>
+            )}
+          </>
+        }
+      />
 
       {/* Sticky фильтр-бар. На скролле остаётся под шапкой (h-16=64px). */}
-      <form
-        method="get"
-        className="sticky top-16 z-20 -mx-6 px-6 py-3 bg-canvas/85 backdrop-blur-md border-y border-line"
-      >
-        <div className="flex flex-col md:flex-row gap-2 items-stretch">
-          {/* Поиск */}
-          <div className="relative flex-1 min-w-0">
-            <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none" />
-            <input
-              type="search"
-              name="q"
-              defaultValue={searchParams.q ?? ''}
-              placeholder="Поиск: № / ФИО / телефон / адрес"
-              className="w-full bg-white border border-line text-ink-900 rounded-md pl-10 pr-3 py-2 text-[14px]
-                         placeholder:text-ink-400 hover:border-ink-900/20
-                         focus:outline-none focus:border-ink-900/30"
-            />
-          </div>
-          {/* Этап */}
-          <select
-            name="stage"
-            defaultValue={searchParams.stage ?? ''}
-            className="field bg-white border border-line text-ink-900 rounded-md px-3 py-2 text-[14px]
-                       md:w-52 focus:outline-none hover:border-ink-900/20 focus:border-ink-900/30"
-          >
-            <option value="">Все этапы</option>
-            {STAGE_ORDER.map((s) => (
-              <option key={s} value={s}>{STAGE_LABEL[s]}</option>
-            ))}
-          </select>
-          {/* Сотрудник */}
-          <select
-            name="user"
-            defaultValue={searchParams.user ?? ''}
-            className="field bg-white border border-line text-ink-900 rounded-md px-3 py-2 text-[14px]
-                       md:w-56 focus:outline-none hover:border-ink-900/20 focus:border-ink-900/30"
-          >
-            <option value="">Все сотрудники</option>
-            {assignable.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.fullName} ({ROLE_LABEL[u.role].toLowerCase()})
-              </option>
-            ))}
-          </select>
-          {activeFilters > 0 && (
-            <Link
-              href="/orders"
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-md text-[13px]
-                         text-ink-700 hover:text-ink-900 hover:bg-ink-900/[0.04] border border-transparent"
-            >
-              <X size={13} /> Сбросить
-            </Link>
-          )}
-          <button type="submit" className="hidden" />
+      <Toolbar>
+        {/* Поиск */}
+        <div className="relative flex-1 min-w-0">
+          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none z-10" />
+          <Input
+            type="search"
+            name="q"
+            defaultValue={searchParams.q ?? ''}
+            placeholder="Поиск: № / ФИО / телефон / адрес"
+            form="orders-filter"
+            className="pl-10 h-10"
+            aria-label="Поиск по заказам"
+          />
         </div>
-      </form>
+        {/* Этап */}
+        <Select
+          name="stage"
+          defaultValue={searchParams.stage ?? ''}
+          form="orders-filter"
+          aria-label="Фильтр по этапу"
+          className="md:w-52 h-10"
+        >
+          <option value="">Все этапы</option>
+          {STAGE_ORDER.map((s) => (
+            <option key={s} value={s}>{STAGE_LABEL[s]}</option>
+          ))}
+        </Select>
+        {/* Сотрудник */}
+        <Select
+          name="user"
+          defaultValue={searchParams.user ?? ''}
+          form="orders-filter"
+          aria-label="Фильтр по сотруднику"
+          className="md:w-56 h-10"
+        >
+          <option value="">Все сотрудники</option>
+          {assignable.map((u) => (
+            <option key={u.id} value={u.id}>
+              {u.fullName} ({ROLE_LABEL[u.role].toLowerCase()})
+            </option>
+          ))}
+        </Select>
+        {activeFilters > 0 && (
+          <Link
+            href="/orders"
+            className="inline-flex items-center justify-center gap-1.5 px-3 h-10 rounded-md text-[13px]
+                       text-ink-700 hover:text-ink-900 hover:bg-ink-900/[0.04] border border-transparent
+                       transition-colors"
+          >
+            <X size={13} /> Сбросить
+          </Link>
+        )}
+        {/* Скрытая form-элемент, к которой привязаны Input/Select через атрибут form */}
+        <form id="orders-filter" method="get" className="hidden" />
+      </Toolbar>
 
       {/* Десктоп-таблица */}
       <div className="hidden md:block bg-white border border-line rounded-2xl overflow-hidden shadow-soft">
@@ -171,7 +168,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                       {o.surveyor && <span className="text-ink-500"> · {shortName(o.surveyor.fullName)}</span>}
                     </>
                   ) : (
-                    <span className="text-ink-300">—</span>
+                    <span className="text-ink-400">—</span>
                   )}
                 </td>
                 <td className="px-5 py-3.5 text-ink-700">
@@ -181,7 +178,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                       {o.installer && <span className="text-ink-500"> · {shortName(o.installer.fullName)}</span>}
                     </>
                   ) : (
-                    <span className="text-ink-300">—</span>
+                    <span className="text-ink-400">—</span>
                   )}
                 </td>
               </tr>
@@ -193,7 +190,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
       {/* Мобильные карточки */}
       <div className="md:hidden space-y-2">
         {items.length === 0 && (
-          <div className="text-center text-ink-400 py-12">Заказов нет</div>
+          <EmptyState
+            icon={Inbox}
+            title="Заказов нет"
+            description={searchParams.q || stage || searchParams.user ? 'Попробуйте сбросить фильтры' : undefined}
+          />
         )}
         {items.map((o) => (
           <Link
@@ -254,7 +255,7 @@ function PageLink({
 }) {
   if (disabled) {
     return (
-      <span className="inline-flex items-center justify-center w-8 h-8 rounded-md text-ink-300 border border-line">
+      <span className="inline-flex items-center justify-center w-10 h-10 rounded-md text-ink-300 border border-line">
         {children}
       </span>
     );
@@ -267,7 +268,7 @@ function PageLink({
   return (
     <Link
       href={`/orders?${sp.toString()}`}
-      className="inline-flex items-center justify-center w-8 h-8 rounded-md text-ink-700 hover:bg-ink-900/[0.04] border border-line hover:border-ink-900/20"
+      className="inline-flex items-center justify-center w-10 h-10 rounded-md text-ink-700 hover:bg-ink-900/[0.04] border border-line hover:border-ink-900/20 transition-colors"
     >
       {children}
     </Link>

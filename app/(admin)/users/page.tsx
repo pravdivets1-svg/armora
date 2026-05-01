@@ -9,6 +9,7 @@ import { ROLE_LABEL } from '@/lib/labels';
 import { Button } from '@/components/ui';
 import { EmptyState } from '@/components/empty-state';
 import RoleAvatar from '@/components/role-avatar';
+import { PageHeader } from '@/components/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Сотрудники — Armora' };
@@ -28,22 +29,18 @@ export default async function UsersPage() {
   });
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-12 space-y-8">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="font-display text-[56px] md:text-[64px] leading-[0.95] tracking-tight text-ink-900">
-            Сотрудники
-          </h1>
-          <div className="text-[14px] text-ink-500 mt-2">
-            {users.length} {users.length === 1 ? 'учётная запись' : users.length < 5 ? 'учётные записи' : 'учётных записей'}
-          </div>
-        </div>
-        <Link href="/users/new">
-          <Button variant="primary">
-            <Plus size={14} /> Новый сотрудник
-          </Button>
-        </Link>
-      </div>
+    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+      <PageHeader
+        title="Сотрудники"
+        sub={`${users.length} ${users.length === 1 ? 'учётная запись' : users.length < 5 ? 'учётные записи' : 'учётных записей'}`}
+        actions={
+          <Link href="/users/new">
+            <Button variant="primary">
+              <Plus size={14} /> Новый сотрудник
+            </Button>
+          </Link>
+        }
+      />
 
       {users.length === 0 ? (
         <EmptyState

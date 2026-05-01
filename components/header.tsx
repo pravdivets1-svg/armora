@@ -82,8 +82,10 @@ export default async function Header() {
           <form action={logoutAction}>
             <button
               type="submit"
+              aria-label="Выйти"
               title="Выйти"
-              className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06] p-2 rounded-md transition-colors"
+              className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06]
+                         w-10 h-10 inline-flex items-center justify-center rounded-md transition-colors"
             >
               <LogOut size={16} />
             </button>

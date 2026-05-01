@@ -64,7 +64,7 @@ export default async function CalendarPage({
     : [];
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-12 space-y-8">
+    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
       {/* Editorial-заголовок страницы */}
       <header className="space-y-3">
         <div className="text-[11px] uppercase tracking-[0.2em] text-ink-500 font-medium">

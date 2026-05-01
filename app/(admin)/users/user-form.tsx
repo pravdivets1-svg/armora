@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { Save, Trash2, AlertCircle, ArrowLeft, User as UserIcon, KeyRound, Phone, IdCard, Shield } from 'lucide-react';
 import type { Role } from '@prisma/client';
 import { Card, Input, Select, Button, FieldLabel } from '@/components/ui';
+import { PageBack } from '@/components/page-shell';
 import { ROLE_LABEL } from '@/lib/labels';
 import { deleteUserAction, type UserActionState } from './actions';
 
@@ -40,12 +41,7 @@ export default function UserForm({
 
   return (
     <div className="space-y-6">
-      <Link
-        href="/users"
-        className="inline-flex items-center gap-1.5 text-[13px] text-ink-500 hover:text-ink-900"
-      >
-        <ArrowLeft size={14} /> Все сотрудники
-      </Link>
+      <PageBack href="/users" label="Все сотрудники" />
 
       {state && !state.ok && (
         <div className="bg-white border border-line border-l-4 border-l-bad rounded-lg px-4 py-3

@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react';
 import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { StageBadge } from '@/components/stage-badge';
+import { PageBack, PageHeader } from '@/components/page-shell';
 import OrderForm from './order-form';
 import PublicLinkBlock from './public-link-block';
 import CommentsBlock from './comments-block';
@@ -56,22 +57,15 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
   const publicUrl = `${baseUrl}/order/${order.publicToken}`;
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-12 space-y-8">
-      <Link
-        href="/orders"
-        className="inline-flex items-center gap-1.5 text-[13px] text-ink-500 hover:text-ink-900"
-      >
-        <ArrowLeft size={14} /> Все заказы
-      </Link>
+    <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+      <PageBack href="/orders" label="Все заказы" />
 
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <div className="text-[11px] text-ink-500 uppercase tracking-wide">Заказ</div>
-          <h1 className="font-display text-[48px] md:text-[56px] leading-[0.95] tracking-tight text-ink-900 mt-1">№ {order.number}</h1>
-          <div className="mt-3 text-[15px] text-ink-700">{order.clientName}</div>
-        </div>
-        <StageBadge stage={order.stage} size="md" />
-      </div>
+      <PageHeader
+        kicker="Заказ"
+        title={`№ ${order.number}`}
+        sub={order.clientName}
+        meta={<StageBadge stage={order.stage} size="md" />}
+      />
 
       <PublicLinkBlock url={publicUrl} clientPhone={order.clientPhone} />
 

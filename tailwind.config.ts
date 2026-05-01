@@ -20,6 +20,7 @@ const config: Config = {
           700: '#404040',
           500: '#737373',
           400: '#a3a3a3',
+          300: '#d4d4d4',  // прочерки/disabled-pagination
         },
         accent: {
           // Глубокий индиго — спокойный, профессиональный
@@ -29,8 +30,10 @@ const config: Config = {
           softText:'#4f46e5',
         },
         ok: { DEFAULT: '#15803d', soft: '#f0fdf4' },
-        warn:{ DEFAULT: '#a16207', soft: '#fefce8' },
+        warn:{ DEFAULT: '#a16207', soft: '#fefce8', softText: '#92400e' },
         bad: { DEFAULT: '#b91c1c', soft: '#fef2f2' },
+        // Brand colors сторонних сервисов
+        whatsapp:  { DEFAULT: '#25D366', hover: '#128C7E' },
       },
       borderRadius: {
         DEFAULT: '8px',

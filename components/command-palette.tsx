@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, Plus, ListChecks, CalendarClock, CheckCircle2, ArrowRight, Users, UserPlus, Command as CmdIcon, type LucideIcon } from 'lucide-react';
+import { Search, Plus, ListChecks, CalendarClock, CheckCircle2, ArrowRight, Users, UserPlus, Inbox, Command as CmdIcon, type LucideIcon } from 'lucide-react';
 import type { Role } from '@prisma/client';
 
 type Item = {
@@ -61,6 +61,14 @@ export default function CommandPalette({ role }: { role: Role }) {
       { id: 'today', group: 'Переходы', icon: CalendarClock, label: 'Сегодня', hint: 'Маршрут на сегодня',
         keywords: 'today сегодня маршрут', onRun: () => go('/calendar#today') },
     );
+    if (role === 'director' || role === 'manager') {
+      list.push({
+        id: 'leads', group: 'Переходы', icon: Inbox, label: 'Заявки',
+        hint: 'Входящие с сайта и калькулятора',
+        keywords: 'leads заявки входящие сайт калькулятор',
+        onRun: () => go('/leads'),
+      });
+    }
     if (role === 'director') {
       list.push({
         id: 'closures', group: 'Переходы', icon: CheckCircle2, label: 'На закрытие',

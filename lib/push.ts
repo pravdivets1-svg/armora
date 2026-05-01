@@ -79,6 +79,15 @@ export async function sendPushToDirectors(payload: PushPayload): Promise<void> {
   await sendPushToUsers(directors.map((u) => u.id), payload);
 }
 
+// Отправить директорам и менеджерам — для входящих заявок с сайта
+export async function sendPushToStaff(payload: PushPayload): Promise<void> {
+  const staff = await prisma.user.findMany({
+    where: { role: { in: ['director', 'manager'] }, isActive: true },
+    select: { id: true },
+  });
+  await sendPushToUsers(staff.map((u) => u.id), payload);
+}
+
 // Не оборачивать триггеры в await на критическом пути — глушим ошибки тут.
 // Использование: void notifySafe(() => sendPushToUser(id, payload)).
 export function notifySafe(fn: () => Promise<void>): Promise<void> {

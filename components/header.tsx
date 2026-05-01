@@ -25,6 +25,12 @@ export default async function Header() {
       ? await prisma.order.count({ where: { stage: 'pending_closure' } })
       : 0;
 
+  // Счётчик новых заявок с сайта — для директора и менеджера
+  const newLeads =
+    user?.role === 'director' || user?.role === 'manager'
+      ? await prisma.lead.count({ where: { stage: 'new' } })
+      : 0;
+
   return (
     <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-line/80">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
@@ -44,6 +50,9 @@ export default async function Header() {
             items={[
               { href: '/orders',   label: 'Заказы' },
               { href: '/calendar', label: 'Расписание' },
+              ...(user?.role === 'director' || user?.role === 'manager'
+                ? [{ href: '/leads', label: 'Заявки', badge: newLeads }]
+                : []),
               ...(user?.role === 'director'
                 ? [
                     { href: '/closures', label: 'На закрытие', badge: pendingClosures },

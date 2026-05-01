@@ -37,6 +37,7 @@ model User {
   comments          OrderComment[]
   sessions          Session[]
   pushSubscriptions PushSubscription[]
+  assignedLeads     Lead[]         @relation("AssignedLeads")
 
   @@map("users")
 }
@@ -100,6 +101,7 @@ model Order {
   installer User?          @relation("InstallerOrders", fields: [installerId], references: [id])
   createdBy User           @relation("CreatedByOrders", fields: [createdById], references: [id])
   comments  OrderComment[]
+  fromLead  Lead?          @relation("ConvertedFromLead")
 
   // Индексы под типичные запросы
   @@index([stage])
@@ -191,4 +193,80 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+// =====================================================================
+// Заявки с сайта (calculator → lead → конверсия в Order)
+// =====================================================================
+// Lead — это входящая заявка с публичной формы. Хранится отдельно от
+// Order, чтобы:
+//   1) не мешать спам/мусор реальным заказам (статусы spam, rejected);
+//   2) сохранить весь сырой payload калькулятора (JSON) — даже если
+//      форма поменяется, история останется;
+//   3) видеть конверсию: сколько лидов → сколько закрытых заказов.
+// При нажатии «Создать заказ» Lead.stage становится converted и
+// проставляется convertedOrderId.
+
+enum LeadStage {
+  new          // 1. Только что пришла, никто не смотрел
+  contacted    // 2. Менеджер связался
+  scheduled    // 3. Договорились на замер
+  converted    // 4. Создан заказ → convertedOrderId
+  rejected     // 5. Отказ клиента
+  spam         // 6. Помечена как мусор/бот
+}
+
+model Lead {
+  id     String @id @default(uuid())
+  number Int    @unique @default(autoincrement())
+
+  // Контакты клиента (минимально обязательно: имя+телефон)
+  clientName        String  @map("client_name")
+  clientPhone       String  @map("client_phone")
+  clientPhoneDigits String  @default("") @map("client_phone_digits")
+  clientAddress     String? @map("client_address")
+
+  // Опциональные параметры двери (для предзаполнения Order)
+  widthMm  Int? @map("width_mm")
+  heightMm Int? @map("height_mm")
+
+  // Свободный комментарий клиента
+  comment String @default("")
+
+  // Сырой payload с калькулятора — любые доп. поля (цвет, замок, отделка...).
+  // Используем JSON, чтобы схема не ломалась при изменении формы.
+  payload Json @default("{}")
+
+  // Прикинутая клиентом цена в калькуляторе (для справки)
+  estimatedPrice Decimal? @map("estimated_price") @db.Decimal(10, 2)
+
+  // Источник: 'calc' (внутренний калькулятор), 'landing', 'phone' и т.п.
+  source String @default("calc")
+
+  // Статус воронки
+  stage LeadStage @default(new)
+
+  // Назначение (опционально — кто из менеджеров ведёт)
+  assignedToId String? @map("assigned_to_id")
+  assignedTo   User?   @relation("AssignedLeads", fields: [assignedToId], references: [id])
+
+  // Конверсия в заказ
+  convertedOrderId String? @unique @map("converted_order_id")
+  convertedOrder   Order?  @relation("ConvertedFromLead", fields: [convertedOrderId], references: [id])
+
+  // Метаданные/аналитика
+  ip           String?
+  userAgent    String? @map("user_agent")
+  utmSource    String? @map("utm_source")
+  utmMedium    String? @map("utm_medium")
+  utmCampaign  String? @map("utm_campaign")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([stage])
+  @@index([clientPhoneDigits])
+  @@index([createdAt])
+  @@index([assignedToId])
+  @@map("leads")
 }

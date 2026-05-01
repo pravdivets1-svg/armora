@@ -9,11 +9,11 @@
 //   роль    — director | manager | surveyor | installer
 
 import { useFormState, useFormStatus } from 'react-dom';
-import Link from 'next/link';
-import { Save, Trash2, AlertCircle, ArrowLeft, User as UserIcon, KeyRound, Phone, IdCard, Shield } from 'lucide-react';
+import { Save, AlertCircle, User as UserIcon, IdCard } from 'lucide-react';
 import type { Role } from '@prisma/client';
 import { Card, Input, Select, Button, FieldLabel } from '@/components/ui';
 import { PageBack } from '@/components/page-shell';
+import UndoDeleteButton from '@/components/undo-delete-button';
 import { ROLE_LABEL } from '@/lib/labels';
 import { deleteUserAction, type UserActionState } from './actions';
 
@@ -170,16 +170,10 @@ function SubmitButton({ mode }: { mode: 'create' | 'edit' }) {
 
 function DeleteButton({ userId }: { userId: string }) {
   return (
-    <form action={deleteUserAction.bind(null, userId)}>
-      <Button
-        type="submit"
-        variant="danger"
-        onClick={(e) => {
-          if (!confirm('Удалить сотрудника? Действие необратимо.')) e.preventDefault();
-        }}
-      >
-        <Trash2 size={14} /> Удалить
-      </Button>
-    </form>
+    <UndoDeleteButton
+      action={async () => { await deleteUserAction(userId); }}
+      label="Удалить сотрудника"
+      successMessage="Сотрудник будет удалён"
+    />
   );
 }

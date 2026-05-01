@@ -10,13 +10,14 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { flushSync } from 'react-dom';
-import { Save, Trash2, AlertCircle, CheckCircle2, AlertTriangle, Lock } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle2, AlertTriangle, Lock } from 'lucide-react';
 import type { Stage, Role } from '@prisma/client';
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, Input, Textarea, Select, Button, FieldLabel } from '@/components/ui';
 import { fmtMoney } from '@/lib/format';
 import { Metric } from '@/components/metric';
 import StageStepper from '@/components/stage-stepper';
+import UndoDeleteButton from '@/components/undo-delete-button';
 import { deleteOrderAction, type OrderActionState } from '../actions';
 import AddressField from './address-field';
 
@@ -463,20 +464,11 @@ function SaveButton({ label }: { label: string }) {
 }
 
 function DeleteButton({ orderId }: { orderId: string }) {
-  const [pending, start] = useTransition();
   return (
-    <Button
-      type="button"
-      variant="danger"
-      disabled={pending}
-      onClick={() => {
-        if (!confirm('Удалить заказ безвозвратно?')) return;
-        start(async () => {
-          await deleteOrderAction(orderId);
-        });
-      }}
-    >
-      <Trash2 size={14} /> {pending ? 'Удаление…' : 'Удалить'}
-    </Button>
+    <UndoDeleteButton
+      action={async () => { await deleteOrderAction(orderId); }}
+      label="Удалить заказ"
+      successMessage="Заказ будет удалён"
+    />
   );
 }

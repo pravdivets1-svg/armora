@@ -14,7 +14,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Search, Plus, ListChecks, CalendarClock, CheckCircle2, ArrowRight, Command as CmdIcon, type LucideIcon } from 'lucide-react';
+import { Search, Plus, ListChecks, CalendarClock, CheckCircle2, ArrowRight, Users, UserPlus, Command as CmdIcon, type LucideIcon } from 'lucide-react';
 import type { Role } from '@prisma/client';
 
 type Item = {
@@ -67,6 +67,18 @@ export default function CommandPalette({ role }: { role: Role }) {
         hint: 'Очередь подтверждений',
         keywords: 'closures закрытие подтверждение',
         onRun: () => go('/closures'),
+      });
+      list.push({
+        id: 'users', group: 'Переходы', icon: Users, label: 'Сотрудники',
+        hint: 'Учётные записи и доступы',
+        keywords: 'users сотрудники пользователи логины пароли',
+        onRun: () => go('/users'),
+      });
+      list.push({
+        id: 'user-new', group: 'Действия', icon: UserPlus, label: 'Новый сотрудник',
+        hint: 'Создать учётную запись',
+        keywords: 'new user создать сотрудника пользователя логин',
+        onRun: () => go('/users/new'),
       });
     }
     return list;

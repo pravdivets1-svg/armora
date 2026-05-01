@@ -45,7 +45,10 @@ export default async function Header() {
               { href: '/orders',   label: 'Заказы' },
               { href: '/calendar', label: 'Расписание' },
               ...(user?.role === 'director'
-                ? [{ href: '/closures', label: 'На закрытие', badge: pendingClosures }]
+                ? [
+                    { href: '/closures', label: 'На закрытие', badge: pendingClosures },
+                    { href: '/users',    label: 'Сотрудники' },
+                  ]
                 : []),
             ]}
           />

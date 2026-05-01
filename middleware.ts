@@ -14,6 +14,7 @@ import { NextResponse } from 'next/server';
 // Точное соответствие или префикс с "/" — чтобы /closures-foo не считался /closures.
 const ROLE_GUARDED: Array<{ prefix: string; roles: ReadonlyArray<string> }> = [
   { prefix: '/closures', roles: ['director'] },
+  { prefix: '/users',    roles: ['director'] },
   { prefix: '/orders/new', roles: ['director', 'manager'] },
 ];
 

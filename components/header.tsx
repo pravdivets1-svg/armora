@@ -72,7 +72,7 @@ export default async function Header() {
             </Suspense>
           )}
           {user && (
-            <div className="hidden xl:flex items-center gap-2.5 text-[14px] pl-2">
+            <div className="hidden 2xl:flex items-center gap-2.5 text-[14px] pl-2">
               <RoleAvatar role={user.role} name={user.name} />
               <div className="flex flex-col leading-tight">
                 <span className="text-ink-900 font-medium truncate max-w-[140px]">{user.name}</span>

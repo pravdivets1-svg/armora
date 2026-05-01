@@ -178,7 +178,7 @@ export default function CommandPalette({ role }: { role: Role }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="hidden lg:inline-flex items-center gap-2 w-56 xl:w-72
+        className="hidden 2xl:inline-flex items-center gap-2 w-64
                    bg-ink-900/[0.04] hover:bg-ink-900/[0.06]
                    border border-transparent hover:border-ink-900/10
                    rounded-lg pl-3 pr-2 py-1.5 text-[13px] text-ink-500
@@ -197,7 +197,7 @@ export default function CommandPalette({ role }: { role: Role }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="lg:hidden w-10 h-10 inline-flex items-center justify-center rounded-md text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06]"
+        className="2xl:hidden w-10 h-10 inline-flex items-center justify-center rounded-md text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06]"
         aria-label="Поиск"
       >
         <Search size={16} />

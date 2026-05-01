@@ -34,9 +34,11 @@ export default function NavBar({ items }: { items: NavItem[] }) {
 
   return (
     <>
-      {/* Десктоп: inline pills */}
+      {/* Десктоп: inline pills (только на широких экранах от xl=1280px,
+          т.к. у директора 5 пунктов + лого + поиск + push + logout не
+          помещаются в одну строку даже на стандартном 13"-ноутбуке 1366px). */}
       <LayoutGroup id="nav">
-        <nav className="hidden md:flex items-center gap-1 relative">
+        <nav className="hidden xl:flex items-center gap-1 relative">
           {items.map((item) => {
             const active = pathname === item.href || pathname.startsWith(item.href + '/');
             return (
@@ -72,7 +74,7 @@ export default function NavBar({ items }: { items: NavItem[] }) {
         onClick={() => setOpen((v) => !v)}
         aria-label="Меню"
         aria-expanded={open}
-        className="md:hidden relative w-10 h-10 inline-flex items-center justify-center rounded-md
+        className="xl:hidden relative w-10 h-10 inline-flex items-center justify-center rounded-md
                    text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06] transition-colors"
       >
         {open ? <X size={18} /> : <Menu size={18} />}
@@ -90,7 +92,7 @@ export default function NavBar({ items }: { items: NavItem[] }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="md:hidden fixed inset-0 top-16 bg-ink-900/20 z-20"
+              className="xl:hidden fixed inset-0 top-16 bg-ink-900/20 z-20"
               onClick={() => setOpen(false)}
             />
             <motion.nav
@@ -98,7 +100,7 @@ export default function NavBar({ items }: { items: NavItem[] }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
-              className="md:hidden absolute left-0 right-0 top-full bg-white border-b border-line shadow-soft z-30"
+              className="xl:hidden absolute left-0 right-0 top-full bg-white border-b border-line shadow-soft z-30"
             >
               <ul className="max-w-6xl mx-auto px-4 py-2">
                 {items.map((item) => {

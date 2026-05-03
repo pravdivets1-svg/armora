@@ -11,7 +11,7 @@ Copilot и т.д.), работающего с проектом. Прочитай
 **Armora** — внутреннее веб-приложение для учёта заказов металлических входных
 дверей. Команда: 4 сотрудника. Работа с компьютера и телефона.
 
-- Прод: **https://pravdivets1-svg-armora-6743.twc1.net**
+- Прод: **https://армора.рф** (punycode: `xn--80aa0aebnli8b.xn--p1ai`)
 - Репо: **https://github.com/pravdivets1-svg/armora** (приватный, ветка `main`)
 - Папка локально: `C:\Users\Mi\приложение`
 - Хостинг: **Timeweb Cloud Apps** (Россия, 152-ФЗ, ~600₽/мес)
@@ -93,9 +93,9 @@ Env vars в Timeweb Cloud App:
 ```
 DATABASE_URL                     postgresql://gen_user:vovka2183@85.239.55.23:5432/default_db?sslmode=require
 AUTH_SECRET                      uoQtINfRlC8dUz8f4bzk0Je7chWacqYJDWI2z5sBY+c=
-AUTH_URL                         https://pravdivets1-svg-armora-6743.twc1.net
+AUTH_URL                         https://армора.рф
 AUTH_TRUST_HOST                  true
-NEXT_PUBLIC_APP_URL              https://pravdivets1-svg-armora-6743.twc1.net
+NEXT_PUBLIC_APP_URL              https://армора.рф
 NODE_ENV                         production
 NEXT_PUBLIC_COMPANY_NAME         Armora
 NEXT_PUBLIC_COMPANY_PHONE        +7 (495) 123-45-67
@@ -128,7 +128,7 @@ NEXT_PUBLIC_COMPANY_PHONE_DIGITS 74951234567
    git -c user.email=dev@armora.local -c user.name=Armora commit -m "<msg>"
    git push
 7. Подождать 3–7 мин — Timeweb сам соберёт и передеплоит.
-8. Проверить на https://pravdivets1-svg-armora-6743.twc1.net
+8. Проверить на https://армора.рф
 ```
 
 ## Полезные команды

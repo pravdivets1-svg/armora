@@ -14,6 +14,7 @@
 import { prisma } from '@/lib/prisma';
 import type { Role } from '@prisma/client';
 import { isStaff } from '@/lib/auth-helpers';
+import { mskDayStart } from '@/lib/format';
 
 export type EventKind = 'survey' | 'install';
 
@@ -40,12 +41,6 @@ export type ScheduleSummary = {
 
 const PAST_DAYS = 7;
 const FUTURE_DAYS = 30;
-
-function dayStart(d: Date): Date {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-}
 
 export async function loadSchedule(
   me: { id: string; role: Role },
@@ -121,10 +116,9 @@ export async function loadSchedule(
 
   const events = [...surveys, ...installs].sort((a, b) => a.at.getTime() - b.at.getTime());
 
-  // Сводка
-  const today = dayStart(now);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  // Сводка. Границы суток считаем в МСК (сервер в UTC).
+  const today = mskDayStart(now);
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
   const summary: ScheduleSummary = {
     surveysCount: surveys.filter((e) => !e.isOverdue).length,

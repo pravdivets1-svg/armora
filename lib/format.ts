@@ -4,6 +4,45 @@
 
 const TZ = 'Europe/Moscow';
 
+// Возвращает Date, у которого UTC-компоненты равны компонентам исходной даты в МСК.
+// Нужно когда мы читаем .getHours()/.getDate()/etc — это локальное время процесса
+// (на проде Timeweb это UTC). Чтобы получить МСК-час/день — сдвигаем на +3ч и
+// читаем UTC-компоненты через getUTCHours()/getUTCDate().
+//
+// Используется в местах где надо сравнить «тот же день в МСК» или показать час
+// без Intl.DateTimeFormat (например, padStart по часам).
+const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
+export function toMsk(d: Date): Date {
+  return new Date(d.getTime() + MSK_OFFSET_MS);
+}
+
+// «Начало дня в МСК» — Date, у которого UTC-компоненты:
+// год/месяц/день из МСК, час/минута/секунда = 0.
+// Возвращает «настоящий» момент времени (UTC), соответствующий 00:00 МСК.
+export function mskDayStart(d: Date): Date {
+  const m = toMsk(d);
+  // Берём UTC-компоненты сдвинутой даты как «МСК-компоненты»
+  const y = m.getUTCFullYear();
+  const mo = m.getUTCMonth();
+  const da = m.getUTCDate();
+  // 00:00 МСК = 21:00 UTC предыдущих суток. Используем Date.UTC и вычитаем сдвиг.
+  return new Date(Date.UTC(y, mo, da, 0, 0, 0) - MSK_OFFSET_MS);
+}
+
+// Ключ дня в МСК для группировки. «2026-05-03».
+export function mskDayKey(d: Date): string {
+  const m = toMsk(d);
+  const y = m.getUTCFullYear();
+  const mo = String(m.getUTCMonth() + 1).padStart(2, '0');
+  const da = String(m.getUTCDate()).padStart(2, '0');
+  return `${y}-${mo}-${da}`;
+}
+
+// «Тот же день в МСК?»
+export function isSameMskDay(a: Date, b: Date): boolean {
+  return mskDayKey(a) === mskDayKey(b);
+}
+
 export const fmtMoney = (n: number | string) =>
   new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Number(n)) + ' ₽';
 

@@ -8,7 +8,7 @@ import { Ruler, Hammer, CalendarClock, Factory, AlertTriangle, MapPin, ArrowUpRi
 
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { loadSchedule, type ScheduleEvent } from '@/lib/schedule';
-import { fmtDayLong } from '@/lib/format';
+import { fmtDayLong, fmtTime, mskDayKey, mskDayStart, isSameMskDay } from '@/lib/format';
 import { prisma } from '@/lib/prisma';
 import { Metric, MetricCard } from '@/components/metric';
 import CalendarUserFilter from './user-filter';
@@ -34,20 +34,20 @@ export default async function CalendarPage({
       })
     : [];
 
-  // Группировка событий по дням
+  // Группировка событий по дням — ключ строится в МСК, чтобы события после 21:00 UTC
+  // (00:00+ МСК) попадали в следующий день, а не в текущий UTC-день.
   const byDay = new Map<string, ScheduleEvent[]>();
   for (const e of events) {
-    const key = `${e.at.getFullYear()}-${e.at.getMonth()}-${e.at.getDate()}`;
+    const key = mskDayKey(e.at);
     if (!byDay.has(key)) byDay.set(key, []);
     byDay.get(key)!.push(e);
   }
 
-  const today = new Date(now);
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(today.getDate() + 1);
-  const isSameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  // «Сегодня/завтра» — границы в МСК. На проде сервер UTC, поэтому
+  // setHours(0,0,0,0) дал бы 00:00 UTC = 03:00 МСК, и события с 00:00..03:00 МСК
+  // считались бы «вчерашними». mskDayStart возвращает реальный момент 00:00 МСК.
+  const today = mskDayStart(now);
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
   const showRoute = !isStaff(me.role);
   const todayPoints = showRoute
@@ -191,8 +191,8 @@ export default async function CalendarPage({
       <div className="space-y-8">
         {[...byDay.entries()].map(([key, dayEvents]) => {
           const date = dayEvents[0].at;
-          const isToday = isSameDay(date, today);
-          const isTomorrow = isSameDay(date, tomorrow);
+          const isToday = isSameMskDay(date, today);
+          const isTomorrow = isSameMskDay(date, tomorrow);
           const isPast = date.getTime() < today.getTime();
           const dayName = isPast ? 'Просрочено' : isToday ? 'Сегодня' : isTomorrow ? 'Завтра' : null;
 
@@ -233,8 +233,7 @@ export default async function CalendarPage({
                     {/* Десктоп: время display serif в фикс колонке */}
                     <div className="hidden md:block w-20 shrink-0">
                       <div className={`font-display text-[28px] tabular-nums leading-none tracking-tight ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
-                        {String(e.at.getHours()).padStart(2, '0')}:
-                        {String(e.at.getMinutes()).padStart(2, '0')}
+                        {fmtTime(e.at)}
                       </div>
                       <div className={`mt-1.5 text-[10px] uppercase tracking-[0.15em] font-medium ${
                         e.isOverdue ? 'text-bad' : e.kind === 'survey' ? 'text-blue-700' : 'text-emerald-700'
@@ -246,8 +245,7 @@ export default async function CalendarPage({
                     {/* Мобайл: время+тип одной строкой сверху */}
                     <div className="md:hidden flex items-center gap-2 text-[13px]">
                       <span className={`font-display text-[18px] tabular-nums tracking-tight ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
-                        {String(e.at.getHours()).padStart(2, '0')}:
-                        {String(e.at.getMinutes()).padStart(2, '0')}
+                        {fmtTime(e.at)}
                       </span>
                       <span className={`uppercase tracking-wider font-medium text-[11px] ${
                         e.isOverdue ? 'text-bad' : e.kind === 'survey' ? 'text-blue-700' : 'text-emerald-700'

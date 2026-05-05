@@ -40,18 +40,32 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
     ];
   }
 
-  const [leads, counts] = await Promise.all([
-    prisma.lead.findMany({
+  let leads: any[] = [];
+  let counts: Array<{ stage: LeadStage; _count: { _all: number } }> = [];
+  try {
+    [leads, counts] = await Promise.all([
+      prisma.lead.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        include: { assignedTo: { select: { fullName: true } } },
+      }),
+      prisma.lead.groupBy({
+        by: ['stage'],
+        _count: { _all: true },
+      }),
+    ]);
+  } catch (e: any) {
+    console.error('[LEADS_PAGE_ERROR]', {
+      name: e?.name,
+      code: e?.code,
+      message: e?.message,
+      meta: e?.meta,
+      stack: e?.stack?.split('\n').slice(0, 5).join('\n'),
       where,
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-      include: { assignedTo: { select: { fullName: true } } },
-    }),
-    prisma.lead.groupBy({
-      by: ['stage'],
-      _count: { _all: true },
-    }),
-  ]);
+    });
+    throw e;
+  }
 
   const countByStage: Partial<Record<LeadStage, number>> = {};
   for (const c of counts) countByStage[c.stage] = c._count._all;

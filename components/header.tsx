@@ -20,16 +20,36 @@ export default async function Header() {
   const user = session?.user;
 
   // Счётчик «На закрытие» — только для директора
-  const pendingClosures =
-    user?.role === 'director'
-      ? await prisma.order.count({ where: { stage: 'pending_closure' } })
-      : 0;
+  let pendingClosures = 0;
+  if (user?.role === 'director') {
+    try {
+      pendingClosures = await prisma.order.count({ where: { stage: 'pending_closure' } });
+    } catch (e: any) {
+      console.error('[HEADER_CLOSURES_ERROR]', {
+        name: e?.name,
+        code: e?.code,
+        message: e?.message,
+        meta: e?.meta,
+        stack: e?.stack?.split('\n').slice(0, 5).join('\n'),
+      });
+    }
+  }
 
   // Счётчик новых заявок с сайта — для директора и менеджера
-  const newLeads =
-    user?.role === 'director' || user?.role === 'manager'
-      ? await prisma.lead.count({ where: { stage: 'new' } })
-      : 0;
+  let newLeads = 0;
+  if (user?.role === 'director' || user?.role === 'manager') {
+    try {
+      newLeads = await prisma.lead.count({ where: { stage: 'new' } });
+    } catch (e: any) {
+      console.error('[HEADER_LEADS_ERROR]', {
+        name: e?.name,
+        code: e?.code,
+        message: e?.message,
+        meta: e?.meta,
+        stack: e?.stack?.split('\n').slice(0, 5).join('\n'),
+      });
+    }
+  }
 
   return (
     <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-line/80">

@@ -74,12 +74,37 @@ async function renderLeadsPage(searchParams: Search) {
   let dbError: { source: string; name?: string; code?: string; message?: string; meta?: any } | null = null;
 
   try {
-    leads = await prisma.lead.findMany({
+    const rawLeads = await prisma.lead.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: 100,
-      include: { assignedTo: { select: { fullName: true } } },
+      select: {
+        id: true,
+        number: true,
+        clientName: true,
+        clientPhone: true,
+        clientAddress: true,
+        widthMm: true,
+        heightMm: true,
+        stage: true,
+        createdAt: true,
+        assignedTo: { select: { fullName: true } },
+      },
     });
+    // Plain objects only — избегаем Decimal/JSON в RSC payload, иначе
+    // сериализация падает после return → "Application error" мимо try/catch.
+    leads = rawLeads.map((l) => ({
+      id: l.id,
+      number: l.number,
+      clientName: l.clientName,
+      clientPhone: l.clientPhone,
+      clientAddress: l.clientAddress,
+      widthMm: l.widthMm,
+      heightMm: l.heightMm,
+      stage: l.stage,
+      createdAt: l.createdAt,
+      assignedTo: l.assignedTo ? { fullName: l.assignedTo.fullName } : null,
+    }));
   } catch (e: any) {
     console.error('[LEADS_FINDMANY_ERROR]', {
       name: e?.name, code: e?.code, message: e?.message, meta: e?.meta,

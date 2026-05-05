@@ -2,12 +2,15 @@
 // Адаптивная раскладка:
 //   < md (мобилка): лого | гамбургер-меню | поиск | push | logout — всё помещается
 //   md+:            лого | nav-pills | поиск | имя+аватар (lg+) | push | logout
+//
+// Синхронный компонент: вся серверная загрузка (auth, счётчики) делается
+// в (admin)/layout.tsx и передаётся пропсами. Так ошибки точно ловятся
+// try/catch в layout — async children в RSC проходят мимо parent try/catch.
 
 import Link from 'next/link';
 import { Suspense } from 'react';
 import { LogOut } from 'lucide-react';
-import { auth } from '@/auth';
-import { prisma } from '@/lib/prisma';
+import type { Role } from '@prisma/client';
 import { ROLE_LABEL } from '@/lib/labels';
 import { logoutAction } from '@/app/(auth)/actions';
 import NavBar from './nav-bar';
@@ -15,42 +18,15 @@ import CommandPalette from './command-palette';
 import PushToggle from './push-toggle';
 import RoleAvatar from './role-avatar';
 
-export default async function Header() {
-  const session = await auth();
-  const user = session?.user;
+type HeaderUser = { id: string; email: string; name: string; role: Role } | undefined;
 
-  // Счётчик «На закрытие» — только для директора
-  let pendingClosures = 0;
-  if (user?.role === 'director') {
-    try {
-      pendingClosures = await prisma.order.count({ where: { stage: 'pending_closure' } });
-    } catch (e: any) {
-      console.error('[HEADER_CLOSURES_ERROR]', {
-        name: e?.name,
-        code: e?.code,
-        message: e?.message,
-        meta: e?.meta,
-        stack: e?.stack?.split('\n').slice(0, 5).join('\n'),
-      });
-    }
-  }
+type HeaderProps = {
+  user: HeaderUser;
+  pendingClosures: number;
+  newLeads: number;
+};
 
-  // Счётчик новых заявок с сайта — для директора и менеджера
-  let newLeads = 0;
-  if (user?.role === 'director' || user?.role === 'manager') {
-    try {
-      newLeads = await prisma.lead.count({ where: { stage: 'new' } });
-    } catch (e: any) {
-      console.error('[HEADER_LEADS_ERROR]', {
-        name: e?.name,
-        code: e?.code,
-        message: e?.message,
-        meta: e?.meta,
-        stack: e?.stack?.split('\n').slice(0, 5).join('\n'),
-      });
-    }
-  }
-
+export default function Header({ user, pendingClosures, newLeads }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-line/80">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-2 sm:gap-3">

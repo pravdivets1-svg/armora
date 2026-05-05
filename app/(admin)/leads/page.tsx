@@ -61,10 +61,11 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
 
   if (!dbError) {
     try {
-      counts = await prisma.lead.groupBy({
+      const grouped = await prisma.lead.groupBy({
         by: ['stage'],
         _count: { _all: true },
       });
+      counts = grouped as any;
     } catch (e: any) {
       console.error('[LEADS_GROUPBY_ERROR]', {
         name: e?.name, code: e?.code, message: e?.message, meta: e?.meta,
@@ -174,8 +175,8 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px]
-                                        uppercase tracking-wider font-semibold ${LEAD_STAGE_TONE[lead.stage]}`}>
-                        {LEAD_STAGE_LABEL[lead.stage]}
+                                        uppercase tracking-wider font-semibold ${LEAD_STAGE_TONE[lead.stage as LeadStage]}`}>
+                        {LEAD_STAGE_LABEL[lead.stage as LeadStage]}
                       </span>
                       <span className="text-[11px] text-ink-500 uppercase tracking-wider">
                         №{lead.number}

@@ -18,38 +18,9 @@ import LeadsBulkBar from './bulk-bar';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Заявки — Armora' };
 
-const BUILD_MARKER = 'leads-debug-v3';
-
 type Search = { stage?: string; q?: string };
 
 export default async function LeadsPage({ searchParams }: { searchParams: Search }) {
-  try {
-    return await renderLeadsPage(searchParams);
-  } catch (e: any) {
-    console.error('[LEADS_PAGE_TOPLEVEL_ERROR]', {
-      name: e?.name, code: e?.code, message: e?.message, meta: e?.meta,
-      stack: e?.stack?.split('\n').slice(0, 8).join('\n'),
-    });
-    return (
-      <main className="max-w-3xl mx-auto px-6 py-10 space-y-4">
-        <h1 className="text-2xl font-semibold">Заявки — диагностика ({BUILD_MARKER})</h1>
-        <p className="text-sm text-ink-500">Top-level ошибка. Это новый код.</p>
-        <pre className="bg-red-50 border border-red-200 rounded-lg p-4 text-[12px] text-red-900 whitespace-pre-wrap break-words">
-{JSON.stringify({
-  source: 'toplevel',
-  name: e?.name,
-  code: e?.code,
-  message: e?.message,
-  meta: e?.meta,
-  stack: e?.stack?.split('\n').slice(0, 8).join('\n'),
-}, null, 2)}
-        </pre>
-      </main>
-    );
-  }
-}
-
-async function renderLeadsPage(searchParams: Search) {
   const me = await requireUser();
   if (!isStaff(me.role)) redirect('/orders');
 
@@ -69,12 +40,10 @@ async function renderLeadsPage(searchParams: Search) {
     ];
   }
 
-  let leads: any[] = [];
-  let counts: Array<{ stage: LeadStage; _count: { _all: number } }> = [];
-  let dbError: { source: string; name?: string; code?: string; message?: string; meta?: any } | null = null;
-
-  try {
-    const rawLeads = await prisma.lead.findMany({
+  // select только то, что реально нужно для рендера. Избегаем Decimal/Json
+  // полей в RSC payload — они не сериализуются и валят страницу.
+  const [rawLeads, counts] = await Promise.all([
+    prisma.lead.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: 100,
@@ -90,55 +59,17 @@ async function renderLeadsPage(searchParams: Search) {
         createdAt: true,
         assignedTo: { select: { fullName: true } },
       },
-    });
-    // Plain objects only — избегаем Decimal/JSON в RSC payload, иначе
-    // сериализация падает после return → "Application error" мимо try/catch.
-    leads = rawLeads.map((l) => ({
-      id: l.id,
-      number: l.number,
-      clientName: l.clientName,
-      clientPhone: l.clientPhone,
-      clientAddress: l.clientAddress,
-      widthMm: l.widthMm,
-      heightMm: l.heightMm,
-      stage: l.stage,
-      createdAt: l.createdAt,
-      assignedTo: l.assignedTo ? { fullName: l.assignedTo.fullName } : null,
-    }));
-  } catch (e: any) {
-    console.error('[LEADS_FINDMANY_ERROR]', {
-      name: e?.name, code: e?.code, message: e?.message, meta: e?.meta,
-      stack: e?.stack?.split('\n').slice(0, 6).join('\n'), where,
-    });
-    dbError = { source: 'findMany', name: e?.name, code: e?.code, message: e?.message, meta: e?.meta };
-  }
+    }),
+    prisma.lead.groupBy({
+      by: ['stage'],
+      _count: { _all: true },
+    }),
+  ]);
 
-  if (!dbError) {
-    try {
-      const grouped = await prisma.lead.groupBy({
-        by: ['stage'],
-        _count: { _all: true },
-      });
-      counts = grouped as any;
-    } catch (e: any) {
-      console.error('[LEADS_GROUPBY_ERROR]', {
-        name: e?.name, code: e?.code, message: e?.message, meta: e?.meta,
-        stack: e?.stack?.split('\n').slice(0, 6).join('\n'),
-      });
-      dbError = { source: 'groupBy', name: e?.name, code: e?.code, message: e?.message, meta: e?.meta };
-    }
-  }
-
-  if (dbError) {
-    return (
-      <main className="max-w-3xl mx-auto px-6 py-10 space-y-4">
-        <PageHeader title={`Заявки — диагностика (${BUILD_MARKER})`} sub="Prisma ошибка. Сообщи это разработчику." />
-        <pre className="bg-red-50 border border-red-200 rounded-lg p-4 text-[12px] text-red-900 whitespace-pre-wrap break-words">
-{JSON.stringify(dbError, null, 2)}
-        </pre>
-      </main>
-    );
-  }
+  const leads = rawLeads.map((l) => ({
+    ...l,
+    assignedTo: l.assignedTo ? { fullName: l.assignedTo.fullName } : null,
+  }));
 
   const countByStage: Partial<Record<LeadStage, number>> = {};
   for (const c of counts) countByStage[c.stage] = c._count._all;
@@ -228,8 +159,8 @@ async function renderLeadsPage(searchParams: Search) {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px]
-                                        uppercase tracking-wider font-semibold ${LEAD_STAGE_TONE[lead.stage as LeadStage]}`}>
-                        {LEAD_STAGE_LABEL[lead.stage as LeadStage]}
+                                        uppercase tracking-wider font-semibold ${LEAD_STAGE_TONE[lead.stage]}`}>
+                        {LEAD_STAGE_LABEL[lead.stage]}
                       </span>
                       <span className="text-[11px] text-ink-500 uppercase tracking-wider">
                         №{lead.number}

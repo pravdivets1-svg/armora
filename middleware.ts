@@ -27,8 +27,7 @@ export default auth((req) => {
     pathname === '/login' ||
     pathname.startsWith('/api/auth/') ||
     pathname === '/api/leads' ||        // публичный приём заявок с каталога
-    pathname.startsWith('/api/leads/') ||
-    pathname.startsWith('/api/diag/'); // временный диагностический эндпойнт
+    pathname.startsWith('/api/leads/');
 
   if (isPublic) return NextResponse.next();
 

@@ -13,6 +13,7 @@ import Header from '@/components/header';
 import PageTransition from '@/components/page-transition';
 import ToastHost from '@/components/toast-host';
 import FaviconBadge from '@/components/favicon-badge';
+import PushPrompt from '@/components/push-prompt';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -49,6 +50,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <ToastHost />
       </Suspense>
       <FaviconBadge enabled={showLeadBadge} />
+      <PushPrompt />
     </div>
   );
 }

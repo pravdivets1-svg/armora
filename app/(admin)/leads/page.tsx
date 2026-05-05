@@ -42,29 +42,47 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
 
   let leads: any[] = [];
   let counts: Array<{ stage: LeadStage; _count: { _all: number } }> = [];
+  let dbError: { source: string; name?: string; code?: string; message?: string; meta?: any } | null = null;
+
   try {
-    [leads, counts] = await Promise.all([
-      prisma.lead.findMany({
-        where,
-        orderBy: { createdAt: 'desc' },
-        take: 100,
-        include: { assignedTo: { select: { fullName: true } } },
-      }),
-      prisma.lead.groupBy({
+    leads = await prisma.lead.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+      include: { assignedTo: { select: { fullName: true } } },
+    });
+  } catch (e: any) {
+    console.error('[LEADS_FINDMANY_ERROR]', {
+      name: e?.name, code: e?.code, message: e?.message, meta: e?.meta,
+      stack: e?.stack?.split('\n').slice(0, 6).join('\n'), where,
+    });
+    dbError = { source: 'findMany', name: e?.name, code: e?.code, message: e?.message, meta: e?.meta };
+  }
+
+  if (!dbError) {
+    try {
+      counts = await prisma.lead.groupBy({
         by: ['stage'],
         _count: { _all: true },
-      }),
-    ]);
-  } catch (e: any) {
-    console.error('[LEADS_PAGE_ERROR]', {
-      name: e?.name,
-      code: e?.code,
-      message: e?.message,
-      meta: e?.meta,
-      stack: e?.stack?.split('\n').slice(0, 5).join('\n'),
-      where,
-    });
-    throw e;
+      });
+    } catch (e: any) {
+      console.error('[LEADS_GROUPBY_ERROR]', {
+        name: e?.name, code: e?.code, message: e?.message, meta: e?.meta,
+        stack: e?.stack?.split('\n').slice(0, 6).join('\n'),
+      });
+      dbError = { source: 'groupBy', name: e?.name, code: e?.code, message: e?.message, meta: e?.meta };
+    }
+  }
+
+  if (dbError) {
+    return (
+      <main className="max-w-3xl mx-auto px-6 py-10 space-y-4">
+        <PageHeader title="Заявки — диагностика" sub="Ошибка загрузки. Сообщи это разработчику." />
+        <pre className="bg-red-50 border border-red-200 rounded-lg p-4 text-[12px] text-red-900 whitespace-pre-wrap break-words">
+{JSON.stringify(dbError, null, 2)}
+        </pre>
+      </main>
+    );
   }
 
   const countByStage: Partial<Record<LeadStage, number>> = {};

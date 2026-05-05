@@ -209,7 +209,6 @@ async function renderLeadsPage(searchParams: Search) {
                 <label
                   className="absolute left-3 top-1/2 -translate-y-1/2 z-10 cursor-pointer p-1
                              text-ink-400 hover:text-ink-900"
-                  onClick={(e) => e.stopPropagation()}
                   aria-label={`Выбрать заявку №${lead.number}`}
                 >
                   <input

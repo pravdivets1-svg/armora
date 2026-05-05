@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const BUILD_MARKER = 'fix-decimal-v3';
+const BUILD_MARKER = 'fix-onclick-v4';
 
 export async function GET() {
   const checks: Record<string, any> = { marker: BUILD_MARKER };

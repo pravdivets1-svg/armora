@@ -25,7 +25,9 @@ export default auth((req) => {
   const isPublic =
     pathname.startsWith('/order/') ||  // клиентская страница
     pathname === '/login' ||
-    pathname.startsWith('/api/auth/');
+    pathname.startsWith('/api/auth/') ||
+    pathname === '/api/leads' ||        // публичный приём заявок с каталога
+    pathname.startsWith('/api/leads/');
 
   if (isPublic) return NextResponse.next();
 

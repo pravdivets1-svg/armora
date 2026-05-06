@@ -1,21 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Link2, Copy, Check, MessageCircle } from 'lucide-react';
+import { Link2, Copy, Check } from 'lucide-react';
 import { Card } from '@/components/ui';
-import { phoneDigits } from '@/lib/format';
 
 export default function PublicLinkBlock({
   url,
-  clientPhone,
 }: {
   url: string;
-  clientPhone: string;
+  clientPhone?: string;
 }) {
   const [copied, setCopied] = useState(false);
-
-  const maxText = encodeURIComponent(`Здравствуйте! Статус вашего заказа: ${url}`);
-  const maxUrl = `https://max.ru/+${phoneDigits(clientPhone)}?text=${maxText}`;
 
   async function copy() {
     try {
@@ -37,27 +32,15 @@ export default function PublicLinkBlock({
                      focus:outline-none focus:border-ink-900/25 focus:ring-4 focus:ring-ink-900/5"
           aria-label="Ссылка для клиента"
         />
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={copy}
-            className="inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-md
-                       text-[13px] bg-white hover:bg-canvas text-ink-900 border border-line
-                       hover:border-ink-900/20 transition-colors"
-          >
-            {copied ? <><Check size={14} /> Скопировано</> : <><Copy size={14} /> Скопировать</>}
-          </button>
-          <a
-            href={maxUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-md
-                       text-[13px] bg-ink-900 hover:bg-ink-700 text-white font-medium
-                       transition-colors"
-          >
-            <MessageCircle size={14} /> Max
-          </a>
-        </div>
+        <button
+          type="button"
+          onClick={copy}
+          className="inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-md
+                     text-[13px] bg-white hover:bg-canvas text-ink-900 border border-line
+                     hover:border-ink-900/20 transition-colors"
+        >
+          {copied ? <><Check size={14} /> Скопировано</> : <><Copy size={14} /> Скопировать</>}
+        </button>
       </div>
     </Card>
   );

@@ -10,7 +10,7 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { flushSync } from 'react-dom';
-import { Save, AlertCircle, CheckCircle2, AlertTriangle, Lock, Phone, MessageCircle, Clock } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle2, AlertTriangle, Lock, Phone, Clock } from 'lucide-react';
 import type { Stage, Role } from '@prisma/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, Input, Textarea, Select, Button, FieldLabel } from '@/components/ui';
@@ -522,48 +522,32 @@ function DeleteButton({ orderId }: { orderId: string }) {
   );
 }
 
-// Кнопки звонка и Max-мессенджера рядом с полем телефона.
+// Кнопка звонка рядом с полем телефона.
 // tel: открывается на десктопе тоже (через системный обработчик / Skype / FaceTime).
-// max.ru/+digits открывает чат в приложении Max или веб-версии.
 function PhoneActions({ phone }: { phone: string }) {
   const digits = phoneDigits(phone);
   const disabled = digits.length < 5;
   const tel = `tel:+${digits}`;
-  const max = `https://max.ru/+${digits}`;
   const cls =
     'inline-flex items-center justify-center w-10 h-10 rounded-md border border-line ' +
     'bg-white hover:bg-canvas text-ink-900 hover:border-ink-900/20 transition-colors ' +
     'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white';
   if (disabled) {
     return (
-      <span className="flex gap-1.5">
-        <button type="button" disabled className={cls} aria-label="Позвонить (нет номера)">
-          <Phone size={16} />
-        </button>
-      </span>
+      <button type="button" disabled className={cls} aria-label="Позвонить (нет номера)">
+        <Phone size={16} />
+      </button>
     );
   }
   return (
-    <span className="flex gap-1.5">
-      <a
-        href={tel}
-        className={cls}
-        aria-label="Позвонить клиенту"
-        title="Позвонить"
-      >
-        <Phone size={16} />
-      </a>
-      <a
-        href={max}
-        target="_blank"
-        rel="noreferrer"
-        className={cls}
-        aria-label="Написать в Max"
-        title="Max"
-      >
-        <MessageCircle size={16} />
-      </a>
-    </span>
+    <a
+      href={tel}
+      className={cls}
+      aria-label="Позвонить клиенту"
+      title="Позвонить"
+    >
+      <Phone size={16} />
+    </a>
   );
 }
 

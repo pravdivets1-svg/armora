@@ -3,7 +3,7 @@
 // единая иерархия: title → meta → action.
 
 import Link from 'next/link';
-import { Plus, Search, ChevronLeft, ChevronRight, X, Inbox } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, X, Inbox } from 'lucide-react';
 import type { Stage } from '@prisma/client';
 
 import { requireUser } from '@/lib/auth-helpers';
@@ -15,9 +15,12 @@ import { awaitingStateOf } from '@/lib/awaiting';
 import { Clock, AlertCircle as AlertCircleIcon } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import DensityToggle from '@/components/density-toggle';
-import { Button, Input, Select } from '@/components/ui';
+import { Button } from '@/components/ui';
 import { PageShell, PageHeader, Toolbar } from '@/components/page-shell';
 import SavedViews from '@/components/saved-views';
+import LiveSearch from '@/components/live-search';
+import CopyPhone from '@/components/copy-phone';
+import AutoSubmitSelect from '@/components/auto-submit-select';
 
 export const metadata = { title: 'Заказы — Armora' };
 // Всегда свежий список: после смены этапа в карточке заказа
@@ -66,39 +69,29 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
 
       {/* Sticky фильтр-бар. На скролле остаётся под шапкой (h-16=64px). */}
       <Toolbar>
-        {/* Поиск */}
-        <div className="relative flex-1 min-w-0">
-          <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none z-10" />
-          <Input
-            type="search"
-            name="q"
-            defaultValue={searchParams.q ?? ''}
-            placeholder="Поиск: № / ФИО / телефон / адрес"
-            form="orders-filter"
-            className="pl-10 h-10"
-            aria-label="Поиск по заказам"
-          />
-        </div>
-        {/* Этап */}
-        <Select
+        <LiveSearch
+          defaultValue={searchParams.q ?? ''}
+          placeholder="Поиск: № / ФИО / телефон / адрес"
+          preserve={['stage', 'user']}
+        />
+        <AutoSubmitSelect
           name="stage"
           defaultValue={searchParams.stage ?? ''}
-          form="orders-filter"
+          preserve={['q', 'user']}
           aria-label="Фильтр по этапу"
-          className="md:w-52 h-10"
+          className="md:w-52"
         >
           <option value="">Все этапы</option>
           {STAGE_ORDER.map((s) => (
             <option key={s} value={s}>{STAGE_LABEL[s]}</option>
           ))}
-        </Select>
-        {/* Сотрудник */}
-        <Select
+        </AutoSubmitSelect>
+        <AutoSubmitSelect
           name="user"
           defaultValue={searchParams.user ?? ''}
-          form="orders-filter"
+          preserve={['q', 'stage']}
           aria-label="Фильтр по сотруднику"
-          className="md:w-56 h-10"
+          className="md:w-56"
         >
           <option value="">Все сотрудники</option>
           {assignable.map((u) => (
@@ -106,7 +99,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
               {u.fullName} ({ROLE_LABEL[u.role].toLowerCase()})
             </option>
           ))}
-        </Select>
+        </AutoSubmitSelect>
         {activeFilters > 0 && (
           <Link
             href="/orders"
@@ -117,8 +110,6 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             <X size={13} /> Сбросить
           </Link>
         )}
-        {/* Скрытая form-элемент, к которой привязаны Input/Select через атрибут form */}
-        <form id="orders-filter" method="get" className="hidden" />
       </Toolbar>
 
       {/* Saved views — закреплённые комбинации фильтров */}
@@ -183,7 +174,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                     </span>
                   )}
                 </td>
-                <td className="px-5 py-3.5 text-ink-700 tabular-nums">{o.clientPhone}</td>
+                <td className="px-5 py-3.5 text-ink-700 tabular-nums">
+                  <CopyPhone phone={o.clientPhone} />
+                </td>
                 <td className="px-5 py-3.5 text-ink-700 max-w-[260px]">
                   <span className="block truncate" title={o.clientAddress}>{o.clientAddress}</span>
                 </td>

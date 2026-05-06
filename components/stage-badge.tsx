@@ -55,7 +55,7 @@ export function StageBadge({
       className={`inline-flex items-center gap-1.5 rounded-md font-medium whitespace-nowrap
                   ${BG[g]} ${TEXT[g]} ${pad} ${ring}`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${DOT[g]}`} />
+      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${DOT[g]} ${g === 'pending' ? 'animate-pulse' : ''}`} />
       {STAGE_LABEL[stage]}
     </span>
   );

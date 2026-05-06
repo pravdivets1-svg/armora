@@ -10,11 +10,11 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { flushSync } from 'react-dom';
-import { Save, AlertCircle, CheckCircle2, AlertTriangle, Lock } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle2, AlertTriangle, Lock, Phone, MessageCircle, Clock } from 'lucide-react';
 import type { Stage, Role } from '@prisma/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, Input, Textarea, Select, Button, FieldLabel } from '@/components/ui';
-import { fmtMoney } from '@/lib/format';
+import { fmtMoney, phoneDigits } from '@/lib/format';
 import { Metric } from '@/components/metric';
 import StageStepper from '@/components/stage-stepper';
 import UndoDeleteButton from '@/components/undo-delete-button';
@@ -39,7 +39,11 @@ type OrderData = {
   surveyorId: string | null;
   installerId: string | null;
   surveyAt: Date | null;
+  surveyEndAt: Date | null;
   installAt: Date | null;
+  installEndAt: Date | null;
+  awaitingClient: boolean;
+  awaitingClientNote: string;
 };
 
 function toLocalInputValue(d: Date | null): string {
@@ -219,7 +223,15 @@ export default function OrderForm({
               </label>
               <label>
                 <FieldLabel>Телефон</FieldLabel>
-                <Input name="clientPhone" defaultValue={order?.clientPhone} disabled={disableClient} className="mt-1 tabular-nums" />
+                <div className="mt-1 flex gap-2">
+                  <Input
+                    name="clientPhone"
+                    defaultValue={order?.clientPhone}
+                    disabled={disableClient}
+                    className="tabular-nums flex-1"
+                  />
+                  <PhoneActions phone={order?.clientPhone ?? ''} />
+                </div>
                 {fe['clientPhone'] && <span className="text-xs text-bad mt-1 block">{fe['clientPhone']}</span>}
               </label>
               <label className="md:col-span-2">
@@ -346,15 +358,27 @@ export default function OrderForm({
           )}
 
           <Card title="Замер">
-            <label className="block">
-              <FieldLabel>Дата и время</FieldLabel>
+            <FieldLabel>Дата и интервал</FieldLabel>
+            <div className="mt-1 grid grid-cols-2 gap-2">
               <Input
                 type="datetime-local" name="surveyAt"
                 defaultValue={toLocalInputValue(order?.surveyAt ?? null)}
-                disabled={disableClient} className="mt-1"
+                disabled={disableClient}
+                aria-label="Начало интервала замера"
               />
-              {fe['surveyAt'] && <span className="text-xs text-bad mt-1 block">{fe['surveyAt']}</span>}
-            </label>
+              <Input
+                type="datetime-local" name="surveyEndAt"
+                defaultValue={toLocalInputValue(order?.surveyEndAt ?? null)}
+                disabled={disableClient}
+                aria-label="Конец интервала замера"
+                placeholder="до"
+              />
+            </div>
+            <p className="text-[11px] text-ink-400 mt-1">
+              Второе поле — конец интервала. Оставьте пустым, если время точное.
+            </p>
+            {fe['surveyAt']    && <span className="text-xs text-bad mt-1 block">{fe['surveyAt']}</span>}
+            {fe['surveyEndAt'] && <span className="text-xs text-bad mt-1 block">{fe['surveyEndAt']}</span>}
             <label className="block mt-3">
               <FieldLabel>Замерщик</FieldLabel>
               <Select name="surveyorId" defaultValue={order?.surveyorId ?? ''} disabled={disableClient} className="mt-1">
@@ -367,15 +391,27 @@ export default function OrderForm({
           </Card>
 
           <Card title="Установка">
-            <label className="block">
-              <FieldLabel>Дата и время</FieldLabel>
+            <FieldLabel>Дата и интервал</FieldLabel>
+            <div className="mt-1 grid grid-cols-2 gap-2">
               <Input
                 type="datetime-local" name="installAt"
                 defaultValue={toLocalInputValue(order?.installAt ?? null)}
-                disabled={disableClient} className="mt-1"
+                disabled={disableClient}
+                aria-label="Начало интервала установки"
               />
-              {fe['installAt'] && <span className="text-xs text-bad mt-1 block">{fe['installAt']}</span>}
-            </label>
+              <Input
+                type="datetime-local" name="installEndAt"
+                defaultValue={toLocalInputValue(order?.installEndAt ?? null)}
+                disabled={disableClient}
+                aria-label="Конец интервала установки"
+                placeholder="до"
+              />
+            </div>
+            <p className="text-[11px] text-ink-400 mt-1">
+              Второе поле — конец интервала. Оставьте пустым, если время точное.
+            </p>
+            {fe['installAt']    && <span className="text-xs text-bad mt-1 block">{fe['installAt']}</span>}
+            {fe['installEndAt'] && <span className="text-xs text-bad mt-1 block">{fe['installEndAt']}</span>}
             <label className="block mt-3">
               <FieldLabel>Установщик</FieldLabel>
               <Select name="installerId" defaultValue={order?.installerId ?? ''} disabled={disableClient} className="mt-1">
@@ -386,6 +422,12 @@ export default function OrderForm({
               </Select>
             </label>
           </Card>
+
+          <AwaitingClientCard
+            initial={order?.awaitingClient ?? false}
+            initialNote={order?.awaitingClientNote ?? ''}
+            disabled={lockedClosed}
+          />
         </aside>
       </div>
 
@@ -470,5 +512,93 @@ function DeleteButton({ orderId }: { orderId: string }) {
       label="Удалить заказ"
       successMessage="Заказ будет удалён"
     />
+  );
+}
+
+// Кнопки звонка и WhatsApp рядом с полем телефона.
+// tel: открывается на десктопе тоже (через системный обработчик / Skype / FaceTime),
+// поэтому показываем всегда — пользователь сам выберет.
+function PhoneActions({ phone }: { phone: string }) {
+  const digits = phoneDigits(phone);
+  const disabled = digits.length < 5;
+  const tel = `tel:+${digits}`;
+  const wa  = `https://wa.me/${digits}`;
+  const cls =
+    'inline-flex items-center justify-center w-10 h-10 rounded-md border border-line ' +
+    'bg-white hover:bg-canvas text-ink-900 hover:border-ink-900/20 transition-colors ' +
+    'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white';
+  if (disabled) {
+    return (
+      <span className="flex gap-1.5">
+        <button type="button" disabled className={cls} aria-label="Позвонить (нет номера)">
+          <Phone size={16} />
+        </button>
+      </span>
+    );
+  }
+  return (
+    <span className="flex gap-1.5">
+      <a
+        href={tel}
+        className={cls}
+        aria-label="Позвонить клиенту"
+        title="Позвонить"
+      >
+        <Phone size={16} />
+      </a>
+      <a
+        href={wa}
+        target="_blank"
+        rel="noreferrer"
+        className={cls + ' text-whatsapp'}
+        aria-label="Написать в WhatsApp"
+        title="WhatsApp"
+      >
+        <MessageCircle size={16} />
+      </a>
+    </span>
+  );
+}
+
+// Блок «Ждём связи с клиентом» — флаг + заметка. Доступен всем ролям, что
+// видят заказ. Если включён — заказ подсвечивается во всех списках/уведомлениях.
+function AwaitingClientCard({
+  initial,
+  initialNote,
+  disabled,
+}: {
+  initial: boolean;
+  initialNote: string;
+  disabled: boolean;
+}) {
+  const [on, setOn] = useState(initial);
+  return (
+    <Card
+      title="Ждём связи с клиентом"
+      icon={<Clock size={12} />}
+    >
+      <label className="flex items-start gap-2 cursor-pointer select-none">
+        <input
+          type="checkbox"
+          name="awaitingClient"
+          checked={on}
+          disabled={disabled}
+          onChange={(e) => setOn(e.target.checked)}
+          className="mt-0.5 w-4 h-4 accent-accent"
+        />
+        <span className="text-[13px] text-ink-700 leading-snug">
+          Клиент должен дать связь / перезвонить / прислать данные
+        </span>
+      </label>
+      <Textarea
+        name="awaitingClientNote"
+        rows={2}
+        defaultValue={initialNote}
+        disabled={disabled || !on}
+        placeholder="Что именно ждём (перезвон, согласование даты, паспорт и т.п.)"
+        className="mt-3"
+        maxLength={500}
+      />
+    </Card>
   );
 }

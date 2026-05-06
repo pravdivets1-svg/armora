@@ -9,7 +9,7 @@ import type { Stage } from '@prisma/client';
 import { requireUser } from '@/lib/auth-helpers';
 import { listOrders, listAssignableUsers } from '@/lib/orders';
 import { STAGE_LABEL, STAGE_ORDER, ROLE_LABEL } from '@/lib/labels';
-import { fmtDateTime, shortName } from '@/lib/format';
+import { fmtDateTime, fmtInterval, shortName } from '@/lib/format';
 import { StageBadge } from '@/components/stage-badge';
 import { EmptyState } from '@/components/empty-state';
 import DensityToggle from '@/components/density-toggle';
@@ -171,7 +171,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 <td className="px-5 py-3.5 text-ink-700">
                   {o.surveyAt ? (
                     <>
-                      <span className="tabular-nums">{fmtDateTime(o.surveyAt)}</span>
+                      <span className="tabular-nums">{fmtInterval(o.surveyAt, o.surveyEndAt)}</span>
                       {o.surveyor && <span className="text-ink-500"> · {shortName(o.surveyor.fullName)}</span>}
                     </>
                   ) : (
@@ -181,7 +181,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 <td className="px-5 py-3.5 text-ink-700">
                   {o.installAt ? (
                     <>
-                      <span className="tabular-nums">{fmtDateTime(o.installAt)}</span>
+                      <span className="tabular-nums">{fmtInterval(o.installAt, o.installEndAt)}</span>
                       {o.installer && <span className="text-ink-500"> · {shortName(o.installer.fullName)}</span>}
                     </>
                   ) : (
@@ -221,10 +221,10 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             {(o.surveyAt || o.installAt) && (
               <div className="mt-3 text-[12px] text-ink-500 pt-3 border-t border-line space-y-0.5">
                 {o.surveyAt && (
-                  <div>Замер <span className="tabular-nums">{fmtDateTime(o.surveyAt)}</span>{o.surveyor && ` · ${shortName(o.surveyor.fullName)}`}</div>
+                  <div>Замер <span className="tabular-nums">{fmtInterval(o.surveyAt, o.surveyEndAt)}</span>{o.surveyor && ` · ${shortName(o.surveyor.fullName)}`}</div>
                 )}
                 {o.installAt && (
-                  <div>Установка <span className="tabular-nums">{fmtDateTime(o.installAt)}</span>{o.installer && ` · ${shortName(o.installer.fullName)}`}</div>
+                  <div>Установка <span className="tabular-nums">{fmtInterval(o.installAt, o.installEndAt)}</span>{o.installer && ` · ${shortName(o.installer.fullName)}`}</div>
                 )}
               </div>
             )}

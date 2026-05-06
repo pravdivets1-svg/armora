@@ -91,7 +91,15 @@ model Order {
   surveyorId  String?   @map("surveyor_id")
   installerId String?   @map("installer_id")
   surveyAt    DateTime? @map("survey_at")
+  surveyEndAt DateTime? @map("survey_end_at")   // конец интервала; null = «к конкретному времени»
   installAt   DateTime? @map("install_at")
+  installEndAt DateTime? @map("install_end_at") // конец интервала; null = «к конкретному времени»
+
+  // Маркер «ждём ответа клиента» — независим от Stage, может быть выставлен на любом этапе.
+  // Заметка — что именно ждём (перезвонить, прислать паспорт, согласовать дату и т.п.).
+  awaitingClient      Boolean   @default(false) @map("awaiting_client")
+  awaitingClientNote  String    @default("")    @map("awaiting_client_note")
+  awaitingClientSince DateTime? @map("awaiting_client_since")
 
   // Аудит
   createdById String   @map("created_by")

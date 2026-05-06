@@ -80,6 +80,18 @@ export const fmtTime = (d: Date | string) =>
     minute: '2-digit',
   }).format(new Date(d));
 
+// Интервал «дд.мм чч:мм–чч:мм» (если оба в один МСК-день) или «дд.мм чч:мм – дд.мм чч:мм».
+// Если end null/undefined — возвращает обычный fmtDateTime(start).
+export function fmtInterval(start: Date | string, end?: Date | string | null): string {
+  if (!end) return fmtDateTime(start);
+  const a = new Date(start);
+  const b = new Date(end);
+  if (isSameMskDay(a, b)) {
+    return `${fmtDateTime(a)}–${fmtTime(b)}`;
+  }
+  return `${fmtDateTime(a)} – ${fmtDateTime(b)}`;
+}
+
 // Сокращение ФИО до «И. Иванов»
 export function shortName(full: string): string {
   const parts = full.trim().split(/\s+/);

@@ -40,7 +40,14 @@ const orderInputSchema = z.object({
   surveyorId:    z.string().uuid().nullable().or(z.literal('').transform(() => null)),
   installerId:   z.string().uuid().nullable().or(z.literal('').transform(() => null)),
   surveyAt:      z.string().nullable().or(z.literal('').transform(() => null)),
+  surveyEndAt:   z.string().nullable().or(z.literal('').transform(() => null)),
   installAt:     z.string().nullable().or(z.literal('').transform(() => null)),
+  installEndAt:  z.string().nullable().or(z.literal('').transform(() => null)),
+  awaitingClient:     z.preprocess(
+                        (v) => v === 'on' || v === 'true' || v === '1' || v === true,
+                        z.boolean(),
+                      ),
+  awaitingClientNote: z.string().trim().max(500).default(''),
 });
 
 export type OrderActionState =
@@ -113,6 +120,40 @@ function validateStageDates(
   return null;
 }
 
+// Проверка интервалов: если задан end — должен быть и start, и end > start.
+function validateIntervals(
+  surveyAt: string | null | undefined,
+  surveyEndAt: string | null | undefined,
+  installAt: string | null | undefined,
+  installEndAt: string | null | undefined,
+): { error: string; fieldErrors: Record<string, string> } | null {
+  const fieldErrors: Record<string, string> = {};
+  if (surveyEndAt && !surveyAt) {
+    fieldErrors.surveyAt = 'Сначала укажите начало интервала';
+  }
+  if (surveyAt && surveyEndAt) {
+    const a = applyDateOrNull(surveyAt);
+    const b = applyDateOrNull(surveyEndAt);
+    if (a && b && b.getTime() <= a.getTime()) {
+      fieldErrors.surveyEndAt = 'Конец интервала должен быть позже начала';
+    }
+  }
+  if (installEndAt && !installAt) {
+    fieldErrors.installAt = 'Сначала укажите начало интервала';
+  }
+  if (installAt && installEndAt) {
+    const a = applyDateOrNull(installAt);
+    const b = applyDateOrNull(installEndAt);
+    if (a && b && b.getTime() <= a.getTime()) {
+      fieldErrors.installEndAt = 'Конец интервала должен быть позже начала';
+    }
+  }
+  if (Object.keys(fieldErrors).length > 0) {
+    return { error: 'Проверьте интервалы дат', fieldErrors };
+  }
+  return null;
+}
+
 // Гейт перевода в pending_closure / closed: проверка финансов
 function validateClosureFinances(
   totalAmount: number,
@@ -165,6 +206,11 @@ export async function createOrderAction(
     return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
   }
 
+  const intervalError = validateIntervals(d.surveyAt, d.surveyEndAt, d.installAt, d.installEndAt);
+  if (intervalError) {
+    return { ok: false, error: intervalError.error, fieldErrors: intervalError.fieldErrors };
+  }
+
   if (d.stage === 'pending_closure') {
     const fin = validateClosureFinances(d.totalAmount, d.prepayment, d.finalPayment, d.costAmount);
     if (fin) return { ok: false, error: fin.error, fieldErrors: fin.fieldErrors };
@@ -188,7 +234,12 @@ export async function createOrderAction(
       surveyorId:     d.surveyorId,
       installerId:    d.installerId,
       surveyAt:       applyDateOrNull(d.surveyAt),
+      surveyEndAt:    applyDateOrNull(d.surveyEndAt),
       installAt:      applyDateOrNull(d.installAt),
+      installEndAt:   applyDateOrNull(d.installEndAt),
+      awaitingClient:      d.awaitingClient,
+      awaitingClientNote:  d.awaitingClientNote,
+      awaitingClientSince: d.awaitingClient ? new Date() : null,
       tokenExpiresAt: tokenExpiresFor(d.stage, null),
       createdById:    me.id,
     },
@@ -276,6 +327,13 @@ export async function updateOrderAction(
   const stageError = validateStageDates(d.stage, surveyAtForCheck, installAtForCheck);
   if (stageError) {
     return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
+  }
+
+  if (canEditAll(me.role)) {
+    const intervalError = validateIntervals(d.surveyAt, d.surveyEndAt, d.installAt, d.installEndAt);
+    if (intervalError) {
+      return { ok: false, error: intervalError.error, fieldErrors: intervalError.fieldErrors };
+    }
   }
 
   // Гейт финансов при переводе в pending_closure или closed
@@ -384,7 +442,7 @@ function canEditAll(role: Role): boolean {
 
 function buildUpdatePayload(
   role: Role,
-  existing: { totalAmount: any; prepayment: any; finalPayment: any; costAmount: any; tokenExpiresAt: Date | null; surveyAt: Date | null; installAt: Date | null; surveyorId: string | null; installerId: string | null; clientName: string; clientPhone: string; clientAddress: string; doorComment: string; widthMm: number | null; heightMm: number | null },
+  existing: { totalAmount: any; prepayment: any; finalPayment: any; costAmount: any; tokenExpiresAt: Date | null; surveyAt: Date | null; surveyEndAt: Date | null; installAt: Date | null; installEndAt: Date | null; surveyorId: string | null; installerId: string | null; clientName: string; clientPhone: string; clientAddress: string; doorComment: string; widthMm: number | null; heightMm: number | null; awaitingClient: boolean; awaitingClientNote: string; awaitingClientSince: Date | null },
   d: z.infer<typeof orderInputSchema>,
 ) {
   const base = {
@@ -397,6 +455,14 @@ function buildUpdatePayload(
   const prepay = canEditMainAmounts(role) ? d.prepayment  : Number(existing.prepayment);
   const final  = canEditFinal(role)       ? d.finalPayment : Number(existing.finalPayment);
   const cost   = canEditCost(role)        ? d.costAmount  : Number(existing.costAmount);
+
+  // awaitingClient доступен всем, кто видит заказ (и менеджер, и полевые) —
+  // это просто маркер «нужна связь с клиентом», без него полевой не сможет
+  // отметить «жду перезвона». Since выставляется только при переходе false→true.
+  const awaitingChanged = d.awaitingClient !== existing.awaitingClient;
+  const awaitingSince   = d.awaitingClient
+    ? (awaitingChanged ? new Date() : existing.awaitingClientSince)
+    : null;
 
   // Контактные/доорные данные / даты / назначения — директор, менеджер, замерщик
   if (canEditAll(role)) {
@@ -416,14 +482,22 @@ function buildUpdatePayload(
       surveyorId:    d.surveyorId,
       installerId:   d.installerId,
       surveyAt:      applyDateOrNull(d.surveyAt),
+      surveyEndAt:   applyDateOrNull(d.surveyEndAt),
       installAt:     applyDateOrNull(d.installAt),
+      installEndAt:  applyDateOrNull(d.installEndAt),
+      awaitingClient:      d.awaitingClient,
+      awaitingClientNote:  d.awaitingClientNote,
+      awaitingClientSince: awaitingSince,
     };
   }
 
-  // Полевой работник: stage + finalPayment (если разрешено) + ничего больше
+  // Полевой работник: stage + finalPayment + awaitingClient (флаг + заметка) + ничего больше
   return {
     ...base,
     finalPayment: final,
+    awaitingClient:      d.awaitingClient,
+    awaitingClientNote:  d.awaitingClientNote,
+    awaitingClientSince: awaitingSince,
   };
 }
 

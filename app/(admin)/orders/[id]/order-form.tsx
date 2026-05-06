@@ -18,7 +18,8 @@ import { fmtMoney, phoneDigits } from '@/lib/format';
 import { Metric } from '@/components/metric';
 import StageStepper from '@/components/stage-stepper';
 import UndoDeleteButton from '@/components/undo-delete-button';
-import { deleteOrderAction, extendAwaitingAction, resumeFromAwaitingAction, closeFromAwaitingAction, type OrderActionState } from '../actions';
+import { toast } from 'sonner';
+import { deleteOrderAction, extendAwaitingAction, resumeFromAwaitingAction, closeFromAwaitingAction, setAwaitingAction, type OrderActionState } from '../actions';
 import AddressField from './address-field';
 import { awaitingStateOf } from '@/lib/awaiting';
 
@@ -437,7 +438,6 @@ export default function OrderForm({
           />
         </aside>
       </div>
-
       {/* Sticky bottom bar: всегда виден на скролле длинной формы.
           В режиме edit — кнопка Сохранить заменена на индикатор autosave;
           в режиме create — оставлена явная кнопка Создать. */}
@@ -551,9 +551,10 @@ function PhoneActions({ phone }: { phone: string }) {
   );
 }
 
-// Блок «Ждём связи с клиентом» — флаг + заметка + 3-дневное окно тишины.
-// silent  → серый бейдж «осталось N дн», заказ в списке приглушён.
-// overdue → красный бейдж «просрочен N дн» + 3 кнопки решения.
+// Блок «Ждём связи с клиентом» — ВЫНЕСЕН ИЗ <form>.
+// Вызывает setAwaitingAction напрямую, не через autosave формы.
+// Это исправляет баг: если у заказа validateStageDates возвращала ошибку
+// (нет даты замера/установки), весь update не писался — флаг тоже терялся.
 function AwaitingClientCard({
   orderId,
   initial,
@@ -572,11 +573,40 @@ function AwaitingClientCard({
   canSeeDecisions: boolean;
 }) {
   const [on, setOn] = useState(initial);
+  const [note, setNote] = useState(initialNote);
+  const [saving, setSaving] = useState(false);
+  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const state = awaitingStateOf({
     awaitingClient: initial,
     awaitingClientSince: since,
     awaitingClientUntil: until,
   });
+
+  async function save(nextOn: boolean, nextNote: string) {
+    if (!orderId) return;
+    setSaving(true);
+    try {
+      await setAwaitingAction(orderId, nextOn, nextNote);
+    } catch (e) {
+      toast.error('Не удалось сохранить');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function handleToggle(e: React.ChangeEvent<HTMLInputElement>) {
+    const next = e.target.checked;
+    setOn(next);
+    save(next, note);
+  }
+
+  function handleNoteChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const v = e.target.value;
+    setNote(v);
+    if (noteTimer.current) clearTimeout(noteTimer.current);
+    noteTimer.current = setTimeout(() => save(on, v), 1000);
+  }
 
   return (
     <Card
@@ -586,15 +616,15 @@ function AwaitingClientCard({
       <label className="flex items-start gap-2 cursor-pointer select-none">
         <input
           type="checkbox"
-          name="awaitingClient"
           checked={on}
-          disabled={disabled}
-          onChange={(e) => setOn(e.target.checked)}
+          disabled={disabled || saving}
+          onChange={handleToggle}
           className="mt-0.5 w-4 h-4 accent-accent"
         />
         <span className="text-[13px] text-ink-700 leading-snug">
           Клиент должен дать связь / перезвонить / прислать данные
         </span>
+        {saving && <span className="text-[11px] text-ink-400 ml-1">…</span>}
       </label>
 
       {state.kind === 'silent' && (
@@ -611,13 +641,13 @@ function AwaitingClientCard({
       )}
 
       <Textarea
-        name="awaitingClientNote"
         rows={2}
-        defaultValue={initialNote}
+        value={note}
         disabled={disabled || !on}
         placeholder="Что именно ждём (перезвон, согласование даты, паспорт и т.п.)"
         className="mt-3"
         maxLength={500}
+        onChange={handleNoteChange}
       />
 
       {canSeeDecisions && state.kind === 'overdue' && (

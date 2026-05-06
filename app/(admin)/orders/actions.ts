@@ -45,11 +45,6 @@ const orderInputSchema = z.object({
   surveyEndAt:   z.string().nullable().or(z.literal('').transform(() => null)),
   installAt:     z.string().nullable().or(z.literal('').transform(() => null)),
   installEndAt:  z.string().nullable().or(z.literal('').transform(() => null)),
-  awaitingClient:     z.preprocess(
-                        (v) => v === 'on' || v === 'true' || v === '1' || v === true,
-                        z.boolean(),
-                      ),
-  awaitingClientNote: z.string().trim().max(500).default(''),
 });
 
 export type OrderActionState =
@@ -239,10 +234,6 @@ export async function createOrderAction(
       surveyEndAt:    applyDateOrNull(d.surveyEndAt),
       installAt:      applyDateOrNull(d.installAt),
       installEndAt:   applyDateOrNull(d.installEndAt),
-      awaitingClient:      d.awaitingClient,
-      awaitingClientNote:  d.awaitingClientNote,
-      awaitingClientSince: d.awaitingClient ? new Date() : null,
-      awaitingClientUntil: d.awaitingClient ? awaitingUntilFrom(new Date()) : null,
       tokenExpiresAt: tokenExpiresFor(d.stage, null),
       createdById:    me.id,
     },
@@ -445,7 +436,7 @@ function canEditAll(role: Role): boolean {
 
 function buildUpdatePayload(
   role: Role,
-  existing: { totalAmount: any; prepayment: any; finalPayment: any; costAmount: any; tokenExpiresAt: Date | null; surveyAt: Date | null; surveyEndAt: Date | null; installAt: Date | null; installEndAt: Date | null; surveyorId: string | null; installerId: string | null; clientName: string; clientPhone: string; clientAddress: string; doorComment: string; widthMm: number | null; heightMm: number | null; awaitingClient: boolean; awaitingClientNote: string; awaitingClientSince: Date | null; awaitingClientUntil: Date | null },
+  existing: { totalAmount: any; prepayment: any; finalPayment: any; costAmount: any; tokenExpiresAt: Date | null; surveyAt: Date | null; surveyEndAt: Date | null; installAt: Date | null; installEndAt: Date | null; surveyorId: string | null; installerId: string | null; clientName: string; clientPhone: string; clientAddress: string; doorComment: string; widthMm: number | null; heightMm: number | null },
   d: z.infer<typeof orderInputSchema>,
 ) {
   const base = {
@@ -459,26 +450,7 @@ function buildUpdatePayload(
   const final  = canEditFinal(role)       ? d.finalPayment : Number(existing.finalPayment);
   const cost   = canEditCost(role)        ? d.costAmount  : Number(existing.costAmount);
 
-  // awaitingClient доступен всем, кто видит заказ (и менеджер, и полевые) —
-  // это просто маркер «нужна связь с клиентом», без него полевой не сможет
-  // отметить «жду перезвона». Since выставляется только при переходе false→true.
-  // Until = since + 3 дня (см. lib/awaiting.ts) — это «окно тишины», после которого
-  // заказ становится overdue и требует решения.
-  const awaitingChanged = d.awaitingClient !== existing.awaitingClient;
-  const nowDate         = new Date();
-  const awaitingSince   = d.awaitingClient
-    ? (awaitingChanged ? nowDate : existing.awaitingClientSince)
-    : null;
-  const awaitingUntil   = d.awaitingClient
-    ? (awaitingChanged
-        ? awaitingUntilFrom(nowDate)
-        : (existing.awaitingClientUntil
-            ?? (existing.awaitingClientSince
-                  ? awaitingUntilFrom(existing.awaitingClientSince)
-                  : awaitingUntilFrom(nowDate))))
-    : null;
-
-  // Контактные/доорные данные / даты / назначения — директор, менеджер, замерщик
+  // Контактные/дверные данные / даты / назначения — директор, менеджер, замерщик
   if (canEditAll(role)) {
     return {
       ...base,
@@ -499,27 +471,72 @@ function buildUpdatePayload(
       surveyEndAt:   applyDateOrNull(d.surveyEndAt),
       installAt:     applyDateOrNull(d.installAt),
       installEndAt:  applyDateOrNull(d.installEndAt),
-      awaitingClient:      d.awaitingClient,
-      awaitingClientNote:  d.awaitingClientNote,
-      awaitingClientSince: awaitingSince,
-      awaitingClientUntil: awaitingUntil,
     };
   }
 
-  // Полевой работник: stage + finalPayment + awaitingClient (флаг + заметка) + ничего больше
+  // Полевой работник: stage + finalPayment + ничего больше
   return {
     ...base,
     finalPayment: final,
-    awaitingClient:      d.awaitingClient,
-    awaitingClientNote:  d.awaitingClientNote,
-    awaitingClientSince: awaitingSince,
-    awaitingClientUntil: awaitingUntil,
   };
 }
 
 // =====================================================================
 // AWAITING CLIENT — решения по «ждём клиента» когда срок вышел
 // =====================================================================
+
+// Установить флаг «ждём клиента» (true/false) и заметку.
+// НЕЗАВИСИМО от формы: не запускает валидацию этапа/дат/финансов.
+// Это нужно потому что validateStageDates у некоторых этапов может вернуть
+// ошибку и тогда update не пишется ВООБЩЕ — флаг тоже терялся.
+export async function setAwaitingAction(
+  orderId: string,
+  on: boolean,
+  note: string,
+) {
+  const me = await requireUser();
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: {
+      id: true, surveyorId: true, installerId: true, stage: true,
+      awaitingClient: true, awaitingClientSince: true, awaitingClientUntil: true,
+    },
+  });
+  if (!order) throw new Error('Not found');
+  const isMine = order.surveyorId === me.id || order.installerId === me.id;
+  if (!isStaff(me.role) && !isMine) throw new Error('Forbidden');
+  // На закрытых заказах флаг не редактируем
+  if (order.stage === 'closed') throw new Error('Order closed');
+
+  const trimmed = (note ?? '').slice(0, 500);
+  const wasOn = order.awaitingClient;
+  const now = new Date();
+
+  let data: any;
+  if (on) {
+    // Включение или обновление заметки. Если флаг уже был включён —
+    // since/until не сбрасываем (продление — отдельным action'ом).
+    data = {
+      awaitingClient: true,
+      awaitingClientNote: trimmed,
+      awaitingClientSince: wasOn ? order.awaitingClientSince ?? now : now,
+      awaitingClientUntil: wasOn
+        ? (order.awaitingClientUntil ?? awaitingUntilFrom(now))
+        : awaitingUntilFrom(now),
+    };
+  } else {
+    data = {
+      awaitingClient: false,
+      awaitingClientNote: '',
+      awaitingClientSince: null,
+      awaitingClientUntil: null,
+    };
+  }
+
+  await prisma.order.update({ where: { id: orderId }, data });
+  revalidatePath('/orders');
+  revalidatePath(`/orders/${orderId}`);
+}
 
 // Продлить «ждём клиента» ещё на 3 дня от текущего момента.
 export async function extendAwaitingAction(orderId: string) {

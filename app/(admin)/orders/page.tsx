@@ -11,6 +11,8 @@ import { listOrders, listAssignableUsers } from '@/lib/orders';
 import { STAGE_LABEL, STAGE_ORDER, ROLE_LABEL } from '@/lib/labels';
 import { fmtDateTime, fmtInterval, shortName } from '@/lib/format';
 import { StageBadge } from '@/components/stage-badge';
+import { awaitingStateOf } from '@/lib/awaiting';
+import { Clock, AlertCircle as AlertCircleIcon } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
 import DensityToggle from '@/components/density-toggle';
 import { Button, Input, Select } from '@/components/ui';
@@ -152,8 +154,14 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 </td>
               </tr>
             )}
-            {items.map((o) => (
-              <tr key={o.id} className="relative border-b border-line/60 last:border-0 hover-row">
+            {items.map((o) => {
+              const aw = awaitingStateOf(o);
+              const muted = aw.kind === 'silent';
+              return (
+              <tr
+                key={o.id}
+                className={`relative border-b border-line/60 last:border-0 hover-row ${muted ? 'opacity-50 [&_*]:!text-ink-400' : ''}`}
+              >
                 <td className="px-5 py-3.5 text-ink-500 tabular-nums">
                   <Link
                     href={`/orders/${o.id}`}
@@ -162,7 +170,19 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                   />
                   <span className="relative">{o.number}</span>
                 </td>
-                <td className="px-5 py-3.5 font-medium text-ink-900">{o.clientName}</td>
+                <td className="px-5 py-3.5 font-medium text-ink-900">
+                  {o.clientName}
+                  {aw.kind === 'overdue' && (
+                    <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold bg-bad/10 text-bad align-middle">
+                      <AlertCircleIcon size={10} /> просрочен {aw.overdueDays}д
+                    </span>
+                  )}
+                  {aw.kind === 'silent' && (
+                    <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider bg-ink-900/[0.05] align-middle">
+                      <Clock size={10} /> ждём клиента {aw.daysLeft}д
+                    </span>
+                  )}
+                </td>
                 <td className="px-5 py-3.5 text-ink-700 tabular-nums">{o.clientPhone}</td>
                 <td className="px-5 py-3.5 text-ink-700 max-w-[260px]">
                   <span className="block truncate" title={o.clientAddress}>{o.clientAddress}</span>
@@ -189,7 +209,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                   )}
                 </td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -203,16 +224,31 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             description={searchParams.q || stage || searchParams.user ? 'Попробуйте сбросить фильтры' : undefined}
           />
         )}
-        {items.map((o) => (
+        {items.map((o) => {
+          const aw = awaitingStateOf(o);
+          const muted = aw.kind === 'silent';
+          return (
           <Link
             key={o.id}
             href={`/orders/${o.id}`}
-            className="block bg-white border border-line rounded-lg p-4 hover:border-ink-900/20"
+            className={`block bg-white border border-line rounded-lg p-4 hover:border-ink-900/20 ${muted ? 'opacity-50' : ''}`}
           >
             <div className="flex justify-between items-start gap-3">
               <div className="min-w-0">
                 <div className="text-[11px] text-ink-500 uppercase tracking-wider">№ {o.number}</div>
-                <div className="font-medium truncate text-ink-900 mt-0.5">{o.clientName}</div>
+                <div className="font-medium truncate text-ink-900 mt-0.5">
+                  {o.clientName}
+                </div>
+                {aw.kind === 'overdue' && (
+                  <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold bg-bad/10 text-bad">
+                    <AlertCircleIcon size={10} /> просрочен {aw.overdueDays}д
+                  </div>
+                )}
+                {aw.kind === 'silent' && (
+                  <div className="mt-1 inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider bg-ink-900/[0.05] text-ink-500">
+                    <Clock size={10} /> ждём клиента {aw.daysLeft}д
+                  </div>
+                )}
                 <div className="text-[13px] text-ink-500 tabular-nums mt-0.5">{o.clientPhone}</div>
                 <div className="text-[13px] text-ink-500 truncate mt-0.5">{o.clientAddress}</div>
               </div>
@@ -229,7 +265,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
               </div>
             )}
           </Link>
-        ))}
+          );
+        })}
       </div>
 
       {pageCount > 1 && (

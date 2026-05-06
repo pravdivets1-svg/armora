@@ -18,8 +18,9 @@ import { fmtMoney, phoneDigits } from '@/lib/format';
 import { Metric } from '@/components/metric';
 import StageStepper from '@/components/stage-stepper';
 import UndoDeleteButton from '@/components/undo-delete-button';
-import { deleteOrderAction, type OrderActionState } from '../actions';
+import { deleteOrderAction, extendAwaitingAction, resumeFromAwaitingAction, closeFromAwaitingAction, type OrderActionState } from '../actions';
 import AddressField from './address-field';
+import { awaitingStateOf } from '@/lib/awaiting';
 
 type UserOpt = { id: string; fullName: string };
 
@@ -44,6 +45,8 @@ type OrderData = {
   installEndAt: Date | null;
   awaitingClient: boolean;
   awaitingClientNote: string;
+  awaitingClientSince: Date | null;
+  awaitingClientUntil: Date | null;
 };
 
 function toLocalInputValue(d: Date | null): string {
@@ -424,9 +427,13 @@ export default function OrderForm({
           </Card>
 
           <AwaitingClientCard
+            orderId={order?.id ?? ''}
             initial={order?.awaitingClient ?? false}
             initialNote={order?.awaitingClientNote ?? ''}
+            since={order?.awaitingClientSince ?? null}
+            until={order?.awaitingClientUntil ?? null}
             disabled={lockedClosed}
+            canSeeDecisions={mode === 'edit' && !!order}
           />
         </aside>
       </div>
@@ -560,18 +567,33 @@ function PhoneActions({ phone }: { phone: string }) {
   );
 }
 
-// Блок «Ждём связи с клиентом» — флаг + заметка. Доступен всем ролям, что
-// видят заказ. Если включён — заказ подсвечивается во всех списках/уведомлениях.
+// Блок «Ждём связи с клиентом» — флаг + заметка + 3-дневное окно тишины.
+// silent  → серый бейдж «осталось N дн», заказ в списке приглушён.
+// overdue → красный бейдж «просрочен N дн» + 3 кнопки решения.
 function AwaitingClientCard({
+  orderId,
   initial,
   initialNote,
+  since,
+  until,
   disabled,
+  canSeeDecisions,
 }: {
+  orderId: string;
   initial: boolean;
   initialNote: string;
+  since: Date | null;
+  until: Date | null;
   disabled: boolean;
+  canSeeDecisions: boolean;
 }) {
   const [on, setOn] = useState(initial);
+  const state = awaitingStateOf({
+    awaitingClient: initial,
+    awaitingClientSince: since,
+    awaitingClientUntil: until,
+  });
+
   return (
     <Card
       title="Ждём связи с клиентом"
@@ -590,6 +612,20 @@ function AwaitingClientCard({
           Клиент должен дать связь / перезвонить / прислать данные
         </span>
       </label>
+
+      {state.kind === 'silent' && (
+        <div className="mt-3 inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-ink-900/[0.04] text-ink-500 text-[12px]">
+          <Clock size={12} />
+          Осталось {state.daysLeft} {plural(state.daysLeft, 'день', 'дня', 'дней')} тишины
+        </div>
+      )}
+      {state.kind === 'overdue' && (
+        <div className="mt-3 inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-bad/10 text-bad text-[12px] font-medium">
+          <AlertCircle size={12} />
+          Просрочено на {state.overdueDays} {plural(state.overdueDays, 'день', 'дня', 'дней')} — нужно решение
+        </div>
+      )}
+
       <Textarea
         name="awaitingClientNote"
         rows={2}
@@ -599,6 +635,61 @@ function AwaitingClientCard({
         className="mt-3"
         maxLength={500}
       />
+
+      {canSeeDecisions && state.kind === 'overdue' && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          <AwaitingDecisionButton
+            onClick={() => extendAwaitingAction(orderId)}
+            label="Продлить +3 дня"
+          />
+          <AwaitingDecisionButton
+            onClick={() => resumeFromAwaitingAction(orderId)}
+            label="Вернуть в работу"
+          />
+          <AwaitingDecisionButton
+            onClick={() => closeFromAwaitingAction(orderId)}
+            label="Закрыть как отказ"
+            tone="bad"
+          />
+        </div>
+      )}
     </Card>
   );
+}
+
+function AwaitingDecisionButton({
+  onClick,
+  label,
+  tone,
+}: {
+  onClick: () => Promise<void>;
+  label: string;
+  tone?: 'bad';
+}) {
+  const [pending, setPending] = useState(false);
+  const cls =
+    tone === 'bad'
+      ? 'border-bad/30 text-bad hover:bg-bad/5'
+      : 'border-line text-ink-900 hover:bg-canvas';
+  return (
+    <button
+      type="button"
+      disabled={pending}
+      onClick={async () => {
+        setPending(true);
+        try { await onClick(); } finally { setPending(false); }
+      }}
+      className={`inline-flex items-center justify-center gap-1.5 px-3 h-9 rounded-md text-[12px] bg-white border transition-colors disabled:opacity-50 ${cls}`}
+    >
+      {pending ? '…' : label}
+    </button>
+  );
+}
+
+function plural(n: number, one: string, few: string, many: string): string {
+  const mod10 = n % 10;
+  const mod100 = n % 100;
+  if (mod10 === 1 && mod100 !== 11) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
 }

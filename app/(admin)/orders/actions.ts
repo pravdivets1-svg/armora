@@ -14,6 +14,7 @@ import { isStaff } from '@/lib/auth-helpers';
 import { isStageTransitionAllowed, transitionErrorMessage } from '@/lib/stage-transitions';
 import { notifyOrderChanges, notifySafe } from '@/lib/push';
 import { diffOrderEvents, snapshotFromOrder } from '@/lib/order-events';
+import { awaitingUntilFrom } from '@/lib/awaiting';
 import type { Stage, Role } from '@prisma/client';
 
 // =====================================================================
@@ -240,6 +241,7 @@ export async function createOrderAction(
       awaitingClient:      d.awaitingClient,
       awaitingClientNote:  d.awaitingClientNote,
       awaitingClientSince: d.awaitingClient ? new Date() : null,
+      awaitingClientUntil: d.awaitingClient ? awaitingUntilFrom(new Date()) : null,
       tokenExpiresAt: tokenExpiresFor(d.stage, null),
       createdById:    me.id,
     },
@@ -442,7 +444,7 @@ function canEditAll(role: Role): boolean {
 
 function buildUpdatePayload(
   role: Role,
-  existing: { totalAmount: any; prepayment: any; finalPayment: any; costAmount: any; tokenExpiresAt: Date | null; surveyAt: Date | null; surveyEndAt: Date | null; installAt: Date | null; installEndAt: Date | null; surveyorId: string | null; installerId: string | null; clientName: string; clientPhone: string; clientAddress: string; doorComment: string; widthMm: number | null; heightMm: number | null; awaitingClient: boolean; awaitingClientNote: string; awaitingClientSince: Date | null },
+  existing: { totalAmount: any; prepayment: any; finalPayment: any; costAmount: any; tokenExpiresAt: Date | null; surveyAt: Date | null; surveyEndAt: Date | null; installAt: Date | null; installEndAt: Date | null; surveyorId: string | null; installerId: string | null; clientName: string; clientPhone: string; clientAddress: string; doorComment: string; widthMm: number | null; heightMm: number | null; awaitingClient: boolean; awaitingClientNote: string; awaitingClientSince: Date | null; awaitingClientUntil: Date | null },
   d: z.infer<typeof orderInputSchema>,
 ) {
   const base = {
@@ -459,9 +461,20 @@ function buildUpdatePayload(
   // awaitingClient доступен всем, кто видит заказ (и менеджер, и полевые) —
   // это просто маркер «нужна связь с клиентом», без него полевой не сможет
   // отметить «жду перезвона». Since выставляется только при переходе false→true.
+  // Until = since + 3 дня (см. lib/awaiting.ts) — это «окно тишины», после которого
+  // заказ становится overdue и требует решения.
   const awaitingChanged = d.awaitingClient !== existing.awaitingClient;
+  const nowDate         = new Date();
   const awaitingSince   = d.awaitingClient
-    ? (awaitingChanged ? new Date() : existing.awaitingClientSince)
+    ? (awaitingChanged ? nowDate : existing.awaitingClientSince)
+    : null;
+  const awaitingUntil   = d.awaitingClient
+    ? (awaitingChanged
+        ? awaitingUntilFrom(nowDate)
+        : (existing.awaitingClientUntil
+            ?? (existing.awaitingClientSince
+                  ? awaitingUntilFrom(existing.awaitingClientSince)
+                  : awaitingUntilFrom(nowDate))))
     : null;
 
   // Контактные/доорные данные / даты / назначения — директор, менеджер, замерщик
@@ -488,6 +501,7 @@ function buildUpdatePayload(
       awaitingClient:      d.awaitingClient,
       awaitingClientNote:  d.awaitingClientNote,
       awaitingClientSince: awaitingSince,
+      awaitingClientUntil: awaitingUntil,
     };
   }
 
@@ -498,7 +512,79 @@ function buildUpdatePayload(
     awaitingClient:      d.awaitingClient,
     awaitingClientNote:  d.awaitingClientNote,
     awaitingClientSince: awaitingSince,
+    awaitingClientUntil: awaitingUntil,
   };
+}
+
+// =====================================================================
+// AWAITING CLIENT — решения по «ждём клиента» когда срок вышел
+// =====================================================================
+
+// Продлить «ждём клиента» ещё на 3 дня от текущего момента.
+export async function extendAwaitingAction(orderId: string) {
+  const me = await requireUser();
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { id: true, surveyorId: true, installerId: true, awaitingClient: true },
+  });
+  if (!order) throw new Error('Not found');
+  const isMine = order.surveyorId === me.id || order.installerId === me.id;
+  if (!isStaff(me.role) && !isMine) throw new Error('Forbidden');
+  if (!order.awaitingClient) throw new Error('Awaiting flag is off');
+
+  const now = new Date();
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { awaitingClientSince: now, awaitingClientUntil: awaitingUntilFrom(now) },
+  });
+  revalidatePath('/orders');
+  revalidatePath(`/orders/${orderId}`);
+}
+
+// Вернуть в работу — снять флаг «ждём клиента».
+export async function resumeFromAwaitingAction(orderId: string) {
+  const me = await requireUser();
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { id: true, surveyorId: true, installerId: true },
+  });
+  if (!order) throw new Error('Not found');
+  const isMine = order.surveyorId === me.id || order.installerId === me.id;
+  if (!isStaff(me.role) && !isMine) throw new Error('Forbidden');
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      awaitingClient: false,
+      awaitingClientNote: '',
+      awaitingClientSince: null,
+      awaitingClientUntil: null,
+    },
+  });
+  revalidatePath('/orders');
+  revalidatePath(`/orders/${orderId}`);
+}
+
+// Закрыть как отказ клиента — переводим в pending_closure (директор далее
+// подтверждает в /closures). Доступно только staff.
+export async function closeFromAwaitingAction(orderId: string) {
+  const me = await requireUser();
+  if (!isStaff(me.role)) throw new Error('Forbidden');
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) throw new Error('Not found');
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: {
+      stage: 'pending_closure',
+      awaitingClient: false,
+      awaitingClientSince: null,
+      awaitingClientUntil: null,
+    },
+  });
+  revalidatePath('/orders');
+  revalidatePath('/closures');
+  revalidatePath(`/orders/${orderId}`);
 }
 
 // =====================================================================

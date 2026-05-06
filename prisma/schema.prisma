@@ -97,9 +97,12 @@ model Order {
 
   // Маркер «ждём ответа клиента» — независим от Stage, может быть выставлен на любом этапе.
   // Заметка — что именно ждём (перезвонить, прислать паспорт, согласовать дату и т.п.).
+  // until — крайний срок ожидания (since + 3 дня по умолчанию). После него состояние
+  // переходит в overdue и менеджер должен принять решение (продлить / в работу / закрыть).
   awaitingClient      Boolean   @default(false) @map("awaiting_client")
   awaitingClientNote  String    @default("")    @map("awaiting_client_note")
   awaitingClientSince DateTime? @map("awaiting_client_since")
+  awaitingClientUntil DateTime? @map("awaiting_client_until")
 
   // Аудит
   createdById String   @map("created_by")

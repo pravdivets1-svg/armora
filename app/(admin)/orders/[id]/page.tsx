@@ -11,6 +11,7 @@ import { PageBack, PageHeader } from '@/components/page-shell';
 import KeyboardShortcuts from '@/components/keyboard-shortcuts';
 import OrderForm from './order-form';
 import OrderPhotos from './order-photos';
+import AwaitingClientCard from './order-awaiting-card';
 import PublicLinkBlock from './public-link-block';
 import CommentsBlock from './comments-block';
 import EventLog from './event-log';
@@ -104,6 +105,16 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         role={me.role}
         mode="edit"
         comments={<CommentsBlock orderId={order.id} comments={order.comments} />}
+      />
+
+      <AwaitingClientCard
+        orderId={order.id}
+        initial={order.awaitingClient}
+        initialNote={order.awaitingClientNote ?? ''}
+        since={order.awaitingClientSince}
+        until={order.awaitingClientUntil}
+        disabled={order.stage === 'closed'}
+        canSeeDecisions={true}
       />
 
       {/* Лента событий — только для staff (исполнителям не показываем

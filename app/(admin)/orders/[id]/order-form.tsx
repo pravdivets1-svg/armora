@@ -10,7 +10,7 @@
 
 import { useFormState, useFormStatus } from 'react-dom';
 import { flushSync } from 'react-dom';
-import { Save, AlertCircle, CheckCircle2, AlertTriangle, Lock, Phone, Clock } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle2, AlertTriangle, Lock, Phone } from 'lucide-react';
 import type { Stage, Role } from '@prisma/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, Input, Textarea, Select, Button, FieldLabel } from '@/components/ui';
@@ -18,10 +18,8 @@ import { fmtMoney, phoneDigits } from '@/lib/format';
 import { Metric } from '@/components/metric';
 import StageStepper from '@/components/stage-stepper';
 import UndoDeleteButton from '@/components/undo-delete-button';
-import { toast } from 'sonner';
-import { deleteOrderAction, extendAwaitingAction, resumeFromAwaitingAction, closeFromAwaitingAction, setAwaitingAction, type OrderActionState } from '../actions';
+import { deleteOrderAction, type OrderActionState } from '../actions';
 import AddressField from './address-field';
-import { awaitingStateOf } from '@/lib/awaiting';
 
 type UserOpt = { id: string; fullName: string };
 
@@ -44,10 +42,6 @@ type OrderData = {
   surveyEndAt: Date | null;
   installAt: Date | null;
   installEndAt: Date | null;
-  awaitingClient: boolean;
-  awaitingClientNote: string;
-  awaitingClientSince: Date | null;
-  awaitingClientUntil: Date | null;
 };
 
 function toLocalInputValue(d: Date | null): string {
@@ -427,15 +421,6 @@ export default function OrderForm({
             </label>
           </Card>
 
-          <AwaitingClientCard
-            orderId={order?.id ?? ''}
-            initial={order?.awaitingClient ?? false}
-            initialNote={order?.awaitingClientNote ?? ''}
-            since={order?.awaitingClientSince ?? null}
-            until={order?.awaitingClientUntil ?? null}
-            disabled={lockedClosed}
-            canSeeDecisions={mode === 'edit' && !!order}
-          />
         </aside>
       </div>
       {/* Sticky bottom bar: всегда виден на скролле длинной формы.
@@ -551,159 +536,4 @@ function PhoneActions({ phone }: { phone: string }) {
   );
 }
 
-// Блок «Ждём связи с клиентом» — ВЫНЕСЕН ИЗ <form>.
-// Вызывает setAwaitingAction напрямую, не через autosave формы.
-// Это исправляет баг: если у заказа validateStageDates возвращала ошибку
-// (нет даты замера/установки), весь update не писался — флаг тоже терялся.
-function AwaitingClientCard({
-  orderId,
-  initial,
-  initialNote,
-  since,
-  until,
-  disabled,
-  canSeeDecisions,
-}: {
-  orderId: string;
-  initial: boolean;
-  initialNote: string;
-  since: Date | null;
-  until: Date | null;
-  disabled: boolean;
-  canSeeDecisions: boolean;
-}) {
-  const [on, setOn] = useState(initial);
-  const [note, setNote] = useState(initialNote);
-  const [saving, setSaving] = useState(false);
-  const noteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const state = awaitingStateOf({
-    awaitingClient: initial,
-    awaitingClientSince: since,
-    awaitingClientUntil: until,
-  });
-
-  async function save(nextOn: boolean, nextNote: string) {
-    if (!orderId) return;
-    setSaving(true);
-    try {
-      await setAwaitingAction(orderId, nextOn, nextNote);
-    } catch (e) {
-      toast.error('Не удалось сохранить');
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function handleToggle(e: React.ChangeEvent<HTMLInputElement>) {
-    const next = e.target.checked;
-    setOn(next);
-    save(next, note);
-  }
-
-  function handleNoteChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
-    const v = e.target.value;
-    setNote(v);
-    if (noteTimer.current) clearTimeout(noteTimer.current);
-    noteTimer.current = setTimeout(() => save(on, v), 1000);
-  }
-
-  return (
-    <Card
-      title="Ждём связи с клиентом"
-      icon={<Clock size={12} />}
-    >
-      <label className="flex items-start gap-2 cursor-pointer select-none">
-        <input
-          type="checkbox"
-          checked={on}
-          disabled={disabled || saving}
-          onChange={handleToggle}
-          className="mt-0.5 w-4 h-4 accent-accent"
-        />
-        <span className="text-[13px] text-ink-700 leading-snug">
-          Клиент должен дать связь / перезвонить / прислать данные
-        </span>
-        {saving && <span className="text-[11px] text-ink-400 ml-1">…</span>}
-      </label>
-
-      {state.kind === 'silent' && (
-        <div className="mt-3 inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-ink-900/[0.04] text-ink-500 text-[12px]">
-          <Clock size={12} />
-          Осталось {state.daysLeft} {plural(state.daysLeft, 'день', 'дня', 'дней')} тишины
-        </div>
-      )}
-      {state.kind === 'overdue' && (
-        <div className="mt-3 inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-bad/10 text-bad text-[12px] font-medium">
-          <AlertCircle size={12} />
-          Просрочено на {state.overdueDays} {plural(state.overdueDays, 'день', 'дня', 'дней')} — нужно решение
-        </div>
-      )}
-
-      <Textarea
-        rows={2}
-        value={note}
-        disabled={disabled || !on}
-        placeholder="Что именно ждём (перезвон, согласование даты, паспорт и т.п.)"
-        className="mt-3"
-        maxLength={500}
-        onChange={handleNoteChange}
-      />
-
-      {canSeeDecisions && state.kind === 'overdue' && (
-        <div className="mt-3 flex flex-wrap gap-2">
-          <AwaitingDecisionButton
-            onClick={() => extendAwaitingAction(orderId)}
-            label="Продлить +3 дня"
-          />
-          <AwaitingDecisionButton
-            onClick={() => resumeFromAwaitingAction(orderId)}
-            label="Вернуть в работу"
-          />
-          <AwaitingDecisionButton
-            onClick={() => closeFromAwaitingAction(orderId)}
-            label="Закрыть как отказ"
-            tone="bad"
-          />
-        </div>
-      )}
-    </Card>
-  );
-}
-
-function AwaitingDecisionButton({
-  onClick,
-  label,
-  tone,
-}: {
-  onClick: () => Promise<void>;
-  label: string;
-  tone?: 'bad';
-}) {
-  const [pending, setPending] = useState(false);
-  const cls =
-    tone === 'bad'
-      ? 'border-bad/30 text-bad hover:bg-bad/5'
-      : 'border-line text-ink-900 hover:bg-canvas';
-  return (
-    <button
-      type="button"
-      disabled={pending}
-      onClick={async () => {
-        setPending(true);
-        try { await onClick(); } finally { setPending(false); }
-      }}
-      className={`inline-flex items-center justify-center gap-1.5 px-3 h-9 rounded-md text-[12px] bg-white border transition-colors disabled:opacity-50 ${cls}`}
-    >
-      {pending ? '…' : label}
-    </button>
-  );
-}
-
-function plural(n: number, one: string, few: string, many: string): string {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return one;
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
-  return many;
-}

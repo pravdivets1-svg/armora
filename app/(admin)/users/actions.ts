@@ -13,6 +13,7 @@ import type { Role } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
 import { requireUser } from '@/lib/auth-helpers';
+import { normalizePhone } from '@/lib/format';
 
 const ROLES = ['director', 'manager', 'surveyor', 'installer'] as const;
 
@@ -91,7 +92,7 @@ export async function createUserAction(
       email,
       password: passwordHash,
       fullName: d.fullName,
-      phone:    d.phone ?? null,
+      phone:    d.phone ? normalizePhone(d.phone) : null,
       role:     d.role as Role,
     },
   });
@@ -142,7 +143,7 @@ export async function updateUserAction(
   const updateData: any = {
     email:    newEmail,
     fullName: d.fullName,
-    phone:    d.phone ?? null,
+    phone:    d.phone ? normalizePhone(d.phone) : null,
     role:     d.role as Role,
   };
   if (d.password) {

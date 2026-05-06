@@ -11,6 +11,7 @@ import type { LeadStage } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
+import { normalizePhone } from '@/lib/format';
 
 const STAGES: LeadStage[] = ['new', 'contacted', 'scheduled', 'converted', 'rejected', 'spam'];
 
@@ -154,6 +155,7 @@ export async function convertLeadToOrderAction(
     : Number(lead.estimatedPrice ?? 0);
 
   const phoneDigits = (lead.clientPhone ?? '').replace(/\D/g, '');
+  const normalizedPhone = normalizePhone(lead.clientPhone ?? '');
 
   // Транзакция: создаём заказ и помечаем lead как converted
   const order = await prisma.$transaction(async (tx) => {
@@ -161,7 +163,7 @@ export async function convertLeadToOrderAction(
       data: {
         publicToken:       randomBytes(16).toString('hex'),
         clientName:        lead.clientName,
-        clientPhone:       lead.clientPhone,
+        clientPhone:       normalizedPhone,
         clientPhoneDigits: phoneDigits,
         clientAddress:     lead.clientAddress ?? '',
         doorComment:       lead.comment ?? '',

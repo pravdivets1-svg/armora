@@ -15,6 +15,7 @@ import { isStageTransitionAllowed, transitionErrorMessage } from '@/lib/stage-tr
 import { notifyOrderChanges, notifySafe } from '@/lib/push';
 import { diffOrderEvents, snapshotFromOrder } from '@/lib/order-events';
 import { awaitingUntilFrom } from '@/lib/awaiting';
+import { normalizePhone } from '@/lib/format';
 import type { Stage, Role } from '@prisma/client';
 
 // =====================================================================
@@ -221,7 +222,7 @@ export async function createOrderAction(
     data: {
       publicToken:    genToken(),
       clientName:     d.clientName,
-      clientPhone:    d.clientPhone,
+      clientPhone:    normalizePhone(d.clientPhone),
       clientPhoneDigits: phoneDigits(d.clientPhone),
       clientAddress:  d.clientAddress,
       doorComment:    d.doorComment,
@@ -482,7 +483,7 @@ function buildUpdatePayload(
     return {
       ...base,
       clientName:    d.clientName,
-      clientPhone:   d.clientPhone,
+      clientPhone:   normalizePhone(d.clientPhone),
       clientPhoneDigits: phoneDigits(d.clientPhone),
       clientAddress: d.clientAddress,
       doorComment:   d.doorComment,

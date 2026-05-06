@@ -89,6 +89,9 @@ function phoneDigits(s: string): string {
   return (s ?? '').replace(/\D/g, '');
 }
 
+// Локальная копия normalizePhone — чтобы не тянуть lib/format.ts (там есть Intl).
+import { normalizePhone } from '@/lib/format';
+
 // =====================================================================
 // CORS
 // =====================================================================
@@ -157,7 +160,7 @@ export async function POST(req: NextRequest) {
   const lead = await prisma.lead.create({
     data: {
       clientName:        d.clientName,
-      clientPhone:       d.clientPhone,
+      clientPhone:       normalizePhone(d.clientPhone),
       clientPhoneDigits: phoneDigits(d.clientPhone),
       clientAddress:     d.clientAddress ?? null,
       widthMm:           d.widthMm ?? null,

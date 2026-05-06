@@ -63,6 +63,8 @@ function phoneDigits(s: string): string {
   return (s ?? '').replace(/\D/g, '');
 }
 
+import { normalizePhone } from '@/lib/format';
+
 const corsHeaders = {
   'Access-Control-Allow-Origin':  '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -114,7 +116,7 @@ export async function POST(req: NextRequest) {
       where: { id: recent.id },
       data: {
         clientName:    d.clientName ?? '(черновик)',
-        clientPhone:   d.clientPhone,
+        clientPhone:   normalizePhone(d.clientPhone),
         clientPhoneDigits: digits,
         clientAddress: d.clientAddress ?? null,
         widthMm:       d.widthMm ?? null,
@@ -130,7 +132,7 @@ export async function POST(req: NextRequest) {
   const lead = await prisma.lead.create({
     data: {
       clientName:    d.clientName ?? '(черновик)',
-      clientPhone:   d.clientPhone,
+      clientPhone:   normalizePhone(d.clientPhone),
       clientPhoneDigits: digits,
       clientAddress: d.clientAddress ?? null,
       widthMm:       d.widthMm ?? null,

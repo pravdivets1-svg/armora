@@ -104,6 +104,35 @@ export function phoneDigits(phone: string): string {
   return phone.replace(/\D/g, '');
 }
 
+// Привести телефон к каноническому виду «+7 (XXX) XXX-XX-XX».
+//
+// Правила:
+//   - 11 цифр, начинаются с 7 или 8 → русский номер: «+7 (XXX) XXX-XX-XX».
+//   - 10 цифр                       → русский номер без кода страны: добавляем 7.
+//   - 11 цифр, не 7/8 (например, 1 — США)
+//     или 12+ цифр                  → «+<digits>» без форматирования.
+//   - <10 цифр                       → возвращаем как есть (вероятно мусор).
+//
+// Пустую/мусорную строку возвращает без изменений — валидация в zod уже
+// отрезала заведомо короткие значения.
+export function normalizePhone(raw: string): string {
+  const s = (raw ?? '').trim();
+  if (!s) return s;
+  const d = s.replace(/\D/g, '');
+  if (d.length < 10) return s;
+
+  let core: string;
+  if (d.length === 10) {
+    core = '7' + d;
+  } else if (d.length === 11 && (d[0] === '7' || d[0] === '8')) {
+    core = '7' + d.slice(1);
+  } else {
+    return '+' + d;
+  }
+  return `+${core[0]} (${core.slice(1, 4)}) ${core.slice(4, 7)}-${core.slice(7, 9)}-${core.slice(9, 11)}`;
+}
+
+
 // Инициалы из ФИО, для аватарок
 export function initials(full: string): string {
   const parts = full.trim().split(/\s+/);

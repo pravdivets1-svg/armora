@@ -88,6 +88,14 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
 
       <PublicLinkBlock url={publicUrl} clientPhone={order.clientPhone} />
 
+      <OrderPhotos
+        orderId={order.id}
+        initial={photoMetas.map((p) => ({
+          ...p,
+          createdAt: p.createdAt.toISOString(),
+        }))}
+      />
+
       <OrderForm
         order={order}
         action={updateOrderAction.bind(null, order.id)}
@@ -96,14 +104,6 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         role={me.role}
         mode="edit"
         comments={<CommentsBlock orderId={order.id} comments={order.comments} />}
-      />
-
-      <OrderPhotos
-        orderId={order.id}
-        initial={photoMetas.map((p) => ({
-          ...p,
-          createdAt: p.createdAt.toISOString(),
-        }))}
       />
 
       {/* Лента событий — только для staff (исполнителям не показываем

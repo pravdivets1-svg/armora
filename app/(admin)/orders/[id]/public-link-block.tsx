@@ -14,8 +14,8 @@ export default function PublicLinkBlock({
 }) {
   const [copied, setCopied] = useState(false);
 
-  const waText = encodeURIComponent(`Здравствуйте! Статус вашего заказа: ${url}`);
-  const waUrl = `https://wa.me/${phoneDigits(clientPhone)}?text=${waText}`;
+  const maxText = encodeURIComponent(`Здравствуйте! Статус вашего заказа: ${url}`);
+  const maxUrl = `https://max.ru/+${phoneDigits(clientPhone)}?text=${maxText}`;
 
   async function copy() {
     try {
@@ -48,14 +48,14 @@ export default function PublicLinkBlock({
             {copied ? <><Check size={14} /> Скопировано</> : <><Copy size={14} /> Скопировать</>}
           </button>
           <a
-            href={waUrl}
+            href={maxUrl}
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-md
-                       text-[13px] bg-whatsapp hover:bg-whatsapp-hover text-white font-medium
+                       text-[13px] bg-ink-900 hover:bg-ink-700 text-white font-medium
                        transition-colors"
           >
-            <MessageCircle size={14} /> WhatsApp
+            <MessageCircle size={14} /> Max
           </a>
         </div>
       </div>

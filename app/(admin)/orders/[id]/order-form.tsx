@@ -522,14 +522,14 @@ function DeleteButton({ orderId }: { orderId: string }) {
   );
 }
 
-// Кнопки звонка и WhatsApp рядом с полем телефона.
-// tel: открывается на десктопе тоже (через системный обработчик / Skype / FaceTime),
-// поэтому показываем всегда — пользователь сам выберет.
+// Кнопки звонка и Max-мессенджера рядом с полем телефона.
+// tel: открывается на десктопе тоже (через системный обработчик / Skype / FaceTime).
+// max.ru/+digits открывает чат в приложении Max или веб-версии.
 function PhoneActions({ phone }: { phone: string }) {
   const digits = phoneDigits(phone);
   const disabled = digits.length < 5;
   const tel = `tel:+${digits}`;
-  const wa  = `https://wa.me/${digits}`;
+  const max = `https://max.ru/+${digits}`;
   const cls =
     'inline-flex items-center justify-center w-10 h-10 rounded-md border border-line ' +
     'bg-white hover:bg-canvas text-ink-900 hover:border-ink-900/20 transition-colors ' +
@@ -554,12 +554,12 @@ function PhoneActions({ phone }: { phone: string }) {
         <Phone size={16} />
       </a>
       <a
-        href={wa}
+        href={max}
         target="_blank"
         rel="noreferrer"
-        className={cls + ' text-whatsapp'}
-        aria-label="Написать в WhatsApp"
-        title="WhatsApp"
+        className={cls}
+        aria-label="Написать в Max"
+        title="Max"
       >
         <MessageCircle size={16} />
       </a>

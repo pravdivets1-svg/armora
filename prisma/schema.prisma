@@ -35,6 +35,7 @@ model User {
   ordersAsInstaller Order[]        @relation("InstallerOrders")
   ordersCreated     Order[]        @relation("CreatedByOrders")
   comments          OrderComment[]
+  photos            OrderPhoto[]
   sessions          Session[]
   pushSubscriptions PushSubscription[]
   assignedLeads     Lead[]         @relation("AssignedLeads")
@@ -113,6 +114,7 @@ model Order {
   installer User?          @relation("InstallerOrders", fields: [installerId], references: [id])
   createdBy User           @relation("CreatedByOrders", fields: [createdById], references: [id])
   comments  OrderComment[]
+  photos    OrderPhoto[]
   events    OrderEvent[]
   fromLead  Lead?          @relation("ConvertedFromLead")
 
@@ -145,6 +147,48 @@ model OrderComment {
 
   @@index([orderId])
   @@map("order_comments")
+}
+
+// =====================================================================
+// Фото договоров и документов по заказу
+// =====================================================================
+// Хранятся прямо в БД как BYTEA. Подходит при низком объёме (десятки фото
+// в месяц). При росте — мигрировать на S3 (см. AGENTS.md).
+//
+// kind = contract — фото договора, замерщик кладёт после подписания.
+// kind = survey   — замерочный лист / эскиз.
+// kind = act      — акт приёма-передачи.
+// kind = other    — прочее (фото объекта и т.п.).
+//
+// `data` хранит уже сжатый JPEG/WebP — клиент должен ужать перед отправкой.
+// Дополнительно ограничиваем 5МБ на стороне API.
+
+enum OrderPhotoKind {
+  contract
+  survey
+  act
+  other
+}
+
+model OrderPhoto {
+  id        String         @id @default(uuid())
+  orderId   String         @map("order_id")
+  authorId  String         @map("author_id")
+  kind      OrderPhotoKind @default(contract)
+  mime      String         @default("image/jpeg")
+  size      Int            // bytes
+  width     Int?
+  height    Int?
+  data      Bytes          // сами байты файла
+  caption   String         @default("")
+  createdAt DateTime       @default(now()) @map("created_at")
+
+  order  Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  author User  @relation(fields: [authorId], references: [id])
+
+  @@index([orderId])
+  @@index([orderId, kind])
+  @@map("order_photos")
 }
 
 // =====================================================================

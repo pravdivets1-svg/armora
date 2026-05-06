@@ -10,6 +10,7 @@ import { StageBadge } from '@/components/stage-badge';
 import { PageBack, PageHeader } from '@/components/page-shell';
 import KeyboardShortcuts from '@/components/keyboard-shortcuts';
 import OrderForm from './order-form';
+import OrderPhotos from './order-photos';
 import PublicLinkBlock from './public-link-block';
 import CommentsBlock from './comments-block';
 import EventLog from './event-log';
@@ -32,7 +33,8 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
 
   // 2) Полная выборка + список назначаемых сотрудников ПАРАЛЛЕЛЬНО.
   //    Также один запрос вместо двух за surveyors/installers — фильтруем в JS.
-  const [order, assignableUsers, events] = await Promise.all([
+  //    Фото берём только метаданные (без BYTEA), чтобы не тянуть мегабайты в RSC.
+  const [order, assignableUsers, events, photoMetas] = await Promise.all([
     prisma.order.findUnique({
       where: { id: params.id },
       include: {
@@ -54,6 +56,15 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
       orderBy: { createdAt: 'desc' },
       take: 100,
       include: { author: { select: { fullName: true, role: true } } },
+    }),
+    prisma.orderPhoto.findMany({
+      where: { orderId: params.id },
+      orderBy: { createdAt: 'desc' },
+      select: {
+        id: true, kind: true, mime: true, size: true,
+        width: true, height: true, caption: true, createdAt: true,
+        author: { select: { id: true, fullName: true } },
+      },
     }),
   ]);
   if (!order) notFound();
@@ -85,6 +96,14 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         role={me.role}
         mode="edit"
         comments={<CommentsBlock orderId={order.id} comments={order.comments} />}
+      />
+
+      <OrderPhotos
+        orderId={order.id}
+        initial={photoMetas.map((p) => ({
+          ...p,
+          createdAt: p.createdAt.toISOString(),
+        }))}
       />
 
       {/* Лента событий — только для staff (исполнителям не показываем

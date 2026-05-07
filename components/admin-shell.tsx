@@ -32,7 +32,7 @@ export default function AdminShell({
       />
 
       {/* Основной контент — смещён на ширину сайдбара на десктопе */}
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-sidebar">
+      <div className="flex-1 flex flex-col min-w-0 lg:ml-[220px]">
         {/* Хедер с гамбургером */}
         <header className="sticky top-0 z-30 bg-white border-b border-line h-14 flex items-center px-4 gap-3 shrink-0">
           {/* Гамбургер — только мобильно */}

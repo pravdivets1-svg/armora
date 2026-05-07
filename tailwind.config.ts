@@ -60,6 +60,9 @@ const config: Config = {
       width: {
         sidebar: '220px',
       },
+      spacing: {
+        sidebar: '220px',
+      },
     },
   },
   plugins: [],

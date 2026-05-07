@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { LayoutList, Calendar, Inbox, CheckSquare, Users, X } from 'lucide-react';
 import type { Role } from '@prisma/client';
@@ -59,9 +60,8 @@ function SidebarContent({
           onClick={onClose}
           className="flex items-center gap-2.5 text-white font-semibold text-[15px] tracking-tight"
         >
-          <span className="inline-flex items-center justify-center w-7 h-7 rounded-md
-                           bg-accent text-white text-[13px] font-bold leading-none shrink-0">
-            A
+          <span className="inline-flex items-center justify-center w-7 h-7 shrink-0">
+            <Image src="/icon.svg" alt="Armora" width={28} height={28} priority />
           </span>
           Armora
         </Link>

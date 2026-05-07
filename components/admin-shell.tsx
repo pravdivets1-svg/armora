@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import Sidebar from './sidebar';
 import type { Role } from '@prisma/client';
 
@@ -48,7 +49,7 @@ export default function AdminShell({
           </button>
           {/* Лого — только мобильно */}
           <span className="lg:hidden font-semibold text-[15px] text-ink-900 tracking-tight flex items-center gap-2">
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded bg-accent text-white text-[11px] font-bold leading-none">A</span>
+            <Image src="/icon.svg" alt="Armora" width={24} height={24} />
             Armora
           </span>
           {/* Правая часть хедера */}

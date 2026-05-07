@@ -1,16 +1,13 @@
-// Расписание — modern editorial 2026.
-// Bento-сетка: главное число "Сегодня" 72px serif в hero-карточке (2×2),
-// рядом мелкие метрики, маршрут на сегодня — широкая полоса под bento.
-// Заголовок страницы — display serif 56px.
-
 import Link from 'next/link';
-import { Ruler, Hammer, CalendarClock, Factory, AlertTriangle, MapPin, ArrowUpRight } from 'lucide-react';
+import {
+  Ruler, Hammer, CalendarClock, Factory,
+  AlertTriangle, MapPin, ArrowUpRight, Clock,
+} from 'lucide-react';
 
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { loadSchedule, type ScheduleEvent } from '@/lib/schedule';
-import { fmtDayLong, fmtTime, mskDayKey, mskDayStart, isSameMskDay } from '@/lib/format';
+import { fmtDayLong, fmtTime, mskDayKey, mskDayStart, isSameMskDay, initials } from '@/lib/format';
 import { prisma } from '@/lib/prisma';
-import { Metric, MetricCard } from '@/components/metric';
 import CalendarUserFilter from './user-filter';
 import TodayRouteCard from './today-route';
 
@@ -34,8 +31,6 @@ export default async function CalendarPage({
       })
     : [];
 
-  // Группировка событий по дням — ключ строится в МСК, чтобы события после 21:00 UTC
-  // (00:00+ МСК) попадали в следующий день, а не в текущий UTC-день.
   const byDay = new Map<string, ScheduleEvent[]>();
   for (const e of events) {
     const key = mskDayKey(e.at);
@@ -43,16 +38,13 @@ export default async function CalendarPage({
     byDay.get(key)!.push(e);
   }
 
-  // «Сегодня/завтра» — границы в МСК. На проде сервер UTC, поэтому
-  // setHours(0,0,0,0) дал бы 00:00 UTC = 03:00 МСК, и события с 00:00..03:00 МСК
-  // считались бы «вчерашними». mskDayStart возвращает реальный момент 00:00 МСК.
   const today = mskDayStart(now);
   const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
   const showRoute = !isStaff(me.role);
   const todayPoints = showRoute
     ? events
-        .filter((e) => e.at.getTime() >= today.getTime() && e.at.getTime() < tomorrow.getTime())
+        .filter((e) => e.at >= today && e.at < tomorrow)
         .filter((e) => e.clientAddress.trim().length > 0)
         .map((e) => ({
           at: e.at,
@@ -63,219 +55,292 @@ export default async function CalendarPage({
         }))
     : [];
 
+  // Форматируем дату заголовка
+  const todayLabel = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(today);
+
   return (
-    <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
-      {/* Editorial-заголовок страницы */}
-      <header className="space-y-3">
-        <div className="text-[11px] uppercase tracking-[0.2em] text-ink-500 font-medium">
-          Сегодня · {fmtDayLong(today)}
+    <main className="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-6">
+
+      {/* ── Шапка ─────────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <div className="text-[11px] uppercase tracking-[0.18em] text-ink-500 font-medium mb-1">
+            Расписание
+          </div>
+          <h1 className="text-[28px] md:text-[32px] font-bold leading-tight tracking-tight text-ink-900 capitalize">
+            {todayLabel}
+          </h1>
         </div>
-        <h1 className="text-[32px] md:text-[36px] font-bold leading-tight tracking-tight text-ink-900">
-          Расписание
-        </h1>
-        <p className="text-[15px] text-ink-500 max-w-xl">
-          Активные замеры и установки на ближайшие 30 дней. Один заказ — одна точка.
-        </p>
-      </header>
-
-      {/* BENTO-СЕТКА: 4 колонки на десктопе, асимметричная.
-          Layout:
-          ┌─────────────┬───────┬───────┐
-          │             │ Замер │ Устан │
-          │   СЕГОДНЯ   ├───────┴───────┤
-          │  (hero 2×2) │   В произв.   │
-          └─────────────┴───────────────┘
-      */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 auto-rows-[minmax(110px,auto)]">
-        {/* Hero: Сегодня — 2×2, тёмная карточка с display-числом */}
-        <a
-          href="#today"
-          className="group md:col-span-2 md:row-span-2 rounded-2xl bg-ink-900 text-white p-7 md:p-8
-                     shadow-soft-lg hover:shadow-accent-glow transition-shadow
-                     flex flex-col justify-between min-h-[240px] md:min-h-[280px]"
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-white/60 font-medium">
-              <CalendarClock size={13} />
-              Сегодня
-            </div>
-            <ArrowUpRight size={20} className="text-white/40 group-hover:text-white transition-colors" />
-          </div>
-          <div className="space-y-2">
-            <div className="text-[96px] md:text-[120px] font-bold leading-[0.85] tracking-tight tabular-nums">
-              {summary.todayCount}
-            </div>
-            <div className="text-[14px] text-white/60">
-              {summary.todayCount === 0
-                ? 'на сегодня событий нет'
-                : summary.todayCount === 1
-                  ? 'событие — замер или установка'
-                  : 'событий — замеры и установки'}
-            </div>
-          </div>
-        </a>
-
-        {/* Замеры — 1×1 */}
-        <MetricCard href="/orders?stage=survey_scheduled">
-          <Metric
-            label="Замеры"
-            value={summary.surveysCount}
-            size="xl"
-            icon={<Ruler size={12} />}
+        {isStaff(me.role) && assignable.length > 0 && (
+          <CalendarUserFilter
+            users={assignable as { id: string; fullName: string; role: 'surveyor' | 'installer' }[]}
+            selected={searchParams.user ?? ''}
           />
-        </MetricCard>
-
-        {/* Установки — 1×1 */}
-        <MetricCard href="/orders?stage=ready_to_install">
-          <Metric
-            label="Установки"
-            value={summary.installsCount}
-            size="xl"
-            icon={<Hammer size={12} />}
-          />
-        </MetricCard>
-
-        {/* В производстве — широкая 2×1 */}
-        {isStaff(me.role) && (
-          <MetricCard href="/orders?stage=production" span={2}>
-            <div className="flex items-end justify-between gap-4">
-              <Metric
-                label="В производстве"
-                value={summary.productionCount}
-                size="xl"
-                icon={<Factory size={12} />}
-              />
-              <div className="text-[12px] text-ink-500 pb-2">
-                заказы у нас в работе
-              </div>
-            </div>
-          </MetricCard>
         )}
       </div>
 
-      {/* Маршрут на сегодня — широкая полоса под bento */}
+      {/* ── Stats-bar ─────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {/* Сегодня */}
+        <a
+          href="#today"
+          className="group rounded-xl bg-ink-900 text-white px-4 py-4 flex flex-col gap-2
+                     hover:bg-accent transition-colors shadow-soft"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-white/60 font-medium">Сегодня</span>
+            <CalendarClock size={13} className="text-white/40 group-hover:text-white/70 transition-colors" />
+          </div>
+          <div className="text-[40px] font-bold tabular-nums leading-none tracking-tight">
+            {summary.todayCount}
+          </div>
+          <div className="text-[12px] text-white/55">
+            {summary.todayCount === 0 ? 'событий нет' : summary.todayCount === 1 ? 'событие' : 'событий'}
+          </div>
+        </a>
+
+        {/* Замеры */}
+        <a
+          href="/orders?stage=survey_scheduled"
+          className="group rounded-xl bg-white border border-line px-4 py-4 flex flex-col gap-2
+                     hover:border-blue-300 hover:shadow-soft-lg transition-all shadow-soft"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-blue-600 font-medium">Замеры</span>
+            <Ruler size={13} className="text-blue-400" />
+          </div>
+          <div className="text-[40px] font-bold tabular-nums leading-none tracking-tight text-ink-900">
+            {summary.surveysCount}
+          </div>
+          <div className="text-[12px] text-ink-500">активных</div>
+        </a>
+
+        {/* Установки */}
+        <a
+          href="/orders?stage=ready_to_install"
+          className="group rounded-xl bg-white border border-line px-4 py-4 flex flex-col gap-2
+                     hover:border-emerald-300 hover:shadow-soft-lg transition-all shadow-soft"
+        >
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] uppercase tracking-[0.18em] text-emerald-600 font-medium">Установки</span>
+            <Hammer size={13} className="text-emerald-400" />
+          </div>
+          <div className="text-[40px] font-bold tabular-nums leading-none tracking-tight text-ink-900">
+            {summary.installsCount}
+          </div>
+          <div className="text-[12px] text-ink-500">активных</div>
+        </a>
+
+        {/* В производстве (директор/менеджер) или просрочено (исполнитель) */}
+        {isStaff(me.role) ? (
+          <a
+            href="/orders?stage=production"
+            className="group rounded-xl bg-white border border-line px-4 py-4 flex flex-col gap-2
+                       hover:border-ink-300 hover:shadow-soft-lg transition-all shadow-soft"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] uppercase tracking-[0.18em] text-ink-500 font-medium">Производство</span>
+              <Factory size={13} className="text-ink-400" />
+            </div>
+            <div className="text-[40px] font-bold tabular-nums leading-none tracking-tight text-ink-900">
+              {summary.productionCount}
+            </div>
+            <div className="text-[12px] text-ink-500">в работе</div>
+          </a>
+        ) : (
+          <div
+            className={`rounded-xl px-4 py-4 flex flex-col gap-2 shadow-soft
+              ${summary.overdueCount > 0
+                ? 'bg-bad/5 border border-bad/30'
+                : 'bg-white border border-line'}`}
+          >
+            <div className="flex items-center justify-between">
+              <span className={`text-[10px] uppercase tracking-[0.18em] font-medium
+                ${summary.overdueCount > 0 ? 'text-bad' : 'text-ink-500'}`}>
+                Просрочено
+              </span>
+              <AlertTriangle size={13} className={summary.overdueCount > 0 ? 'text-bad' : 'text-ink-400'} />
+            </div>
+            <div className={`text-[40px] font-bold tabular-nums leading-none tracking-tight
+              ${summary.overdueCount > 0 ? 'text-bad' : 'text-ink-900'}`}>
+              {summary.overdueCount}
+            </div>
+            <div className={`text-[12px] ${summary.overdueCount > 0 ? 'text-bad/70' : 'text-ink-500'}`}>
+              {summary.overdueCount === 0 ? 'всё в порядке' : 'требует внимания'}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Alert просрочки (только для стаффа) ───────────────── */}
+      {isStaff(me.role) && summary.overdueCount > 0 && (
+        <div className="flex items-center gap-3 rounded-xl bg-bad/5 border border-bad/20
+                        border-l-4 border-l-bad px-4 py-3 text-[13.5px] shadow-bad-glow">
+          <AlertTriangle size={16} className="text-bad shrink-0" />
+          <span className="text-ink-900">
+            <span className="font-semibold text-bad">{summary.overdueCount}</span>{' '}
+            {summary.overdueCount === 1 ? 'просроченное событие' : 'просроченных событий'}
+            <span className="text-ink-500"> — выделены ниже красным</span>
+          </span>
+        </div>
+      )}
+
+      {/* ── Маршрут на сегодня ────────────────────────────────── */}
       {showRoute && todayPoints.length > 0 && (
         <TodayRouteCard points={todayPoints} />
       )}
 
-      {/* Алерт о просрочке — с цветной тенью */}
-      {summary.overdueCount > 0 && (
-        <div className="flex items-center gap-3 rounded-xl bg-bad/5 border-l-4 border-l-bad
-                        border-y border-r border-y-bad/15 border-r-bad/15 px-5 py-4
-                        text-[14px] shadow-bad-glow">
-          <AlertTriangle size={18} className="text-bad shrink-0" />
-          <div className="text-ink-900">
-            <span className="font-semibold text-bad tabular-nums">{summary.overdueCount}</span>{' '}
-            {summary.overdueCount === 1 ? 'просроченное событие' : 'просроченных событий'}
-            <span className="text-ink-500"> — выделены красным ниже</span>
+      {/* ── Пустое состояние ─────────────────────────────────── */}
+      {events.length === 0 && (
+        <div className="bg-white border border-line rounded-2xl p-16 text-center shadow-soft">
+          <CalendarClock size={28} className="mx-auto text-ink-400 mb-4" strokeWidth={1.5} />
+          <div className="text-[20px] font-semibold text-ink-900">На горизонте пусто</div>
+          <div className="text-ink-500 text-[13px] mt-2">
+            Назначьте замер или установку из карточки заказа
           </div>
         </div>
       )}
 
-      {isStaff(me.role) && assignable.length > 0 && (
-        <CalendarUserFilter
-          users={assignable as { id: string; fullName: string; role: 'surveyor' | 'installer' }[]}
-          selected={searchParams.user ?? ''}
-        />
-      )}
-
-      {events.length === 0 && (
-        <div className="bg-white border border-line rounded-2xl p-16 text-center shadow-soft">
-          <CalendarClock size={28} className="mx-auto text-ink-400 mb-4" strokeWidth={1.5} />
-          <div className="text-[22px] font-semibold text-ink-900">На горизонте пусто</div>
-          <div className="text-ink-500 text-[13px] mt-2">Назначьте замер или установку из карточки заказа</div>
-        </div>
-      )}
-
-      {/* Список событий по дням — timeline editorial */}
+      {/* ── Timeline по дням ─────────────────────────────────── */}
       <div className="space-y-8">
         {[...byDay.entries()].map(([key, dayEvents]) => {
           const date = dayEvents[0].at;
           const isToday = isSameMskDay(date, today);
           const isTomorrow = isSameMskDay(date, tomorrow);
-          const isPast = date.getTime() < today.getTime();
-          const dayName = isPast ? 'Просрочено' : isToday ? 'Сегодня' : isTomorrow ? 'Завтра' : null;
+          const isPast = date < today;
+
+          const dayPrefix = isPast ? 'Просрочено' : isToday ? 'Сегодня' : isTomorrow ? 'Завтра' : null;
+          const dayFull = new Intl.DateTimeFormat('ru-RU', {
+            timeZone: 'Europe/Moscow',
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+          }).format(date);
 
           return (
             <section key={key} id={isToday ? 'today' : undefined}>
-              {/* Editorial day header */}
-              <div className="flex items-baseline gap-3 mb-4 pb-3 border-b border-line">
-                {dayName && (
-                  <h2 className={`text-[22px] font-semibold tracking-tight leading-none ${isPast ? 'text-bad' : 'text-ink-900'}`}>
-                    {dayName}
-                  </h2>
-                )}
-                <span className={dayName ? 'text-[13px] text-ink-500 uppercase tracking-wider' : 'text-[22px] font-semibold tracking-tight leading-none text-ink-900'}>
-                  {fmtDayLong(date)}
-                </span>
-                {dayEvents.length > 1 && (
-                  <span className="ml-auto text-[11px] px-2.5 py-1 rounded-full bg-ink-900/[0.06] text-ink-700 font-medium tabular-nums">
-                    {dayEvents.length}
+              {/* День-заголовок */}
+              <div className="flex items-center gap-3 mb-4">
+                <div className={`shrink-0 w-2 h-2 rounded-full ${isPast ? 'bg-bad' : isToday ? 'bg-accent' : 'bg-ink-300'}`} />
+                <div className="flex items-baseline gap-2 flex-wrap flex-1">
+                  {dayPrefix && (
+                    <span className={`text-[15px] font-semibold ${isPast ? 'text-bad' : isToday ? 'text-accent' : 'text-ink-900'}`}>
+                      {dayPrefix}
+                    </span>
+                  )}
+                  <span className={`capitalize ${dayPrefix ? 'text-[13px] text-ink-500' : 'text-[15px] font-semibold text-ink-900'}`}>
+                    {dayFull}
                   </span>
-                )}
+                  <span className="ml-auto text-[12px] text-ink-400 tabular-nums">
+                    {dayEvents.length} {dayEvents.length === 1 ? 'событие' : dayEvents.length < 5 ? 'события' : 'событий'}
+                  </span>
+                </div>
               </div>
 
-              <div className="bg-white border border-line rounded-2xl overflow-hidden shadow-soft">
-                {dayEvents.map((e, idx) => (
-                  <Link
-                    key={e.id}
-                    href={`/orders/${e.orderId}`}
-                    className={`group relative flex flex-col md:flex-row md:items-center gap-2 md:gap-5 px-5 md:px-6 py-4 hover-row
-                                ${idx > 0 ? 'border-t border-line/60' : ''}`}
-                  >
-                    {/* Цветная вертикальная полоса слева */}
-                    <span
-                      className={`absolute left-0 top-0 bottom-0 w-[3px] ${
-                        e.isOverdue ? 'bg-bad' : e.kind === 'survey' ? 'bg-blue-500' : 'bg-emerald-500'
-                      }`}
-                    />
+              {/* Карточки событий с вертикальной timeline-линией */}
+              <div className="relative ml-[9px]">
+                {/* Вертикальная линия */}
+                <div className={`absolute left-0 top-4 bottom-4 w-px ${isPast ? 'bg-bad/30' : 'bg-line'}`} />
 
-                    {/* Десктоп: время display serif в фикс колонке */}
-                    <div className="hidden md:block w-20 shrink-0">
-                      <div className={`text-[22px] font-semibold tabular-nums leading-none tracking-tight ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
-                        {fmtTime(e.at)}
-                      </div>
-                      <div className={`mt-1.5 text-[10px] uppercase tracking-[0.15em] font-medium ${
-                        e.isOverdue ? 'text-bad' : e.kind === 'survey' ? 'text-blue-700' : 'text-emerald-700'
-                      }`}>
-                        {e.kind === 'survey' ? 'Замер' : 'Установка'}
-                      </div>
-                    </div>
+                <div className="space-y-2 pl-6">
+                  {dayEvents.map((e) => {
+                    const kindColor = e.isOverdue
+                      ? 'bg-bad text-white'
+                      : e.kind === 'survey'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'bg-emerald-100 text-emerald-700';
+                    const kindLabel = e.kind === 'survey' ? 'Замер' : 'Установка';
+                    const borderColor = e.isOverdue
+                      ? 'border-l-bad'
+                      : e.kind === 'survey'
+                        ? 'border-l-blue-400'
+                        : 'border-l-emerald-400';
 
-                    {/* Мобайл: время+тип одной строкой сверху */}
-                    <div className="md:hidden flex items-center gap-2 text-[13px]">
-                      <span className={`text-[16px] font-semibold tabular-nums tracking-tight ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
-                        {fmtTime(e.at)}
-                      </span>
-                      <span className={`uppercase tracking-wider font-medium text-[11px] ${
-                        e.isOverdue ? 'text-bad' : e.kind === 'survey' ? 'text-blue-700' : 'text-emerald-700'
-                      }`}>
-                        · {e.kind === 'survey' ? 'Замер' : 'Установка'}
-                      </span>
-                      {e.isOverdue && (
-                        <span className="ml-auto text-bad font-medium text-[11px]">просрочено</span>
-                      )}
-                    </div>
+                    return (
+                      <Link
+                        key={e.id}
+                        href={`/orders/${e.orderId}`}
+                        className={`group relative block bg-white border border-line border-l-[3px] ${borderColor}
+                                    rounded-xl px-4 py-3.5 hover-row hover:shadow-soft transition-all
+                                    ${e.isOverdue ? 'bg-bad/[0.02]' : ''}`}
+                      >
+                        {/* Точка на timeline */}
+                        <div className={`absolute -left-[27px] top-1/2 -translate-y-1/2
+                                          w-[11px] h-[11px] rounded-full border-2 border-white shadow-sm
+                                          ${e.isOverdue ? 'bg-bad' : e.kind === 'survey' ? 'bg-blue-400' : 'bg-emerald-400'}`}
+                        />
 
-                    {/* Клиент + адрес */}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-ink-900 text-[15px]">
-                        {e.clientName}{' '}
-                        <span className="text-ink-400 font-normal text-[13px]">№ {e.number}</span>
-                      </div>
-                      <div className="text-[13px] text-ink-500 mt-1 flex items-start gap-1.5">
-                        <MapPin size={12} className="mt-0.5 shrink-0 text-ink-400" />
-                        <span className="truncate">{e.clientAddress}</span>
-                        {e.worker && <span className="text-ink-400 ml-1 hidden md:inline">· {e.worker.fullName}</span>}
-                      </div>
-                      {e.worker && (
-                        <div className="md:hidden text-[12px] text-ink-400 mt-1">{e.worker.fullName}</div>
-                      )}
-                    </div>
+                        <div className="flex items-start gap-3 md:gap-4">
+                          {/* Время */}
+                          <div className="shrink-0 w-16 md:w-[72px]">
+                            <div className={`text-[22px] font-bold tabular-nums leading-none tracking-tight
+                                             ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
+                              {fmtTime(e.at)}
+                            </div>
+                            <span className={`inline-block mt-1.5 px-1.5 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${kindColor}`}>
+                              {kindLabel}
+                            </span>
+                          </div>
 
-                    <ArrowUpRight size={16} className="hidden md:block text-ink-300 group-hover:text-ink-700 transition-colors shrink-0" />
-                  </Link>
-                ))}
+                          {/* Клиент + адрес */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="font-semibold text-ink-900 text-[14.5px] leading-snug">
+                                {e.clientName}
+                                <span className="ml-1.5 text-ink-400 font-normal text-[12px]">№{e.number}</span>
+                              </div>
+                              {e.isOverdue && (
+                                <span className="shrink-0 text-[11px] text-bad font-semibold flex items-center gap-1">
+                                  <Clock size={11} /> просрочено
+                                </span>
+                              )}
+                            </div>
+                            {e.clientAddress && (
+                              <div className="mt-1 text-[13px] text-ink-500 flex items-start gap-1.5">
+                                <MapPin size={11} className="mt-0.5 shrink-0 text-ink-400" />
+                                <span className="truncate">{e.clientAddress}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Работник */}
+                          <div className="hidden md:flex shrink-0 items-center gap-2">
+                            {e.worker ? (
+                              <>
+                                <div className="w-7 h-7 rounded-full bg-ink-900 text-white text-[11px]
+                                                font-semibold flex items-center justify-center shrink-0">
+                                  {initials(e.worker.fullName)}
+                                </div>
+                                <span className="text-[12.5px] text-ink-600 max-w-[100px] truncate">
+                                  {e.worker.fullName.split(' ')[0]}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-[12px] text-ink-400">не назначен</span>
+                            )}
+                            <ArrowUpRight size={14} className="text-ink-300 group-hover:text-ink-700 transition-colors ml-1" />
+                          </div>
+                        </div>
+
+                        {/* Работник — мобайл */}
+                        {e.worker && (
+                          <div className="md:hidden mt-2 flex items-center gap-1.5 pl-[76px]">
+                            <div className="w-5 h-5 rounded-full bg-ink-900 text-white text-[9px]
+                                            font-semibold flex items-center justify-center shrink-0">
+                              {initials(e.worker.fullName)}
+                            </div>
+                            <span className="text-[12px] text-ink-500">{e.worker.fullName}</span>
+                          </div>
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
             </section>
           );

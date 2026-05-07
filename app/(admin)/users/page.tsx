@@ -29,7 +29,7 @@ export default async function UsersPage() {
   });
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
       <PageHeader
         title="Сотрудники"
         sub={`${users.length} ${users.length === 1 ? 'учётная запись' : users.length < 5 ? 'учётные записи' : 'учётных записей'}`}

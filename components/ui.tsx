@@ -1,21 +1,16 @@
-// UI-примитивы. 2026-style: spacious, тонкие границы, индиго-акцент.
+// UI-примитивы. OkoCRM-style: синий акцент, чистые карточки.
 
 import { forwardRef } from 'react';
 
-// Поля в стиле «soft inset glass»: чуть утопленные в карточку,
-// без backdrop-blur (он бесполезен поверх непрозрачного фона), с лёгкой
-// внутренней тенью сверху — даёт ощущение мягкого вдавленного стекла,
-// читается на любом фоне (белом, тонированном, картинке).
 const inputBase =
   'block w-full min-w-0 max-w-full box-border ' +
-  'bg-ink-900/[0.04] border border-transparent text-ink-900 rounded-md ' +
-  'shadow-[inset_0_1px_2px_rgba(15,15,15,0.06)] ' +
-  'px-3.5 py-2 text-[14px] leading-6 placeholder:text-ink-400 ' +
-  'focus:outline-none focus:bg-white focus:border-ink-900/25 focus:ring-4 focus:ring-ink-900/5 focus:shadow-none ' +
-  'disabled:bg-ink-900/[0.03] disabled:text-ink-500 disabled:shadow-none';
+  'bg-white border border-line text-ink-900 rounded-md ' +
+  'px-3 py-2 text-[14px] leading-6 placeholder:text-ink-400 ' +
+  'focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 ' +
+  'disabled:bg-canvas disabled:text-ink-500';
 
 export const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <span className="text-[11px] tracking-wide text-ink-500 font-medium uppercase">
+  <span className="text-[12px] tracking-wide text-ink-500 font-medium">
     {children}
   </span>
 );
@@ -51,10 +46,10 @@ export function Select({ className = '', children, ...rest }: SelectProps) {
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'success' | 'danger';
 
 const BTN_VARIANT: Record<ButtonVariant, string> = {
-  primary:   'bg-ink-900 hover:bg-black text-white font-medium',
+  primary:   'bg-accent hover:bg-accent-hover text-white font-medium',
   secondary: 'bg-white hover:bg-canvas text-ink-900 border border-line',
   ghost:     'text-ink-700 hover:bg-canvas',
-  success:   'bg-ok hover:bg-[#166534] text-white font-medium',
+  success:   'bg-ok hover:bg-[#15803d] text-white font-medium',
   danger:    'text-bad hover:bg-bad/5 border border-transparent',
 };
 
@@ -65,8 +60,8 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 export function Button({ variant = 'primary', className = '', children, ...rest }: ButtonProps) {
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md
-                  text-[14px] disabled:opacity-50 disabled:cursor-not-allowed
+      className={`inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-md
+                  text-[13.5px] disabled:opacity-50 disabled:cursor-not-allowed
                   ${BTN_VARIANT[variant]} ${className}`}
       {...rest}
     >
@@ -76,7 +71,7 @@ export function Button({ variant = 'primary', className = '', children, ...rest 
 }
 
 // =====================================================================
-// Card — белый блок с тонкой рамкой и большим скруглением
+// Card — белый блок с тонкой рамкой
 // =====================================================================
 
 export function Card({
@@ -91,10 +86,9 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`bg-white border border-line rounded-lg p-5 ${className}`}>
+    <section className={`bg-white border border-line rounded-lg p-5 shadow-soft ${className}`}>
       {title && (
-        <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide
-                        text-ink-500 font-medium mb-4">
+        <div className="flex items-center gap-2 text-[12px] text-ink-500 font-medium mb-4 pb-3 border-b border-line">
           {icon}
           {title}
         </div>

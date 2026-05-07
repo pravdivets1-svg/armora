@@ -1,62 +1,61 @@
 import type { Config } from 'tailwindcss';
 
-// Modern 2026: тёплый кремовый фон, графитовый текст, индиго-акцент.
-// Без свечений/градиентов в карточках. Только бордюры + один цветной CTA.
+// OkoCRM-style: холодный серый фон, тёмный сайдбар, синий акцент.
 const config: Config = {
   content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}'],
   theme: {
     extend: {
       fontFamily: {
         sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['var(--font-display)', 'ui-serif', 'Georgia', 'serif'],
       },
       colors: {
-        canvas:    '#fafaf7',  // тёплый кремовый фон страниц
+        canvas:    '#f0f2f5',  // холодный светло-серый фон
         page:      '#ffffff',
-        line:      '#ececec',
-        lineHover: '#dcdcdc',
+        line:      '#e5e7eb',
+        lineHover: '#d1d5db',
+        sidebar: {
+          bg:      '#1e2a3a',  // тёмный navy-сайдбар
+          hover:   '#28394f',
+          active:  '#2563eb',  // синий активный пункт
+          text:    '#94a3b8',  // приглушённый текст
+          textAct: '#ffffff',  // белый для активного
+        },
         ink: {
-          900: '#0f0f0f',  // основной
-          700: '#404040',
-          500: '#737373',
-          400: '#a3a3a3',
-          300: '#d4d4d4',  // прочерки/disabled-pagination
+          900: '#111827',
+          700: '#374151',
+          500: '#6b7280',
+          400: '#9ca3af',
+          300: '#d1d5db',
         },
         accent: {
-          // Глубокий индиго — спокойный, профессиональный
-          DEFAULT: '#4338ca',
-          hover:   '#3730a3',
-          soft:    '#eef2ff',
-          softText:'#4f46e5',
+          DEFAULT:  '#2563eb',
+          hover:    '#1d4ed8',
+          soft:     '#eff6ff',
+          softText: '#1d4ed8',
         },
-        ok: { DEFAULT: '#15803d', soft: '#f0fdf4' },
-        warn:{ DEFAULT: '#a16207', soft: '#fefce8', softText: '#92400e' },
-        bad: { DEFAULT: '#b91c1c', soft: '#fef2f2' },
-        // Brand colors сторонних сервисов
-        whatsapp:  { DEFAULT: '#25D366', hover: '#128C7E' },
+        ok:   { DEFAULT: '#16a34a', soft: '#f0fdf4' },
+        warn: { DEFAULT: '#d97706', soft: '#fffbeb', softText: '#92400e' },
+        bad:  { DEFAULT: '#dc2626', soft: '#fef2f2' },
+        whatsapp: { DEFAULT: '#25D366', hover: '#128C7E' },
       },
       borderRadius: {
-        DEFAULT: '8px',
-        md: '10px',
-        lg: '14px',
-        xl: '20px',
-        '2xl': '24px',
+        DEFAULT: '6px',
+        md: '8px',
+        lg: '10px',
+        xl: '16px',
+        '2xl': '20px',
       },
       fontSize: {
-        // Display sizes — editorial serif (Playfair Display)
-        // Используются с классом font-display
-        hero:    ['72px', { lineHeight: '0.95', letterSpacing: '-0.035em', fontWeight: '500' }],
-        display: ['56px', { lineHeight: '1.0',  letterSpacing: '-0.03em',  fontWeight: '500' }],
-        h1:      ['40px', { lineHeight: '1.05', letterSpacing: '-0.025em', fontWeight: '500' }],
-        h2:      ['28px', { lineHeight: '1.15', letterSpacing: '-0.02em',  fontWeight: '500' }],
+        h1: ['28px', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '600' }],
+        h2: ['20px', { lineHeight: '1.3', letterSpacing: '-0.005em', fontWeight: '600' }],
       },
       boxShadow: {
-        // Цветные мягкие тени для bento-карточек
-        'soft':       '0 1px 2px rgba(15,15,15,0.04), 0 4px 12px -4px rgba(15,15,15,0.06)',
-        'soft-lg':    '0 2px 4px rgba(15,15,15,0.04), 0 12px 32px -8px rgba(15,15,15,0.10)',
-        'accent-glow':'0 8px 32px -12px rgba(67,56,202,0.35), 0 2px 6px -2px rgba(67,56,202,0.15)',
-        'ok-glow':    '0 8px 32px -12px rgba(21,128,61,0.30)',
-        'bad-glow':   '0 8px 32px -12px rgba(185,28,28,0.30)',
+        'soft':    '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+        'soft-lg': '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)',
+        'card':    '0 0 0 1px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.05)',
+      },
+      width: {
+        sidebar: '220px',
       },
     },
   },

@@ -2,7 +2,7 @@ import { SkeletonHeader, SkeletonStatRow, SkeletonRow } from '@/components/skele
 
 export default function Loading() {
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
       <SkeletonHeader />
       <SkeletonStatRow count={3} />
       <div className="space-y-3">

@@ -64,13 +64,13 @@ export default async function CalendarPage({
     : [];
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
       {/* Editorial-заголовок страницы */}
       <header className="space-y-3">
         <div className="text-[11px] uppercase tracking-[0.2em] text-ink-500 font-medium">
           Сегодня · {fmtDayLong(today)}
         </div>
-        <h1 className="font-display text-[56px] md:text-[64px] leading-[0.95] tracking-tight text-ink-900">
+        <h1 className="text-[32px] md:text-[36px] font-bold leading-tight tracking-tight text-ink-900">
           Расписание
         </h1>
         <p className="text-[15px] text-ink-500 max-w-xl">
@@ -102,7 +102,7 @@ export default async function CalendarPage({
             <ArrowUpRight size={20} className="text-white/40 group-hover:text-white transition-colors" />
           </div>
           <div className="space-y-2">
-            <div className="font-display text-[120px] md:text-[140px] leading-[0.85] tracking-tight tabular-nums">
+            <div className="text-[96px] md:text-[120px] font-bold leading-[0.85] tracking-tight tabular-nums">
               {summary.todayCount}
             </div>
             <div className="text-[14px] text-white/60">
@@ -182,7 +182,7 @@ export default async function CalendarPage({
       {events.length === 0 && (
         <div className="bg-white border border-line rounded-2xl p-16 text-center shadow-soft">
           <CalendarClock size={28} className="mx-auto text-ink-400 mb-4" strokeWidth={1.5} />
-          <div className="font-display text-[24px] text-ink-900">На горизонте пусто</div>
+          <div className="text-[22px] font-semibold text-ink-900">На горизонте пусто</div>
           <div className="text-ink-500 text-[13px] mt-2">Назначьте замер или установку из карточки заказа</div>
         </div>
       )}
@@ -201,11 +201,11 @@ export default async function CalendarPage({
               {/* Editorial day header */}
               <div className="flex items-baseline gap-3 mb-4 pb-3 border-b border-line">
                 {dayName && (
-                  <h2 className={`font-display text-[28px] tracking-tight leading-none ${isPast ? 'text-bad' : 'text-ink-900'}`}>
+                  <h2 className={`text-[22px] font-semibold tracking-tight leading-none ${isPast ? 'text-bad' : 'text-ink-900'}`}>
                     {dayName}
                   </h2>
                 )}
-                <span className={dayName ? 'text-[13px] text-ink-500 uppercase tracking-wider' : 'font-display text-[28px] tracking-tight leading-none text-ink-900'}>
+                <span className={dayName ? 'text-[13px] text-ink-500 uppercase tracking-wider' : 'text-[22px] font-semibold tracking-tight leading-none text-ink-900'}>
                   {fmtDayLong(date)}
                 </span>
                 {dayEvents.length > 1 && (
@@ -232,7 +232,7 @@ export default async function CalendarPage({
 
                     {/* Десктоп: время display serif в фикс колонке */}
                     <div className="hidden md:block w-20 shrink-0">
-                      <div className={`font-display text-[28px] tabular-nums leading-none tracking-tight ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
+                      <div className={`text-[22px] font-semibold tabular-nums leading-none tracking-tight ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
                         {fmtTime(e.at)}
                       </div>
                       <div className={`mt-1.5 text-[10px] uppercase tracking-[0.15em] font-medium ${
@@ -244,7 +244,7 @@ export default async function CalendarPage({
 
                     {/* Мобайл: время+тип одной строкой сверху */}
                     <div className="md:hidden flex items-center gap-2 text-[13px]">
-                      <span className={`font-display text-[18px] tabular-nums tracking-tight ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
+                      <span className={`text-[16px] font-semibold tabular-nums tracking-tight ${e.isOverdue ? 'text-bad' : 'text-ink-900'}`}>
                         {fmtTime(e.at)}
                       </span>
                       <span className={`uppercase tracking-wider font-medium text-[11px] ${

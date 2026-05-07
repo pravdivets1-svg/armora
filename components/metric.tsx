@@ -23,8 +23,8 @@ const SIZE_MAP = {
   sm:   { value: 'text-[16px] font-semibold',                          label: 'text-[10px]' },
   md:   { value: 'text-[24px] font-semibold',                          label: 'text-[11px]' },
   lg:   { value: 'text-[34px] font-semibold',                          label: 'text-[11px]' },
-  xl:   { value: 'text-[56px] font-display font-medium tracking-tight',label: 'text-[11px]' },
-  hero: { value: 'text-[72px] font-display font-medium tracking-tight',label: 'text-[12px]' },
+  xl:   { value: 'text-[56px] font-semibold tracking-tight',label: 'text-[11px]' },
+  hero: { value: 'text-[72px] font-bold tracking-tight',  label: 'text-[12px]' },
 } as const;
 
 const TONE_MAP = {

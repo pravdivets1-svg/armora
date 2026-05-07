@@ -12,7 +12,7 @@ const DOT = {
   survey:  'bg-blue-500',
   prod:    'bg-amber-500',
   ready:   'bg-emerald-500',
-  pending: 'bg-accent',
+  pending: 'bg-accent',   // accent = #2563eb (синий)
   closed:  'bg-ink-300',
 } as const;
 

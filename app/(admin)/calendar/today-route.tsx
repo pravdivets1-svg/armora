@@ -43,7 +43,7 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
             Маршрут на сегодня
           </div>
           <div className="mt-2 flex items-baseline gap-3 flex-wrap">
-            <span className="font-display text-[40px] md:text-[48px] tabular-nums leading-none tracking-tight text-ink-900">
+            <span className="text-[36px] md:text-[44px] font-bold tabular-nums leading-none tracking-tight text-ink-900">
               {sorted.length}
             </span>
             <span className="text-[14px] text-ink-500">
@@ -79,7 +79,7 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
             </div>
             {/* Время display + тип */}
             <div className="w-20 shrink-0">
-              <div className="font-display text-[24px] tabular-nums tracking-tight leading-none text-ink-900">
+              <div className="text-[20px] font-semibold tabular-nums tracking-tight leading-none text-ink-900">
                 {fmtTime(p.at)}
               </div>
               <div className={`text-[10px] uppercase tracking-[0.15em] mt-1.5 font-medium ${

@@ -78,7 +78,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
   const convertedCount = countByStage.converted ?? 0;
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
       <PageHeader
         title="Заявки"
         sub="Входящие обращения с сайта и калькулятора"

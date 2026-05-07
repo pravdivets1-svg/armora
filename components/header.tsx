@@ -1,19 +1,12 @@
-// Шапка: light editorial.
-// Адаптивная раскладка:
-//   < md (мобилка): лого | гамбургер-меню | поиск | push | logout — всё помещается
-//   md+:            лого | nav-pills | поиск | имя+аватар (lg+) | push | logout
-//
-// Синхронный компонент: вся серверная загрузка (auth, счётчики) делается
-// в (admin)/layout.tsx и передаётся пропсами. Так ошибки точно ловятся
-// try/catch в layout — async children в RSC проходят мимо parent try/catch.
+// TopBar — правая часть шапки (поиск, пользователь, push, logout).
+// Гамбургер-кнопка живёт в AdminShell (клиентский).
+// Этот компонент — серверный, принимает данные пропсами из layout.tsx.
 
-import Link from 'next/link';
 import { Suspense } from 'react';
 import { LogOut } from 'lucide-react';
 import type { Role } from '@prisma/client';
 import { ROLE_LABEL } from '@/lib/labels';
 import { logoutAction } from '@/app/(auth)/actions';
-import NavBar from './nav-bar';
 import CommandPalette from './command-palette';
 import PushToggle from './push-toggle';
 import RoleAvatar from './role-avatar';
@@ -22,74 +15,37 @@ type HeaderUser = { id: string; email: string; name: string; role: Role } | unde
 
 type HeaderProps = {
   user: HeaderUser;
-  pendingClosures: number;
-  newLeads: number;
 };
 
-export default function Header({ user, pendingClosures, newLeads }: HeaderProps) {
+export default function Header({ user }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-30 bg-white/70 backdrop-blur-xl border-b border-line/80">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-2 sm:gap-3">
-        {/* Лого + nav слева */}
-        <div className="flex items-center gap-3 md:gap-6 min-w-0 flex-1">
-          <Link
-            href="/orders"
-            className="font-display tracking-tight text-ink-900 text-[20px]
-                       inline-flex items-center gap-2 shrink-0"
-          >
-            <span className="inline-flex items-center justify-center w-7 h-7 rounded-md
-                             bg-ink-900 text-white text-[13px] font-sans font-bold leading-none">
-              A
-            </span>
-            <span className="font-medium hidden sm:inline">Armora</span>
-          </Link>
-          <NavBar
-            items={[
-              { href: '/orders',   label: 'Заказы' },
-              { href: '/calendar', label: 'Расписание' },
-              ...(user?.role === 'director' || user?.role === 'manager'
-                ? [{ href: '/leads', label: 'Заявки', badge: newLeads }]
-                : []),
-              ...(user?.role === 'director'
-                ? [
-                    { href: '/closures', label: 'На закрытие', badge: pendingClosures },
-                    { href: '/users',    label: 'Сотрудники' },
-                  ]
-                : []),
-            ]}
-          />
+    <div className="flex items-center gap-1">
+      {user && (
+        <Suspense fallback={null}>
+          <CommandPalette role={user.role} />
+        </Suspense>
+      )}
+      {user && (
+        <div className="hidden md:flex items-center gap-2 text-[13px] px-2">
+          <RoleAvatar role={user.role} name={user.name} />
+          <div className="flex flex-col leading-tight">
+            <span className="text-ink-900 font-medium truncate max-w-[140px]">{user.name}</span>
+            <span className="text-ink-500 text-[11px]">{ROLE_LABEL[user.role].toLowerCase()}</span>
+          </div>
         </div>
-
-        {/* Действия справа */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          {user && (
-            <Suspense fallback={null}>
-              <CommandPalette role={user.role} />
-            </Suspense>
-          )}
-          {user && (
-            <div className="hidden 2xl:flex items-center gap-2.5 text-[14px] pl-2">
-              <RoleAvatar role={user.role} name={user.name} />
-              <div className="flex flex-col leading-tight">
-                <span className="text-ink-900 font-medium truncate max-w-[140px]">{user.name}</span>
-                <span className="text-ink-500 text-[12px]">{ROLE_LABEL[user.role].toLowerCase()}</span>
-              </div>
-            </div>
-          )}
-          <PushToggle />
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              aria-label="Выйти"
-              title="Выйти"
-              className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06]
-                         w-10 h-10 inline-flex items-center justify-center rounded-md transition-colors"
-            >
-              <LogOut size={16} />
-            </button>
-          </form>
-        </div>
-      </div>
-    </header>
+      )}
+      <PushToggle />
+      <form action={logoutAction}>
+        <button
+          type="submit"
+          aria-label="Выйти"
+          title="Выйти"
+          className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.05]
+                     w-9 h-9 inline-flex items-center justify-center rounded-md transition-colors"
+        >
+          <LogOut size={15} />
+        </button>
+      </form>
+    </div>
   );
 }

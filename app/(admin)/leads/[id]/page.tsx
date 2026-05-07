@@ -52,7 +52,7 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-5xl mx-auto px-6 py-6 space-y-5">
       <PageBack href="/leads" label="Все заявки" />
 
       <PageHeader

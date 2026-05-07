@@ -48,7 +48,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
   const activeFilters = [searchParams.q, stage, searchParams.user].filter(Boolean).length;
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
       {/* Заголовок */}
       <PageHeader
         title="Заказы"

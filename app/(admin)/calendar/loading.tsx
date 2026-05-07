@@ -3,7 +3,7 @@ import { Skeleton } from '@/components/skeletons';
 
 export default function Loading() {
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
       <SkeletonHeader />
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 auto-rows-[minmax(110px,auto)]">
         <div className="md:col-span-2 md:row-span-2 rounded-2xl bg-ink-900/[0.06] min-h-[240px] md:min-h-[280px]" />

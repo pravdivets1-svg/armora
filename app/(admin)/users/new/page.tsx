@@ -11,7 +11,7 @@ export default async function NewUserPage() {
   await requireRole(['director']);
 
   return (
-    <main className="max-w-3xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-3xl mx-auto px-6 py-6 space-y-5">
       <PageHeader kicker="Создать" title="Новый сотрудник" />
       <UserForm action={createUserAction} mode="create" />
     </main>

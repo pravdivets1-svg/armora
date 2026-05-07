@@ -24,7 +24,7 @@ export default async function EditUserPage({ params }: { params: { id: string } 
   const isSelf = user.id === me.id;
 
   return (
-    <main className="max-w-3xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-3xl mx-auto px-6 py-6 space-y-5">
       <PageHeader kicker={ROLE_LABEL[user.role]} title={user.fullName} />
 
       <UserForm

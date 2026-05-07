@@ -39,7 +39,7 @@ export default async function ClosuresPage() {
   const totalMargin = totalSum - totalCost;
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
       <PageHeader
         title="На закрытие"
         sub="Заказы, поданные на подтверждение. Только директор может закрыть."

@@ -77,7 +77,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
   const publicUrl = `${baseUrl}/order/${order.publicToken}`;
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-10 space-y-8">
+    <main className="max-w-5xl mx-auto px-6 py-6 space-y-5">
       <PageBack href="/orders" label="Все заказы" />
 
       <PageHeader

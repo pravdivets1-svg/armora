@@ -50,9 +50,12 @@ const config: Config = {
         h2: ['20px', { lineHeight: '1.3', letterSpacing: '-0.005em', fontWeight: '600' }],
       },
       boxShadow: {
-        'soft':    '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
-        'soft-lg': '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)',
-        'card':    '0 0 0 1px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.05)',
+        'soft':         '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
+        'soft-lg':      '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)',
+        'card':         '0 0 0 1px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.05)',
+        'accent-glow':  '0 4px 20px -6px rgba(37,99,235,0.4)',
+        'ok-glow':      '0 4px 20px -6px rgba(22,163,74,0.3)',
+        'bad-glow':     '0 4px 20px -6px rgba(220,38,38,0.3)',
       },
       width: {
         sidebar: '220px',

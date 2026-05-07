@@ -22,6 +22,7 @@ type UserData = {
   login: string;       // часть до @armora.local
   fullName: string;
   phone: string | null;
+  maxUserId: string | null;
   role: Role;
   isSelf: boolean;
 };
@@ -111,6 +112,15 @@ export default function UserForm({
                 name="phone"
                 defaultValue={user?.phone ?? ''}
                 placeholder="+7 916 000-00-00"
+              />
+            </Field>
+
+            <Field label="MAX ID" hint="Числовой user_id в мессенджере MAX — для уведомлений" error={fe('maxUserId')}>
+              <Input
+                name="maxUserId"
+                defaultValue={user?.maxUserId ?? ''}
+                placeholder="123456789"
+                className="font-mono"
               />
             </Field>
 

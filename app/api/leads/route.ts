@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { notifySafe, sendPushToStaff } from '@/lib/push';
 import { notifyLeadCreatedTelegram } from '@/lib/telegram';
+import { notifyLeadCreatedMax } from '@/lib/max';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -209,6 +210,23 @@ export async function POST(req: NextRequest) {
       },
       baseUrl,
     ).catch((e) => console.warn('[telegram] notify failed', e));
+
+    // MAX (silent skip если MAX_BOT_TOKEN не задан)
+    void prisma.user.findMany({
+      where: { role: { in: ['director', 'manager'] }, isActive: true, maxUserId: { not: null } },
+      select: { maxUserId: true },
+    }).then((users) => {
+      const ids = users.map((u) => u.maxUserId!);
+      if (ids.length > 0) {
+        return notifyLeadCreatedMax(ids, {
+          number:        lead.number,
+          clientName:    d.clientName,
+          clientPhone:   d.clientPhone,
+          clientAddress: d.clientAddress ?? null,
+          comment:       d.comment ?? '',
+        }, baseUrl);
+      }
+    }).catch((e) => console.warn('[max] lead notify failed', e));
   }
 
   return NextResponse.json(

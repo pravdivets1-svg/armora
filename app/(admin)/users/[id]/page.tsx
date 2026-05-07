@@ -31,11 +31,12 @@ export default async function EditUserPage({ params }: { params: { id: string } 
         mode="edit"
         action={updateUserAction.bind(null, user.id)}
         user={{
-          id:       user.id,
-          login:    loginOf(user.email),
-          fullName: user.fullName,
-          phone:    user.phone,
-          role:     user.role,
+          id:        user.id,
+          login:     loginOf(user.email),
+          fullName:  user.fullName,
+          phone:     user.phone,
+          maxUserId: user.maxUserId,
+          role:      user.role,
           isSelf,
         }}
       />

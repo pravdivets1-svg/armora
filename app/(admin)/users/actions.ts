@@ -21,11 +21,12 @@ const LOGIN_REGEX = /^[a-z0-9]{6}$/;
 const PASSWORD_REGEX = /^.{5}$/;
 
 const baseSchema = z.object({
-  login:    z.string().trim().toLowerCase()
-              .regex(LOGIN_REGEX, 'Логин: ровно 6 символов (a-z, 0-9)'),
-  fullName: z.string().trim().min(2, 'Введите ФИО'),
-  phone:    z.string().trim().max(40).optional().or(z.literal('').transform(() => undefined)),
-  role:     z.enum(ROLES, { errorMap: () => ({ message: 'Выберите роль' }) }),
+  login:     z.string().trim().toLowerCase()
+               .regex(LOGIN_REGEX, 'Логин: ровно 6 символов (a-z, 0-9)'),
+  fullName:  z.string().trim().min(2, 'Введите ФИО'),
+  phone:     z.string().trim().max(40).optional().or(z.literal('').transform(() => undefined)),
+  maxUserId: z.string().trim().max(40).optional().or(z.literal('').transform(() => undefined)),
+  role:      z.enum(ROLES, { errorMap: () => ({ message: 'Выберите роль' }) }),
 });
 
 const createSchema = baseSchema.extend({
@@ -91,9 +92,10 @@ export async function createUserAction(
     data: {
       email,
       password: passwordHash,
-      fullName: d.fullName,
-      phone:    d.phone ? normalizePhone(d.phone) : null,
-      role:     d.role as Role,
+      fullName:  d.fullName,
+      phone:     d.phone ? normalizePhone(d.phone) : null,
+      maxUserId: d.maxUserId ?? null,
+      role:      d.role as Role,
     },
   });
 
@@ -141,10 +143,11 @@ export async function updateUserAction(
   }
 
   const updateData: any = {
-    email:    newEmail,
-    fullName: d.fullName,
-    phone:    d.phone ? normalizePhone(d.phone) : null,
-    role:     d.role as Role,
+    email:     newEmail,
+    fullName:  d.fullName,
+    phone:     d.phone ? normalizePhone(d.phone) : null,
+    maxUserId: d.maxUserId ?? null,
+    role:      d.role as Role,
   };
   if (d.password) {
     updateData.password = await bcrypt.hash(d.password, 10);

@@ -1,10 +1,16 @@
-// Серверная отправка Web Push уведомлений.
+// Серверная отправка Web Push уведомлений + MAX Bot API.
+// MAX-уведомления отправляются параллельно с Web Push — silent skip если MAX_BOT_TOKEN не задан.
 // VAPID-ключи берём из env (см. .env): VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT.
 // При первом импорте конфигурируем web-push один раз.
 
 import webpush from 'web-push';
 import type { Stage } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import {
+  notifySurveyorMax,
+  notifyInstallerMax,
+  notifyClosureMax,
+} from '@/lib/max';
 
 const PUBLIC_KEY  = process.env.VAPID_PUBLIC_KEY;
 const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
@@ -130,6 +136,7 @@ export async function notifyOrderChanges(
   before: OrderNotifyContext | null,
   after: OrderNotifyContext,
 ): Promise<void> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
   const url = `/orders/${after.id}`;
   const tasks: Promise<void>[] = [];
 
@@ -149,6 +156,21 @@ export async function notifyOrderChanges(
         url,
         tag: `order-${after.id}-survey`,
       }),
+    );
+    // MAX: берём maxUserId замерщика
+    tasks.push(
+      prisma.user.findUnique({ where: { id: after.surveyorId }, select: { maxUserId: true } })
+        .then((u) => {
+          if (u?.maxUserId) {
+            return notifySurveyorMax(u.maxUserId, {
+              number: after.number,
+              clientName: after.clientName,
+              clientAddress: after.clientAddress,
+              surveyAt: after.surveyAt,
+            }, baseUrl);
+          }
+        })
+        .catch((e) => console.warn('[max] surveyor notify error', e)),
     );
   }
 
@@ -170,9 +192,24 @@ export async function notifyOrderChanges(
         tag: `order-${after.id}-install`,
       }),
     );
+    // MAX: берём maxUserId установщика
+    tasks.push(
+      prisma.user.findUnique({ where: { id: after.installerId }, select: { maxUserId: true } })
+        .then((u) => {
+          if (u?.maxUserId) {
+            return notifyInstallerMax(u.maxUserId, {
+              number: after.number,
+              clientName: after.clientName,
+              clientAddress: after.clientAddress,
+              installAt: after.installAt,
+            }, baseUrl);
+          }
+        })
+        .catch((e) => console.warn('[max] installer notify error', e)),
+    );
   }
 
-  // 3) Заказ подан на закрытие — пуш директорам
+  // 3) Заказ подан на закрытие — пуш + MAX директорам
   const becamePendingClosure =
     before?.stage !== 'pending_closure' && after.stage === 'pending_closure';
   if (becamePendingClosure) {
@@ -183,6 +220,21 @@ export async function notifyOrderChanges(
         url: '/closures',
         tag: `order-${after.id}-closure`,
       }),
+    );
+    // MAX: директоры у которых есть maxUserId
+    tasks.push(
+      prisma.user.findMany({
+        where: { role: 'director', isActive: true, maxUserId: { not: null } },
+        select: { maxUserId: true },
+      }).then((users) => {
+        const ids = users.map((u) => u.maxUserId!);
+        if (ids.length > 0) {
+          return notifyClosureMax(ids, {
+            number: after.number,
+            clientName: after.clientName,
+          }, baseUrl);
+        }
+      }).catch((e) => console.warn('[max] closure notify error', e)),
     );
   }
 

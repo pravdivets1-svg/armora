@@ -26,6 +26,7 @@ model User {
   password  String   // bcrypt-хеш
   fullName  String   @map("full_name")
   phone     String?
+  maxUserId String?  @map("max_user_id") // числовой user_id в MAX мессенджере
   role      Role
   isActive  Boolean  @default(true) @map("is_active")
   createdAt DateTime @default(now()) @map("created_at")

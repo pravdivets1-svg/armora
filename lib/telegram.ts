@@ -43,8 +43,8 @@ export async function sendTelegram(text: string): Promise<void> {
           parse_mode: 'HTML',
           disable_web_page_preview: true,
         }),
-        // Telegram иногда тормозит — короткий таймаут, чтобы не блокировать запрос
-        signal: AbortSignal.timeout(5000),
+        // Telegram + Timeweb egress иногда тормозит до 10+с. Ставим запас.
+        signal: AbortSignal.timeout(15000),
       });
       if (!res.ok) {
         const body = await res.text().catch(() => '');

@@ -17,6 +17,7 @@ import { prisma } from '@/lib/prisma';
 import { notifySafe, sendPushToStaff } from '@/lib/push';
 import { notifyLeadCreatedTelegram } from '@/lib/telegram';
 import { notifyLeadCreatedMax } from '@/lib/max';
+import { notifyLeadCreatedEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -195,21 +196,25 @@ export async function POST(req: NextRequest) {
       }),
     );
 
+    const leadCtx = {
+      number:        lead.number,
+      clientName:    d.clientName,
+      clientPhone:   d.clientPhone,
+      clientAddress: d.clientAddress ?? null,
+      widthMm:       d.widthMm ?? null,
+      heightMm:      d.heightMm ?? null,
+      comment:       d.comment ?? '',
+      estimatedPrice: d.estimatedPrice ?? null,
+      source:        d.source ?? 'calc',
+    };
+
     // Telegram (silent skip если env не настроен)
-    void notifyLeadCreatedTelegram(
-      {
-        number:        lead.number,
-        clientName:    d.clientName,
-        clientPhone:   d.clientPhone,
-        clientAddress: d.clientAddress ?? null,
-        widthMm:       d.widthMm ?? null,
-        heightMm:      d.heightMm ?? null,
-        comment:       d.comment ?? '',
-        estimatedPrice: d.estimatedPrice ?? null,
-        source:        d.source ?? 'calc',
-      },
-      baseUrl,
-    ).catch((e) => console.warn('[telegram] notify failed', e));
+    void notifyLeadCreatedTelegram(leadCtx, baseUrl)
+      .catch((e) => console.warn('[telegram] notify failed', e));
+
+    // Email через Resend (silent skip если RESEND_API_KEY / EMAIL_RECIPIENTS не заданы)
+    void notifyLeadCreatedEmail(leadCtx, baseUrl)
+      .catch((e) => console.warn('[email] notify failed', e));
 
     // MAX (silent skip если MAX_BOT_TOKEN не задан)
     void prisma.user.findMany({

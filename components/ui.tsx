@@ -2,10 +2,12 @@
 
 import { forwardRef } from 'react';
 
+// text-[16px] на мобиле обязателен — иначе iOS Safari делает auto-zoom при фокусе.
+// На lg+ возвращаем 14px для визуальной плотности.
 const inputBase =
   'block w-full min-w-0 max-w-full box-border ' +
   'bg-white border border-line text-ink-900 rounded-md ' +
-  'px-3 py-2 text-[14px] leading-6 placeholder:text-ink-400 ' +
+  'px-3 py-2 text-[16px] lg:text-[14px] leading-6 placeholder:text-ink-400 ' +
   'focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 ' +
   'disabled:bg-canvas disabled:text-ink-500';
 

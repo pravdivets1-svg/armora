@@ -17,6 +17,7 @@ export function PageHeader({
   actions?: React.ReactNode;
 }) {
   const isDesktop = useIsDesktop();
+  const iconSize: 36 | 44 = isDesktop ? 36 : 44;
 
   return (
     <header
@@ -24,17 +25,17 @@ export function PageHeader({
                  border-b border-borderc"
       style={{ height: isDesktop ? 64 : 56 }}
     >
-      <div className="flex items-center gap-2 h-full px-4">
+      <div className="flex items-center gap-2 h-full px-3 sm:px-4">
         {backHref && (
-          <Link href={backHref} aria-label="Назад">
-            <IconButton size={36} aria-label="Назад">
+          <Link href={backHref} aria-label="Назад" className="-ml-1">
+            <IconButton size={iconSize} aria-label="Назад">
               <ArrowLeft size={18} />
             </IconButton>
           </Link>
         )}
         <div className="min-w-0 flex-1">
-          <h1 className="text-h1 text-text1 truncate">{title}</h1>
-          {sub && <p className="text-meta text-text3 truncate -mt-0.5">{sub}</p>}
+          <h1 className="text-h1 text-text1 truncate" title={title}>{title}</h1>
+          {sub && <p className="text-meta text-text3 truncate -mt-0.5" title={sub}>{sub}</p>}
         </div>
         <div className="flex items-center gap-1 shrink-0">{actions}</div>
       </div>

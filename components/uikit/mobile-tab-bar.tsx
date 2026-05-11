@@ -25,11 +25,11 @@ export function MobileTabBar({
   const pathname = usePathname();
 
   const all: TabItem[] = [
-    { href: '/orders',   label: 'Заказы',     icon: LayoutList },
-    { href: '/calendar', label: 'Расписание', icon: Calendar },
-    { href: '/leads',    label: 'Заявки',     icon: Inbox,       badge: newLeads,        roles: ['director', 'manager'] as Role[] },
-    { href: '/closures', label: 'Закрытие',   icon: CheckSquare, badge: pendingClosures, roles: ['director'] as Role[] },
-    { href: '/settings', label: 'Профиль',    icon: User },
+    { href: '/orders',   label: 'Заказы',    icon: LayoutList },
+    { href: '/calendar', label: 'Календарь', icon: Calendar },
+    { href: '/leads',    label: 'Заявки',    icon: Inbox,       badge: newLeads,        roles: ['director', 'manager'] as Role[] },
+    { href: '/closures', label: 'Закрыть',   icon: CheckSquare, badge: pendingClosures, roles: ['director'] as Role[] },
+    { href: '/settings', label: 'Профиль',   icon: User },
   ];
   const items = all.filter((it) => !it.roles || it.roles.includes(role));
 
@@ -45,10 +45,10 @@ export function MobileTabBar({
           const active = pathname === it.href || pathname.startsWith(it.href + '/');
           const Icon = it.icon;
           return (
-            <li key={it.href} className="flex-1">
+            <li key={it.href} className="flex-1 min-w-0">
               <Link
                 href={it.href}
-                className={`relative flex flex-col items-center justify-center gap-1 h-full
+                className={`relative flex flex-col items-center justify-center gap-1 h-full px-1
                             text-[11px] font-medium transition-colors duration-fast
                             ${active ? 'text-accent' : 'text-text3 hover:text-text1'}`}
               >
@@ -65,7 +65,7 @@ export function MobileTabBar({
                     </span>
                   )}
                 </span>
-                <span>{it.label}</span>
+                <span className="max-w-full truncate">{it.label}</span>
               </Link>
             </li>
           );

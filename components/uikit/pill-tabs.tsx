@@ -34,7 +34,14 @@ export function PillTabs({
   };
 
   return (
-    <div className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-4 px-4 pb-1">
+    <div
+      className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-4 px-4 pb-1"
+      style={{
+        // Намёк на горизонтальный скролл — fade справа
+        maskImage: 'linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)',
+      }}
+    >
       {items.map((it) => {
         const active = current === it.key;
         return (

@@ -6,7 +6,7 @@ import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { LEAD_STAGE_LABEL, LEAD_STAGE_ORDER } from '@/lib/lead-labels';
-import { PageHeader, PillTabs, Empty, LeadPill, Button } from '@/components/uikit';
+import { PageHeader, PillTabs, Empty, LeadPill } from '@/components/uikit';
 import LiveSearch from '@/components/live-search';
 import LeadsBulkBar from './bulk-bar';
 
@@ -149,14 +149,10 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
           ]}
         />
 
-        {/* Hero — последняя новая заявка */}
+        {/* Hero — последняя новая заявка.
+            Внешняя обёртка — <div>, чтобы внутри жил <a tel:>. Кнопка «Открыть» — отдельный <Link>. */}
         {heroLead && (
-          <Link
-            href={`/leads/${heroLead.id}`}
-            className="block rounded-lg border border-accent/40 bg-accent-soft p-4 sm:p-5
-                       transition-transform duration-fast active:scale-[0.99]
-                       focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-          >
+          <div className="rounded-lg border border-accent/40 bg-accent-soft p-4 sm:p-5">
             <div className="flex items-center gap-2 text-meta uppercase tracking-wide text-accent mb-1">
               <span className="inline-flex items-center h-5 px-1.5 rounded text-[10px] font-semibold tracking-wide bg-accent text-card">
                 Новая
@@ -168,7 +164,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
             </div>
             <h2 className="text-h1 text-text1 mb-1 truncate">{heroLead.clientName}</h2>
             <div className="text-[13px] text-text2 flex items-center gap-3 flex-wrap mb-3 tabular-nums">
-              <a href={`tel:${heroLead.clientPhone}`} className="inline-flex items-center gap-1.5 hover:text-accent" onClick={(e) => e.stopPropagation()}>
+              <a href={`tel:${heroLead.clientPhone}`} className="inline-flex items-center gap-1.5 hover:text-accent">
                 <Phone size={12} /> {fmtPhone(heroLead.clientPhone)}
               </a>
               {heroLead.clientAddress && <span className="text-text3 truncate max-w-[200px]">{heroLead.clientAddress}</span>}
@@ -176,11 +172,17 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                 <span className="text-text3">{heroLead.widthMm ?? '?'} × {heroLead.heightMm ?? '?'} мм</span>
               )}
             </div>
-            <div className="flex items-center justify-between">
-              <Button size="sm" className="pointer-events-none">Открыть</Button>
-              <span className="text-meta text-text3">→</span>
-            </div>
-          </Link>
+            <Link
+              href={`/leads/${heroLead.id}`}
+              className="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-md
+                         bg-accent hover:bg-accent-deep text-white font-medium text-[13px]
+                         transition-colors duration-fast
+                         active:scale-[0.98]
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            >
+              Открыть заявку
+            </Link>
+          </div>
         )}
 
         {leads.length === 0 ? (

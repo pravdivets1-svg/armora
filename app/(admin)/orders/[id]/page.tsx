@@ -1,9 +1,8 @@
 import { notFound } from 'next/navigation';
-import { MoreHorizontal } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
-import { PageHeader, IconButton } from '@/components/uikit';
+import { PageHeader } from '@/components/uikit';
 import OrderForm from './order-form';
 import OrderPhotos from './order-photos';
 import AwaitingClientCard from './order-awaiting-card';
@@ -86,14 +85,9 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         title={`Заказ № ${order.number}`}
         sub={order.clientName}
         backHref="/orders"
-        actions={
-          <IconButton size={40} aria-label="Меню">
-            <MoreHorizontal size={18} />
-          </IconButton>
-        }
       />
 
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-4 space-y-3 pb-12">
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-4 space-y-3 pb-[88px] lg:pb-12">
         <HeroStageBlock
           current={order.stage}
           role={me.role}

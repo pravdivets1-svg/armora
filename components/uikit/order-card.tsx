@@ -35,7 +35,8 @@ export function OrderCard({
     <Link
       href={href}
       className="block bg-card border border-borderc rounded-md px-4 py-3
-                 transition-colors duration-fast ease-soft hover:bg-subtle/60
+                 transition-all duration-fast ease-soft hover:bg-subtle/60
+                 active:scale-[0.99] active:bg-subtle
                  focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
       <div className="flex items-center justify-between gap-3 mb-1.5">

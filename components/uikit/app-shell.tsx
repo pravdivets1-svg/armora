@@ -25,7 +25,7 @@ export function AppShell({
         pendingClosures={pendingClosures}
         newLeads={newLeads}
       />
-      <div className="min-h-screen lg:ml-sidebar pb-[80px] lg:pb-0">
+      <div className="min-h-screen lg:ml-sidebar pb-[calc(64px+env(safe-area-inset-bottom)+8px)] lg:pb-0">
         {children}
       </div>
       <MobileTabBar

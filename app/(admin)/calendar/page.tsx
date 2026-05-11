@@ -1,8 +1,5 @@
 import Link from 'next/link';
-import {
-  Ruler, Hammer, CalendarClock, Factory,
-  AlertTriangle, MapPin, Clock,
-} from 'lucide-react';
+import { MapPin, CalendarClock, AlertTriangle } from 'lucide-react';
 
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { loadSchedule, type ScheduleEvent } from '@/lib/schedule';
@@ -11,6 +8,7 @@ import { prisma } from '@/lib/prisma';
 import { PageHeader, Empty } from '@/components/uikit';
 import CalendarUserFilter from './user-filter';
 import TodayRouteCard from './today-route';
+import NextEventCard from './next-event-card';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Расписание — Armora' };
@@ -42,6 +40,9 @@ export default async function CalendarPage({
   const today = mskDayStart(now);
   const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
+  // Next upcoming event (для hero-блока)
+  const nextEvent = events.find((e) => e.at >= now) ?? events.find((e) => e.isOverdue) ?? null;
+
   const showRoute = !isStaff(me.role);
   const todayPoints = showRoute
     ? events
@@ -56,20 +57,24 @@ export default async function CalendarPage({
         }))
     : [];
 
-  const todayLabel = new Intl.DateTimeFormat('ru-RU', {
-    timeZone: 'Europe/Moscow',
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  }).format(today);
+  const summaryParts: string[] = [];
+  if (summary.todayCount > 0) {
+    summaryParts.push(`${summary.todayCount} ${summary.todayCount === 1 ? 'событие' : summary.todayCount < 5 ? 'события' : 'событий'} сегодня`);
+  }
+  if (summary.surveysCount > 0) summaryParts.push(`${summary.surveysCount} замеров`);
+  if (summary.installsCount > 0) summaryParts.push(`${summary.installsCount} установок`);
+  if (isStaff(me.role) && summary.overdueCount > 0) {
+    summaryParts.push(`${summary.overdueCount} просрочено`);
+  }
+  const subline = summaryParts.length > 0 ? summaryParts.join(' · ') : 'Расписание чистое';
 
   return (
     <>
-      <PageHeader title="Расписание" sub={todayLabel} />
+      <PageHeader title="Расписание" sub={subline} />
 
-      <div className="max-w-5xl mx-auto px-4 lg:px-6 pt-4 space-y-4 pb-12">
+      <div className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 space-y-4 pb-12">
 
-        {/* Фильтр сотрудников — для staff */}
+        {/* Фильтр сотрудников */}
         {isStaff(me.role) && assignable.length > 0 && (
           <CalendarUserFilter
             users={assignable as { id: string; fullName: string; role: 'surveyor' | 'installer' }[]}
@@ -77,99 +82,39 @@ export default async function CalendarPage({
           />
         )}
 
-        {/* Stats-bar — 4 компактных карточки */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
-          <a
-            href="#today"
-            className="rounded-md border border-text1 bg-text1 text-card px-3 py-3 flex flex-col gap-1
-                       transition-opacity duration-fast hover:opacity-90"
-          >
-            <div className="flex items-center justify-between text-meta opacity-70">
-              <span>Сегодня</span>
-              <CalendarClock size={14} />
-            </div>
-            <div className="text-display tabular-nums leading-none">{summary.todayCount}</div>
-            <div className="text-meta opacity-70">
-              {summary.todayCount === 1 ? 'событие' : 'событий'}
-            </div>
-          </a>
-
-          <a
-            href="/orders?stage=survey_scheduled"
-            className="rounded-md border border-borderc bg-card px-3 py-3 flex flex-col gap-1
-                       transition-colors duration-fast hover:bg-subtle"
-          >
-            <div className="flex items-center justify-between text-meta text-info2">
-              <span>Замеры</span>
-              <Ruler size={14} />
-            </div>
-            <div className="text-display tabular-nums leading-none text-text1">{summary.surveysCount}</div>
-            <div className="text-meta text-text3">активных</div>
-          </a>
-
-          <a
-            href="/orders?stage=ready_to_install"
-            className="rounded-md border border-borderc bg-card px-3 py-3 flex flex-col gap-1
-                       transition-colors duration-fast hover:bg-subtle"
-          >
-            <div className="flex items-center justify-between text-meta text-ok2">
-              <span>Установки</span>
-              <Hammer size={14} />
-            </div>
-            <div className="text-display tabular-nums leading-none text-text1">{summary.installsCount}</div>
-            <div className="text-meta text-text3">активных</div>
-          </a>
-
-          {isStaff(me.role) ? (
-            <a
-              href="/orders?stage=production"
-              className="rounded-md border border-borderc bg-card px-3 py-3 flex flex-col gap-1
-                         transition-colors duration-fast hover:bg-subtle"
-            >
-              <div className="flex items-center justify-between text-meta text-warn2">
-                <span>Производство</span>
-                <Factory size={14} />
-              </div>
-              <div className="text-display tabular-nums leading-none text-text1">{summary.productionCount}</div>
-              <div className="text-meta text-text3">в работе</div>
-            </a>
-          ) : (
-            <div
-              className={`rounded-md px-3 py-3 flex flex-col gap-1 border
-                ${summary.overdueCount > 0 ? 'bg-bad2-soft border-bad2/30' : 'bg-card border-borderc'}`}
-            >
-              <div className={`flex items-center justify-between text-meta
-                ${summary.overdueCount > 0 ? 'text-bad2' : 'text-text3'}`}>
-                <span>Просрочено</span>
-                <AlertTriangle size={14} />
-              </div>
-              <div className={`text-display tabular-nums leading-none
-                ${summary.overdueCount > 0 ? 'text-bad2' : 'text-text1'}`}>
-                {summary.overdueCount}
-              </div>
-              <div className={`text-meta ${summary.overdueCount > 0 ? 'text-bad2/80' : 'text-text3'}`}>
-                {summary.overdueCount === 0 ? 'всё в порядке' : 'требует внимания'}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Alert просрочки для staff */}
-        {isStaff(me.role) && summary.overdueCount > 0 && (
-          <div className="flex items-center gap-3 rounded-md bg-bad2-soft border border-bad2/30
-                          px-4 py-3 text-[14px] text-text1">
-            <AlertTriangle size={16} className="text-bad2 shrink-0" />
-            <span>
-              <span className="font-semibold text-bad2">{summary.overdueCount}</span>{' '}
-              {summary.overdueCount === 1 ? 'просроченное событие' : 'просроченных событий'}
-              <span className="text-text3"> — выделены ниже</span>
-            </span>
-          </div>
+        {/* Hero: следующее событие или просрочка */}
+        {nextEvent && (
+          <NextEventCard
+            orderId={nextEvent.orderId}
+            kind={nextEvent.kind}
+            clientName={nextEvent.clientName}
+            clientAddress={nextEvent.clientAddress}
+            number={nextEvent.number}
+            workerName={nextEvent.worker?.fullName}
+            atIso={nextEvent.at.toISOString()}
+            timeLabel={fmtTime(nextEvent.at)}
+          />
         )}
 
-        {/* Маршрут на сегодня (для исполнителей) */}
+        {/* Маршрут на сегодня (только для исполнителей) */}
         {showRoute && todayPoints.length > 0 && (
           <TodayRouteCard points={todayPoints} />
+        )}
+
+        {/* Алерт для staff если есть просрочка */}
+        {isStaff(me.role) && summary.overdueCount > 0 && (
+          <Link
+            href="#overdue"
+            className="flex items-center gap-3 rounded-md bg-bad2-soft border border-bad2/30
+                       px-4 py-3 text-[14px] text-text1 transition-transform duration-fast active:scale-[0.99]"
+          >
+            <AlertTriangle size={16} className="text-bad2 shrink-0" />
+            <span className="flex-1">
+              <span className="font-semibold text-bad2">{summary.overdueCount}</span>{' '}
+              {summary.overdueCount === 1 ? 'просроченное событие' : 'просроченных событий'}
+            </span>
+            <span className="text-meta text-bad2/80">К списку →</span>
+          </Link>
         )}
 
         {/* Пусто */}
@@ -181,8 +126,8 @@ export default async function CalendarPage({
           />
         )}
 
-        {/* Timeline по дням */}
-        <div className="space-y-6">
+        {/* Дни — без timeline-линии, c sticky-заголовком */}
+        <div className="space-y-5">
           {[...byDay.entries()].map(([key, dayEvents]) => {
             const date = dayEvents[0].at;
             const isToday = isSameMskDay(date, today);
@@ -198,12 +143,15 @@ export default async function CalendarPage({
             }).format(date);
 
             return (
-              <section key={key} id={isToday ? 'today' : undefined}>
-                <div className="flex items-center gap-2 mb-3">
-                  <div className={`shrink-0 w-2 h-2 rounded-full ${isPast ? 'bg-bad2' : isToday ? 'bg-accent' : 'bg-text3'}`} />
-                  <div className="flex items-baseline gap-2 flex-wrap flex-1">
+              <section
+                key={key}
+                id={isPast ? 'overdue' : isToday ? 'today' : undefined}
+              >
+                <div className="sticky top-[56px] lg:top-[64px] z-10 -mx-4 lg:-mx-6 px-4 lg:px-6 py-2 bg-app/85 backdrop-blur">
+                  <div className="flex items-baseline gap-2">
                     {dayPrefix && (
-                      <span className={`text-[15px] font-semibold ${isPast ? 'text-bad2' : isToday ? 'text-accent' : 'text-text1'}`}>
+                      <span className={`text-[15px] font-semibold tracking-tight
+                        ${isPast ? 'text-bad2' : isToday ? 'text-accent' : 'text-text1'}`}>
                         {dayPrefix}
                       </span>
                     )}
@@ -211,82 +159,65 @@ export default async function CalendarPage({
                       {dayFull}
                     </span>
                     <span className="ml-auto text-meta text-text3 tabular-nums">
-                      {dayEvents.length} {dayEvents.length === 1 ? 'событие' : dayEvents.length < 5 ? 'события' : 'событий'}
+                      {dayEvents.length}
                     </span>
                   </div>
                 </div>
 
-                <div className="relative ml-[9px]">
-                  <div className={`absolute left-0 top-4 bottom-4 w-px ${isPast ? 'bg-bad2/30' : 'bg-borderc'}`} />
+                <div className="space-y-1.5 mt-2">
+                  {dayEvents.map((e) => {
+                    const kindIsSurvey = e.kind === 'survey';
+                    const stripe = e.isOverdue ? 'bg-bad2' : kindIsSurvey ? 'bg-info2' : 'bg-ok2';
+                    const kindLabel = kindIsSurvey ? 'замер' : 'установка';
 
-                  <div className="space-y-2 pl-6">
-                    {dayEvents.map((e) => {
-                      const kindIsSurvey = e.kind === 'survey';
-                      const pillCls = e.isOverdue
-                        ? 'bg-bad2-soft text-bad2'
-                        : kindIsSurvey
-                          ? 'bg-info2-soft text-info2'
-                          : 'bg-ok2-soft text-ok2';
-                      const dotCls = e.isOverdue
-                        ? 'bg-bad2'
-                        : kindIsSurvey ? 'bg-info2' : 'bg-ok2';
-                      const kindLabel = kindIsSurvey ? 'Замер' : 'Установка';
-
-                      return (
-                        <Link
-                          key={e.id}
-                          href={`/orders/${e.orderId}`}
-                          className={`relative block bg-card border border-borderc rounded-md px-4 py-3
-                                      transition-colors duration-fast hover:bg-subtle/60
-                                      ${e.isOverdue ? 'bg-bad2-soft/30 border-bad2/30' : ''}`}
-                        >
-                          <div className={`absolute -left-[27px] top-1/2 -translate-y-1/2
-                                            w-[10px] h-[10px] rounded-full border-2 border-card ${dotCls}`}
-                          />
-
-                          <div className="flex items-start gap-3">
-                            <div className="shrink-0 w-14">
-                              <div className={`text-[18px] font-semibold tabular-nums leading-none
-                                               ${e.isOverdue ? 'text-bad2' : 'text-text1'}`}>
-                                {fmtTime(e.at)}
-                              </div>
-                              <span className={`inline-flex items-center gap-1 mt-1.5 px-1.5 h-5 rounded text-[11px] font-medium ${pillCls}`}>
-                                {kindLabel}
-                              </span>
+                    return (
+                      <Link
+                        key={e.id}
+                        href={`/orders/${e.orderId}`}
+                        className="group relative block bg-card border border-borderc rounded-md
+                                   transition-all duration-fast active:scale-[0.99]
+                                   hover:bg-subtle/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      >
+                        <span className={`absolute left-0 top-2 bottom-2 w-1 rounded-r-md ${stripe}`} />
+                        <div className="flex items-center gap-4 pl-4 pr-3 py-3">
+                          <div className="shrink-0 w-12 text-right">
+                            <div className={`text-[18px] font-semibold tabular-nums leading-none
+                                            ${e.isOverdue ? 'text-bad2' : 'text-text1'}`}>
+                              {fmtTime(e.at)}
                             </div>
-
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="font-semibold text-text1 text-[14px] leading-snug truncate">
-                                  {e.clientName}
-                                  <span className="ml-1.5 text-text3 font-normal text-meta tabular-nums">№{e.number}</span>
-                                </div>
-                                {e.isOverdue && (
-                                  <span className="shrink-0 text-meta text-bad2 font-semibold flex items-center gap-1">
-                                    <Clock size={11} /> просрочено
-                                  </span>
-                                )}
-                              </div>
-                              {e.clientAddress && (
-                                <div className="mt-1 text-[12.5px] text-text3 flex items-start gap-1.5">
-                                  <MapPin size={11} className="mt-0.5 shrink-0" />
-                                  <span className="truncate">{e.clientAddress}</span>
-                                </div>
-                              )}
-                              {e.worker && (
-                                <div className="mt-1 flex items-center gap-1.5">
-                                  <div className="w-5 h-5 rounded-md bg-subtle text-text2 text-[10px] font-semibold flex items-center justify-center">
-                                    {initials(e.worker.fullName)}
-                                  </div>
-                                  <span className="text-meta text-text3 truncate">{e.worker.fullName}</span>
-                                </div>
-                              )}
+                            <div className="text-[10px] uppercase tracking-wide text-text3 mt-1">
+                              {kindLabel}
                             </div>
                           </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-2">
+                              <p className="text-[14px] font-semibold text-text1 truncate flex-1 min-w-0">
+                                {e.clientName}
+                              </p>
+                              <span className="text-meta text-text3 tabular-nums shrink-0">№ {e.number}</span>
+                            </div>
+                            {e.clientAddress && (
+                              <p className="text-[12.5px] text-text3 truncate mt-0.5">
+                                {e.clientAddress}
+                              </p>
+                            )}
+                          </div>
+
+                          {e.worker && (
+                            <div className="shrink-0">
+                              <div
+                                className="w-8 h-8 rounded-md bg-subtle text-text2 text-[11px] font-semibold flex items-center justify-center"
+                                title={e.worker.fullName}
+                              >
+                                {initials(e.worker.fullName)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </section>
             );

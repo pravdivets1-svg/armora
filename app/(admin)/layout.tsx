@@ -1,8 +1,7 @@
 import { Suspense } from 'react';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import Header from '@/components/header';
-import AdminShell from '@/components/admin-shell';
+import { AppShell } from '@/components/ui';
 import PageTransition from '@/components/page-transition';
 import ToastHost from '@/components/toast-host';
 import FaviconBadge from '@/components/favicon-badge';
@@ -34,16 +33,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
 
   return (
-    <AdminShell
+    <AppShell
       role={role ?? 'installer'}
+      user={{ name: user?.name ?? '—', email: user?.email ?? '' }}
       pendingClosures={pendingClosures}
       newLeads={newLeads}
-      topBar={<Header user={user} />}
     >
       <PageTransition>{children}</PageTransition>
       <Suspense fallback={null}><ToastHost /></Suspense>
       <FaviconBadge enabled={showLeadBadge} />
       <PushPrompt />
-    </AdminShell>
+    </AppShell>
   );
 }

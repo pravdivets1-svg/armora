@@ -1,24 +1,37 @@
-// Список заявок с сайта. Для director + manager.
-
 import Link from 'next/link';
-import { Inbox, Phone, MapPin, Clock, ChevronRight } from 'lucide-react';
+import { Inbox } from 'lucide-react';
 import type { LeadStage } from '@prisma/client';
 
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { LEAD_STAGE_LABEL, LEAD_STAGE_ORDER, LEAD_STAGE_TONE } from '@/lib/lead-labels';
-import { fmtDateTime } from '@/lib/format';
-import { EmptyState } from '@/components/empty-state';
-import { Metric, MetricCard } from '@/components/metric';
-import { Input } from '@/components/ui';
-import { PageHeader } from '@/components/page-shell';
+import { LEAD_STAGE_LABEL, LEAD_STAGE_ORDER } from '@/lib/lead-labels';
+import { PageHeader, PillTabs, Empty, LeadPill } from '@/components/uikit';
+import LiveSearch from '@/components/live-search';
 import LeadsBulkBar from './bulk-bar';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Заявки — Armora' };
 
 type Search = { stage?: string; q?: string };
+
+function fmtRelative(d: Date | string): string {
+  const t = typeof d === 'string' ? new Date(d).getTime() : d.getTime();
+  const diff = Math.max(0, Date.now() - t);
+  const m = Math.floor(diff / 60_000);
+  if (m < 1) return 'только что';
+  if (m < 60) return `${m} мин назад`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} ч назад`;
+  const days = Math.floor(h / 24);
+  if (days === 1) return 'вчера';
+  if (days < 7) return `${days} д назад`;
+  return new Date(t).toLocaleDateString('ru-RU', { day: '2-digit', month: 'short' });
+}
+
+function fmtPhone(p: string): string {
+  return p.replace(/(\+7)(\d{3})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3-$4-$5');
+}
 
 export default async function LeadsPage({ searchParams }: { searchParams: Search }) {
   const me = await requireUser();
@@ -40,8 +53,6 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
     ];
   }
 
-  // select только то, что реально нужно для рендера. Избегаем Decimal/Json
-  // полей в RSC payload — они не сериализуются и валят страницу.
   const [rawLeads, counts] = await Promise.all([
     prisma.lead.findMany({
       where,
@@ -73,156 +84,100 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
 
   const countByStage: Partial<Record<LeadStage, number>> = {};
   for (const c of counts) countByStage[c.stage] = c._count._all;
-  const newCount = countByStage.new ?? 0;
-  const inWorkCount = (countByStage.contacted ?? 0) + (countByStage.scheduled ?? 0);
-  const convertedCount = countByStage.converted ?? 0;
+  const totalCount = leads.length;
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
-      <PageHeader
-        title="Заявки"
-        sub="Входящие обращения с сайта и калькулятора"
-      />
+    <>
+      <PageHeader title="Заявки" sub={`${totalCount} в текущем фильтре`} />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <MetricCard variant={newCount > 0 ? 'accent' : 'default'}>
-          <Metric label="Новые" value={newCount} size="lg" tone={newCount > 0 ? 'accent' : 'default'} />
-        </MetricCard>
-        <MetricCard>
-          <Metric label="В работе" value={inWorkCount} size="lg" tone="default" />
-        </MetricCard>
-        <MetricCard>
-          <Metric label="Конвертировано" value={convertedCount} size="lg" tone="ok" />
-        </MetricCard>
-      </div>
-
-      {/* Фильтр + поиск */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <FilterChip href="/leads" active={!stage} label="Все" />
-        {LEAD_STAGE_ORDER.map((s) => (
-          <FilterChip
-            key={s}
-            href={`/leads?stage=${s}`}
-            active={stage === s}
-            label={LEAD_STAGE_LABEL[s]}
-            count={countByStage[s] ?? 0}
-          />
-        ))}
-        <form action="/leads" className="ml-auto">
-          {stage && <input type="hidden" name="stage" value={stage} />}
-          <Input
-            name="q"
-            defaultValue={q}
-            placeholder="Поиск по имени или телефону"
-            aria-label="Поиск по заявкам"
-            className="w-full md:w-72 h-10"
-          />
-        </form>
-      </div>
-
-      {leads.length === 0 ? (
-        <EmptyState
-          icon={Inbox}
-          title="Заявок нет"
-          description={q || stage ? 'По текущему фильтру ничего не найдено' : 'Когда придёт первая заявка с сайта — она появится тут'}
+      <div className="max-w-5xl mx-auto px-4 lg:px-6 pt-4 space-y-4 pb-12">
+        <LiveSearch
+          defaultValue={q}
+          placeholder="Поиск: имя или телефон"
+          preserve={['stage']}
         />
-      ) : (
-        <LeadsBulkBar isDirector={me.role === 'director'}>
-          <div className="space-y-2">
-            {leads.map((lead) => (
-              <div
-                key={lead.id}
-                className="relative bg-white border border-line rounded-lg pl-12 pr-5 py-4
-                           hover:border-ink-900/20 hover:shadow-soft transition-all
-                           has-[input:checked]:border-accent has-[input:checked]:bg-accent-soft/30"
-              >
-                {/* Чекбокс — поверх карточки слева */}
-                <label
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-10 cursor-pointer p-1
-                             text-ink-400 hover:text-ink-900"
-                  aria-label={`Выбрать заявку №${lead.number}`}
+
+        <PillTabs
+          paramName="stage"
+          preserve={['q']}
+          items={[
+            { key: '', label: 'Все' },
+            ...LEAD_STAGE_ORDER.map((s) => ({
+              key: s,
+              label: LEAD_STAGE_LABEL[s],
+              count: countByStage[s] ?? 0,
+            })),
+          ]}
+        />
+
+        {leads.length === 0 ? (
+          <Empty
+            icon={Inbox}
+            title="Заявок нет"
+            hint={q || stage ? 'По текущему фильтру ничего не найдено' : 'Когда придёт первая заявка с сайта — она появится тут'}
+          />
+        ) : (
+          <LeadsBulkBar isDirector={me.role === 'director'}>
+            <div className="space-y-2">
+              {leads.map((lead) => (
+                <div
+                  key={lead.id}
+                  className="relative bg-card border border-borderc rounded-md pl-11 pr-4 py-3
+                             transition-colors duration-fast ease-soft hover:bg-subtle/60
+                             has-[input:checked]:border-accent has-[input:checked]:bg-accent-soft/40"
                 >
-                  <input
-                    type="checkbox"
-                    data-lead-id={lead.id}
-                    className="w-4 h-4 accent-accent cursor-pointer"
+                  <label
+                    className="absolute left-3 top-3.5 z-10 cursor-pointer p-1 text-text3 hover:text-text1"
+                    aria-label={`Выбрать заявку №${lead.number}`}
+                  >
+                    <input
+                      type="checkbox"
+                      data-lead-id={lead.id}
+                      className="w-4 h-4 accent-accent cursor-pointer"
+                    />
+                  </label>
+
+                  <Link
+                    href={`/leads/${lead.id}`}
+                    className="absolute inset-0 z-0 rounded-md"
+                    aria-label={`Открыть заявку №${lead.number} от ${lead.clientName}`}
                   />
-                </label>
 
-                <Link
-                  href={`/leads/${lead.id}`}
-                  className="absolute inset-0 z-0 rounded-lg"
-                  aria-label={`Открыть заявку №${lead.number} от ${lead.clientName}`}
-                />
-
-                <div className="relative z-[1] flex items-start justify-between gap-4 pointer-events-none">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px]
-                                        uppercase tracking-wider font-semibold ${LEAD_STAGE_TONE[lead.stage]}`}>
-                        {LEAD_STAGE_LABEL[lead.stage]}
-                      </span>
-                      <span className="text-[11px] text-ink-500 uppercase tracking-wider">
-                        №{lead.number}
-                      </span>
-                      <span className="text-[11px] text-ink-400 inline-flex items-center gap-1">
-                        <Clock size={11} /> {fmtDateTime(lead.createdAt)}
-                      </span>
+                  <div className="relative z-[1] pointer-events-none">
+                    <div className="flex items-center justify-between gap-3 mb-1">
+                      <h3 className="text-[14px] font-semibold text-text1 truncate flex-1 min-w-0">
+                        {lead.clientName}
+                      </h3>
+                      <span className="text-meta text-text3 tabular-nums shrink-0">№ {lead.number}</span>
                     </div>
-                    <div className="font-semibold text-ink-900 truncate">{lead.clientName}</div>
-                    <div className="text-[13px] text-ink-700 inline-flex items-center gap-3 mt-0.5 flex-wrap">
-                      <span className="inline-flex items-center gap-1 tabular-nums">
-                        <Phone size={12} className="text-ink-400" /> {lead.clientPhone}
+
+                    <div className="flex items-center justify-between gap-3">
+                      <LeadPill stage={lead.stage} />
+                      <span className="text-meta text-text3 tabular-nums shrink-0">{fmtRelative(lead.createdAt)}</span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3 mt-1.5 text-[12.5px] text-text3">
+                      <span className="tabular-nums truncate flex-1 min-w-0">
+                        {fmtPhone(lead.clientPhone)}
+                        {lead.clientAddress && <> · {lead.clientAddress}</>}
                       </span>
-                      {lead.clientAddress && (
-                        <span className="inline-flex items-center gap-1 truncate">
-                          <MapPin size={12} className="text-ink-400" /> {lead.clientAddress}
-                        </span>
+                      {lead.assignedTo && (
+                        <span className="shrink-0 truncate max-w-[120px]">{lead.assignedTo.fullName}</span>
                       )}
                     </div>
+
                     {(lead.widthMm || lead.heightMm) && (
-                      <div className="text-[12px] text-ink-500 mt-0.5">
-                        Размер: {lead.widthMm ?? '?'} × {lead.heightMm ?? '?'} мм
-                      </div>
-                    )}
-                    {lead.assignedTo && (
-                      <div className="text-[12px] text-ink-500 mt-0.5">
-                        Ведёт: {lead.assignedTo.fullName}
+                      <div className="text-[12px] text-text3 mt-1 tabular-nums">
+                        {lead.widthMm ?? '?'} × {lead.heightMm ?? '?'} мм
                       </div>
                     )}
                   </div>
-                  <ChevronRight size={16} className="text-ink-400 mt-1 shrink-0" />
                 </div>
-              </div>
-            ))}
-          </div>
-        </LeadsBulkBar>
-      )}
-    </main>
-  );
-}
-
-function FilterChip({
-  href, active, label, count,
-}: {
-  href: string; active: boolean; label: string; count?: number;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px]
-                  ${active
-                    ? 'bg-ink-900 text-white font-medium'
-                    : 'bg-white border border-line text-ink-700 hover:border-ink-900/20'}`}
-    >
-      {label}
-      {typeof count === 'number' && count > 0 && (
-        <span className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full
-                          text-[10px] font-semibold tabular-nums leading-none
-                          ${active ? 'bg-white/20 text-white' : 'bg-ink-900/[0.06] text-ink-700'}`}>
-          {count}
-        </span>
-      )}
-    </Link>
+              ))}
+            </div>
+          </LeadsBulkBar>
+        )}
+      </div>
+    </>
   );
 }

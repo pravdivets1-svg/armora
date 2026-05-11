@@ -11,6 +11,7 @@ export * from './mobile-tab-bar';
 export * from './desktop-sidebar';
 export * from './app-shell';
 export * from './stage-pill';
+export * from './lead-pill';
 export * from './stage-ladder';
 export * from './hero-stage';
 export * from './order-card';

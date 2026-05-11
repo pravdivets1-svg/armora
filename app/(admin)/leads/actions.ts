@@ -12,6 +12,8 @@ import type { LeadStage } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { normalizePhone } from '@/lib/format';
+import { notifyOrderAssignedSurveyTelegram } from '@/lib/telegram';
+import { notifySafe, sendPushToUser } from '@/lib/push';
 
 const STAGES: LeadStage[] = ['new', 'contacted', 'scheduled', 'converted', 'rejected', 'spam'];
 
@@ -121,6 +123,9 @@ export async function bulkDeleteLeadsAction(formData: FormData) {
 
 const convertSchema = z.object({
   totalAmount: z.coerce.number().min(0).max(10_000_000).default(0),
+  surveyorId: z.string().trim().optional().or(z.literal('').transform(() => undefined)),
+  surveyAt:   z.string().trim().optional().or(z.literal('').transform(() => undefined)),
+  clientAddress: z.string().trim().max(500).optional().or(z.literal('').transform(() => undefined)),
 });
 
 export type ConvertActionState =
@@ -143,7 +148,10 @@ export async function convertLeadToOrderAction(
   }
 
   const parsed = convertSchema.safeParse({
-    totalAmount: formData.get('totalAmount'),
+    totalAmount:   formData.get('totalAmount'),
+    surveyorId:    formData.get('surveyorId'),
+    surveyAt:      formData.get('surveyAt'),
+    clientAddress: formData.get('clientAddress'),
   });
   if (!parsed.success) {
     return { ok: false, error: 'Проверьте поля формы' };
@@ -157,6 +165,28 @@ export async function convertLeadToOrderAction(
   const phoneDigits = (lead.clientPhone ?? '').replace(/\D/g, '');
   const normalizedPhone = normalizePhone(lead.clientPhone ?? '');
 
+  // Дата замера + замерщик → можно сразу перевести в этап survey_scheduled
+  let surveyAt: Date | null = null;
+  if (d.surveyAt) {
+    const t = new Date(d.surveyAt);
+    if (!isNaN(t.getTime())) surveyAt = t;
+  }
+  const surveyorId = d.surveyorId || null;
+  let surveyorUser: { id: string; fullName: string; role: string } | null = null;
+  if (surveyorId) {
+    surveyorUser = await prisma.user.findUnique({
+      where: { id: surveyorId },
+      select: { id: true, fullName: true, role: true },
+    });
+    if (!surveyorUser || surveyorUser.role !== 'surveyor') {
+      return { ok: false, error: 'Замерщик не найден' };
+    }
+  }
+  const willScheduleSurvey = !!(surveyorUser && surveyAt);
+  const finalAddress = (d.clientAddress && d.clientAddress.length > 0)
+    ? d.clientAddress
+    : (lead.clientAddress ?? '');
+
   // Транзакция: создаём заказ и помечаем lead как converted
   const order = await prisma.$transaction(async (tx) => {
     const order = await tx.order.create({
@@ -165,12 +195,14 @@ export async function convertLeadToOrderAction(
         clientName:        lead.clientName,
         clientPhone:       normalizedPhone,
         clientPhoneDigits: phoneDigits,
-        clientAddress:     lead.clientAddress ?? '',
+        clientAddress:     finalAddress,
         doorComment:       lead.comment ?? '',
         widthMm:           lead.widthMm,
         heightMm:          lead.heightMm,
         totalAmount,
-        stage:             'new',
+        stage:             willScheduleSurvey ? 'survey_scheduled' : 'new',
+        surveyorId:        surveyorUser ? surveyorUser.id : null,
+        surveyAt:          surveyAt,
         createdById:       me.id,
       },
     });
@@ -180,6 +212,30 @@ export async function convertLeadToOrderAction(
     });
     return order;
   });
+
+  // Уведомления — замерщику в TG (общий чат) и push если подписан
+  if (willScheduleSurvey && surveyorUser && surveyAt) {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+    const surveyAtIso = surveyAt.toISOString();
+    void notifyOrderAssignedSurveyTelegram({
+      orderNumber:   order.number,
+      orderId:       order.id,
+      surveyorName:  surveyorUser.fullName,
+      clientName:    lead.clientName,
+      clientPhone:   lead.clientPhone,
+      clientAddress: finalAddress,
+      surveyAt:      surveyAtIso,
+    }, baseUrl).catch((e) => console.warn('[telegram] survey assign notify failed', e));
+
+    void notifySafe(() =>
+      sendPushToUser(surveyorUser!.id, {
+        title: `Замер: ${lead.clientName}`,
+        body:  `${new Date(surveyAtIso).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' })} · ${finalAddress}`,
+        url:   `/orders/${order.id}`,
+        tag:   `order-${order.id}-survey`,
+      }),
+    );
+  }
 
   revalidatePath('/leads');
   revalidatePath(`/leads/${leadId}`);

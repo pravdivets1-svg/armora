@@ -1,15 +1,17 @@
 'use client';
 
-// Правая колонка карточки лида: смена этапа, назначение менеджера, конверсия в Order, удаление.
-
+import { useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
-import Link from 'next/link';
-import { CheckCircle2, Phone, CalendarClock, X, AlertOctagon, Trash2, Sparkles, UserCheck } from 'lucide-react';
+import {
+  CheckCircle2, Phone, CalendarClock, X, AlertOctagon,
+  Sparkles, Loader2,
+} from 'lucide-react';
 import type { LeadStage } from '@prisma/client';
 
-import { Card, Button, Input, Select, FieldLabel } from '@/components/ui';
+import {
+  SectionCard, Button, IconButton, Sheet,
+} from '@/components/uikit';
 import UndoDeleteButton from '@/components/undo-delete-button';
-import { fmtMoney } from '@/lib/format';
 import {
   setLeadStageAction,
   assignLeadAction,
@@ -19,120 +21,209 @@ import {
 } from '../actions';
 
 type Manager = { id: string; fullName: string };
+type Surveyor = { id: string; fullName: string };
 
 export default function LeadActions({
   leadId,
   currentStage,
   estimatedPrice,
+  clientAddress,
   assignedToId,
-  assignedToName,
   managers,
+  surveyors,
   isDirector,
   convertedOrderId,
 }: {
   leadId: string;
   currentStage: LeadStage;
   estimatedPrice: number;
+  clientAddress: string;
   assignedToId: string | null;
-  assignedToName: string | null;
   managers: Manager[];
+  surveyors: Surveyor[];
   isDirector: boolean;
   convertedOrderId: string | null;
 }) {
   const isFinal = currentStage === 'converted' || currentStage === 'rejected' || currentStage === 'spam';
+  const [convertOpen, setConvertOpen] = useState(false);
 
   return (
-    <div className="space-y-4 sticky top-20">
-      {/* Конверсия в заказ — главное действие */}
+    <div className="space-y-3">
+      {/* Главный CTA — sticky на мобиле */}
       {!convertedOrderId && currentStage !== 'spam' && (
-        <Card title="Создать заказ">
-          <ConvertForm leadId={leadId} estimatedPrice={estimatedPrice} />
-          <div className="text-[11px] text-ink-500 mt-2 leading-snug">
-            Создаст заказ с этими данными и отметит заявку как «В заказе».
-            Цену и остальные поля можно дополнить в карточке заказа.
+        <>
+          <div className="lg:hidden fixed inset-x-0 z-30 px-4 pt-2 pb-3 bg-app/95 backdrop-blur border-t border-borderc"
+               style={{ bottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
+            <Button size="lg" block onClick={() => setConvertOpen(true)}>
+              <CheckCircle2 size={18} /> Создать заказ
+            </Button>
           </div>
-        </Card>
+          <SectionCard title="Создать заказ">
+            <p className="text-[13px] text-text2">
+              Заведёт заказ с данными клиента. Можно сразу назначить замерщика и время — он получит уведомление.
+            </p>
+            <Button block onClick={() => setConvertOpen(true)}>
+              <CheckCircle2 size={16} /> Создать заказ
+            </Button>
+          </SectionCard>
+
+          <ConvertSheet
+            open={convertOpen}
+            onClose={() => setConvertOpen(false)}
+            leadId={leadId}
+            estimatedPrice={estimatedPrice}
+            clientAddress={clientAddress}
+            surveyors={surveyors}
+          />
+        </>
       )}
 
       {/* Этапы воронки */}
       {!isFinal && (
-        <Card title="Статус">
-          <div className="space-y-1.5">
+        <SectionCard title="Статус заявки">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {currentStage !== 'contacted' && (
-              <StageBtn leadId={leadId} stage="contacted" icon={<Phone size={14} />} label="Связались с клиентом" />
+              <StageBtn leadId={leadId} stage="contacted" icon={<Phone size={16} />} label="Связались" />
             )}
             {currentStage !== 'scheduled' && (
-              <StageBtn leadId={leadId} stage="scheduled" icon={<CalendarClock size={14} />} label="Договорились на замер" />
+              <StageBtn leadId={leadId} stage="scheduled" icon={<CalendarClock size={16} />} label="Договорились на замер" />
             )}
-            <StageBtn leadId={leadId} stage="rejected" icon={<X size={14} />} label="Отказ клиента" variant="ghost" />
-            <StageBtn leadId={leadId} stage="spam" icon={<AlertOctagon size={14} />} label="Это спам" variant="ghost" />
+            <StageBtn leadId={leadId} stage="rejected" icon={<X size={16} />} label="Отказ" variant="secondary" />
+            <StageBtn leadId={leadId} stage="spam" icon={<AlertOctagon size={16} />} label="Это спам" variant="secondary" />
           </div>
-        </Card>
+        </SectionCard>
       )}
 
-      {/* Возврат из финальных в активные — для случая, когда отметили "отказ" по ошибке */}
+      {/* Возврат из финальных */}
       {isFinal && !convertedOrderId && (
-        <Card title="Вернуть в работу">
-          <StageBtn leadId={leadId} stage="new" icon={<Sparkles size={14} />} label="Снова в «Новые»" />
-        </Card>
+        <SectionCard title="Вернуть в работу">
+          <StageBtn leadId={leadId} stage="new" icon={<Sparkles size={16} />} label="Снова в «Новые»" />
+        </SectionCard>
       )}
 
-      {/* Назначение менеджера */}
-      <Card title="Ответственный">
-        <form action={assignLeadAction.bind(null, leadId, null)} className="hidden" id={`unassign-${leadId}`} />
+      {/* Ответственный */}
+      <SectionCard title="Ответственный менеджер">
         <AssignForm leadId={leadId} assignedToId={assignedToId} managers={managers} />
-        {assignedToName && (
-          <div className="text-[12px] text-ink-500 mt-2">
-            Сейчас ведёт: <span className="text-ink-900 font-medium">{assignedToName}</span>
-          </div>
-        )}
-      </Card>
+      </SectionCard>
 
-      {/* Удаление — только директор. Undo-toast вместо confirm() */}
+      {/* Удаление */}
       {isDirector && (
-        <UndoDeleteButton
-          action={() => deleteLeadAction(leadId)}
-          successMessage="Заявка удалена"
-          label="Удалить заявку"
-          className="w-full"
-        />
+        <SectionCard title="Опасная зона">
+          <UndoDeleteButton
+            action={() => deleteLeadAction(leadId)}
+            successMessage="Заявка удалена"
+            label="Удалить заявку"
+            className="w-full"
+          />
+        </SectionCard>
       )}
     </div>
   );
 }
 
-function ConvertForm({ leadId, estimatedPrice }: { leadId: string; estimatedPrice: number }) {
-  const [, formAction] = useFormState<ConvertActionState, FormData>(
+// ------------------------------------------------------------------
+// Convert sheet — bottom-sheet с полями: сумма, замерщик, дата+время, адрес
+// ------------------------------------------------------------------
+
+function ConvertSheet({
+  open, onClose, leadId, estimatedPrice, clientAddress, surveyors,
+}: {
+  open: boolean;
+  onClose: () => void;
+  leadId: string;
+  estimatedPrice: number;
+  clientAddress: string;
+  surveyors: Surveyor[];
+}) {
+  const [state, formAction] = useFormState<ConvertActionState, FormData>(
     convertLeadToOrderAction.bind(null, leadId),
     undefined,
   );
+
   return (
-    <form action={formAction} className="space-y-2.5">
-      <label className="block">
-        <FieldLabel>Цена по договору, ₽</FieldLabel>
-        <Input
-          type="number"
-          name="totalAmount"
-          defaultValue={estimatedPrice > 0 ? estimatedPrice : ''}
-          placeholder="0"
-          min={0}
-          className="mt-1 tabular-nums"
-        />
-      </label>
-      <ConvertSubmit />
-    </form>
+    <Sheet open={open} onClose={onClose} title="Создать заказ">
+      <form action={formAction} className="space-y-4">
+        <div>
+          <label className="block text-meta text-text3 font-medium mb-1">Цена по договору, ₽</label>
+          <input
+            type="number"
+            name="totalAmount"
+            defaultValue={estimatedPrice > 0 ? estimatedPrice : ''}
+            placeholder="0"
+            min={0}
+            className="w-full h-11 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px] tabular-nums
+                       focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+          />
+        </div>
+
+        <div>
+          <label className="block text-meta text-text3 font-medium mb-1">Адрес клиента</label>
+          <input
+            type="text"
+            name="clientAddress"
+            defaultValue={clientAddress}
+            placeholder="Город, улица, дом, квартира"
+            className="w-full h-11 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px]
+                       focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+          />
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-meta text-text3 font-medium mb-1">Замерщик</label>
+            <select
+              name="surveyorId"
+              className="w-full h-11 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px]
+                         focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+              defaultValue=""
+            >
+              <option value="">— не назначать —</option>
+              {surveyors.map((s) => (
+                <option key={s.id} value={s.id}>{s.fullName}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-meta text-text3 font-medium mb-1">Дата и время замера</label>
+            <input
+              type="datetime-local"
+              name="surveyAt"
+              className="w-full h-11 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px] tabular-nums
+                         focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+            />
+          </div>
+        </div>
+
+        <p className="text-meta text-text3">
+          Если замерщик и время указаны — заказ создастся сразу в этапе «Замер назначен», и замерщик получит уведомление.
+        </p>
+
+        {state && !state.ok && (
+          <p className="text-meta text-bad2">{state.error}</p>
+        )}
+
+        <ConvertSubmit />
+      </form>
+    </Sheet>
   );
 }
 
 function ConvertSubmit() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="primary" disabled={pending} className="w-full">
-      <CheckCircle2 size={14} />
-      {pending ? 'Создаём…' : 'Создать заказ'}
+    <Button type="submit" size="lg" block disabled={pending}>
+      {pending ? (
+        <><Loader2 size={18} className="animate-spin" /> Создаём заказ…</>
+      ) : (
+        <><CheckCircle2 size={18} /> Создать заказ</>
+      )}
     </Button>
   );
 }
+
+// ------------------------------------------------------------------
+// Stage button
+// ------------------------------------------------------------------
 
 function StageBtn({
   leadId, stage, icon, label, variant = 'secondary',
@@ -145,12 +236,16 @@ function StageBtn({
 }) {
   return (
     <form action={setLeadStageAction.bind(null, leadId, stage)}>
-      <Button type="submit" variant={variant} className="w-full justify-start">
+      <Button type="submit" variant={variant} block className="justify-start">
         {icon} {label}
       </Button>
     </form>
   );
 }
+
+// ------------------------------------------------------------------
+// Assign manager
+// ------------------------------------------------------------------
 
 function AssignForm({
   leadId, assignedToId, managers,
@@ -159,8 +254,6 @@ function AssignForm({
   assignedToId: string | null;
   managers: Manager[];
 }) {
-  // Используем server action через onChange — без явной кнопки.
-  // Отдельная маленькая form, которая submit'ится скриптом ниже.
   return (
     <form
       action={async (fd: FormData) => {
@@ -168,19 +261,18 @@ function AssignForm({
         await assignLeadAction(leadId, value || null);
       }}
     >
-      <Select
+      <select
         name="userId"
         defaultValue={assignedToId ?? ''}
-        onChange={(e) => {
-          // Submit на change (форма родительская)
-          (e.currentTarget.form as HTMLFormElement | null)?.requestSubmit();
-        }}
+        onChange={(e) => (e.currentTarget.form as HTMLFormElement | null)?.requestSubmit()}
+        className="w-full h-11 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px]
+                   focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
       >
         <option value="">— не назначен —</option>
         {managers.map((m) => (
           <option key={m.id} value={m.id}>{m.fullName}</option>
         ))}
-      </Select>
+      </select>
     </form>
   );
 }

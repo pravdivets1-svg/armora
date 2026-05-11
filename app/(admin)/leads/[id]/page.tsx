@@ -1,17 +1,12 @@
-// Карточка заявки. Показывает все данные с калькулятора, действия по этапам,
-// конверсию в Order. Для director + manager.
-
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { ArrowLeft, Phone, MapPin, MessageSquare, Trash2, AlertCircle, Tag, ExternalLink } from 'lucide-react';
+import { Phone, MapPin, MessageSquare, ExternalLink, AlertCircle, Tag } from 'lucide-react';
 
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { fmtDateTime, fmtMoney } from '@/lib/format';
-import { LEAD_STAGE_LABEL, LEAD_STAGE_TONE } from '@/lib/lead-labels';
-import { Card, Button } from '@/components/ui';
-import { PageBack, PageHeader } from '@/components/page-shell';
-import { setLeadStageAction, deleteLeadAction, assignLeadAction, convertLeadToOrderAction } from '../actions';
+import { LEAD_STAGE_LABEL } from '@/lib/lead-labels';
+import { PageHeader, SectionCard, KeyValueRow, LeadPill } from '@/components/uikit';
 import LeadActions from './lead-actions';
 
 export const dynamic = 'force-dynamic';
@@ -30,13 +25,20 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
   });
   if (!lead) notFound();
 
-  const managers = await prisma.user.findMany({
-    where: { isActive: true, role: { in: ['director', 'manager'] } },
-    select: { id: true, fullName: true },
-    orderBy: { fullName: 'asc' },
-  });
+  const [managers, surveyors] = await Promise.all([
+    prisma.user.findMany({
+      where: { isActive: true, role: { in: ['director', 'manager'] } },
+      select: { id: true, fullName: true },
+      orderBy: { fullName: 'asc' },
+    }),
+    prisma.user.findMany({
+      where: { isActive: true, role: 'surveyor' },
+      select: { id: true, fullName: true },
+      orderBy: { fullName: 'asc' },
+    }),
+  ]);
 
-  // Сырой payload — отдельные «нестандартные» поля калькулятора
+  // Сырые «нестандартные» поля payload
   const payloadEntries: Array<[string, unknown]> = [];
   if (lead.payload && typeof lead.payload === 'object' && !Array.isArray(lead.payload)) {
     const known = new Set([
@@ -52,149 +54,139 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-6 space-y-5">
-      <PageBack href="/leads" label="Все заявки" />
-
+    <>
       <PageHeader
-        kicker={
-          <span className="inline-flex items-center gap-2">
-            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px]
-                              uppercase tracking-wider font-semibold normal-case ${LEAD_STAGE_TONE[lead.stage]}`}>
-              {LEAD_STAGE_LABEL[lead.stage]}
-            </span>
-            Заявка №{lead.number}
-          </span>
-        }
-        title={lead.clientName}
-        sub={`Поступила ${fmtDateTime(lead.createdAt)} · источник: ${lead.source}`}
+        title={`Заявка № ${lead.number}`}
+        sub={lead.clientName}
+        backHref="/leads"
       />
 
-      {/* Уже создан заказ — баннер */}
-      {lead.convertedOrder && (
-        <div className="bg-white border border-line border-l-4 border-l-ok rounded-lg px-4 py-3
-                        flex items-center gap-3">
-          <Tag size={16} className="text-ok shrink-0" />
-          <div className="flex-1 text-[14px] text-ink-900">
-            По этой заявке создан <Link href={`/orders/${lead.convertedOrder.id}`} className="font-semibold underline hover:no-underline">заказ №{lead.convertedOrder.number}</Link>
-          </div>
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-4 space-y-3 pb-[120px] lg:pb-12">
+
+        {/* Pill + meta строкой */}
+        <div className="flex flex-wrap items-center gap-2">
+          <LeadPill stage={lead.stage} size="md" />
+          <span className="text-meta text-text3">
+            {fmtDateTime(lead.createdAt)} · источник: <span className="font-mono">{lead.source}</span>
+          </span>
+        </div>
+
+        {/* Уже создан заказ */}
+        {lead.convertedOrder && (
           <Link
             href={`/orders/${lead.convertedOrder.id}`}
-            className="inline-flex items-center gap-1 text-[13px] text-ink-700 hover:text-ink-900 font-medium"
+            className="flex items-center gap-3 rounded-md bg-ok2-soft border border-ok2/30 px-4 py-3
+                       transition-transform duration-fast active:scale-[0.99]"
           >
-            Открыть <ExternalLink size={12} />
+            <Tag size={16} className="text-ok2 shrink-0" />
+            <div className="flex-1 text-[14px] text-text1">
+              По этой заявке создан <span className="font-semibold">заказ №{lead.convertedOrder.number}</span>
+            </div>
+            <ExternalLink size={14} className="text-ok2 shrink-0" />
           </Link>
-        </div>
-      )}
+        )}
 
-      {lead.stage === 'spam' && (
-        <div className="bg-white border border-line border-l-4 border-l-bad rounded-lg px-4 py-3
-                        flex items-start gap-2.5">
-          <AlertCircle size={16} className="text-bad mt-0.5 shrink-0" />
-          <div className="text-[14px] text-ink-900">
-            Заявка помечена как спам автоматически (заполнено honeypot-поле). Проверьте перед действием.
+        {/* SPAM баннер */}
+        {lead.stage === 'spam' && (
+          <div className="flex items-start gap-2.5 rounded-md bg-bad2-soft border border-bad2/30 px-4 py-3">
+            <AlertCircle size={16} className="text-bad2 mt-0.5 shrink-0" />
+            <div className="text-[14px] text-text1">
+              Заявка помечена как спам автоматически (заполнено honeypot-поле). Проверьте перед действием.
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 space-y-4">
-          <Card title="Контакты">
-            <div className="space-y-2.5">
-              <Row icon={<Phone size={14} />} label="Телефон">
-                <a href={`tel:${lead.clientPhone.replace(/\s+/g, '')}`}
-                   className="font-mono text-ink-900 hover:underline">
-                  {lead.clientPhone}
-                </a>
-              </Row>
-              {lead.clientAddress && (
-                <Row icon={<MapPin size={14} />} label="Адрес">
-                  <span className="text-ink-900">{lead.clientAddress}</span>
-                </Row>
-              )}
-            </div>
-          </Card>
-
-          <Card title="Параметры двери">
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-[14px]">
-              <Field label="Ширина" value={lead.widthMm ? `${lead.widthMm} мм` : '—'} />
-              <Field label="Высота" value={lead.heightMm ? `${lead.heightMm} мм` : '—'} />
-              <Field
-                label="Ориентир. цена"
-                value={lead.estimatedPrice && Number(lead.estimatedPrice) > 0
-                  ? fmtMoney(Number(lead.estimatedPrice))
-                  : '—'}
-              />
-            </div>
-            {lead.comment && lead.comment.trim() && (
-              <div className="mt-4 pt-4 border-t border-line">
-                <div className="text-[11px] uppercase tracking-wide text-ink-500 mb-1.5
-                                inline-flex items-center gap-1.5">
-                  <MessageSquare size={11} /> Комментарий клиента
-                </div>
-                <div className="text-[14px] text-ink-900 whitespace-pre-wrap">{lead.comment}</div>
-              </div>
-            )}
-          </Card>
-
-          {payloadEntries.length > 0 && (
-            <Card title="Доп. параметры с калькулятора">
-              <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[13px]">
-                {payloadEntries.map(([k, v]) => (
-                  <Field key={k} label={k} value={String(v)} />
-                ))}
-              </div>
-            </Card>
-          )}
-
-          {(lead.utmSource || lead.utmMedium || lead.utmCampaign) && (
-            <Card title="UTM-метки">
-              <div className="grid grid-cols-3 gap-x-6 gap-y-2 text-[13px]">
-                <Field label="Source"   value={lead.utmSource ?? '—'} />
-                <Field label="Medium"   value={lead.utmMedium ?? '—'} />
-                <Field label="Campaign" value={lead.utmCampaign ?? '—'} />
-              </div>
-            </Card>
-          )}
-        </div>
-
-        {/* Правая колонка: действия */}
-        <div className="md:col-span-1">
-          <LeadActions
-            leadId={lead.id}
-            currentStage={lead.stage}
-            estimatedPrice={Number(lead.estimatedPrice ?? 0)}
-            assignedToId={lead.assignedToId}
-            assignedToName={lead.assignedTo?.fullName ?? null}
-            managers={managers}
-            isDirector={me.role === 'director'}
-            convertedOrderId={lead.convertedOrderId}
+        {/* Контакты */}
+        <SectionCard title="Контакты">
+          <KeyValueRow
+            label="Телефон"
+            value={
+              <a href={`tel:${lead.clientPhone.replace(/\s+/g, '')}`} className="text-accent tabular-nums hover:underline">
+                {lead.clientPhone}
+              </a>
+            }
+            action={<Phone size={14} className="text-text3" />}
           />
+          {lead.clientAddress && (
+            <KeyValueRow
+              label="Адрес"
+              value={
+                <a
+                  href={`https://yandex.ru/maps/?text=${encodeURIComponent(lead.clientAddress)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-text1 hover:text-accent"
+                >
+                  {lead.clientAddress}
+                </a>
+              }
+              action={<MapPin size={14} className="text-text3" />}
+            />
+          )}
+          {lead.assignedTo && (
+            <KeyValueRow label="Ведёт" value={lead.assignedTo.fullName} />
+          )}
+        </SectionCard>
+
+        {/* Параметры двери */}
+        <SectionCard title="Параметры двери">
+          <KeyValueRow label="Ширина" value={lead.widthMm ? `${lead.widthMm} мм` : '—'} mono />
+          <KeyValueRow label="Высота" value={lead.heightMm ? `${lead.heightMm} мм` : '—'} mono />
+          <KeyValueRow
+            label="Ориентир. цена"
+            value={lead.estimatedPrice && Number(lead.estimatedPrice) > 0
+              ? fmtMoney(Number(lead.estimatedPrice))
+              : '—'}
+            mono
+          />
+        </SectionCard>
+
+        {/* Комментарий */}
+        {lead.comment && lead.comment.trim() && (
+          <SectionCard title="Комментарий клиента">
+            <div className="flex items-start gap-2 text-[14px] text-text1 whitespace-pre-wrap">
+              <MessageSquare size={14} className="text-text3 mt-1 shrink-0" />
+              <span>{lead.comment}</span>
+            </div>
+          </SectionCard>
+        )}
+
+        {/* Доп параметры калькулятора */}
+        {payloadEntries.length > 0 && (
+          <SectionCard title="Доп. параметры с калькулятора">
+            {payloadEntries.map(([k, v]) => (
+              <KeyValueRow key={k} label={k} value={String(v)} />
+            ))}
+          </SectionCard>
+        )}
+
+        {/* UTM */}
+        {(lead.utmSource || lead.utmMedium || lead.utmCampaign) && (
+          <SectionCard title="UTM-метки">
+            <KeyValueRow label="Source" value={lead.utmSource ?? '—'} mono />
+            <KeyValueRow label="Medium" value={lead.utmMedium ?? '—'} mono />
+            <KeyValueRow label="Campaign" value={lead.utmCampaign ?? '—'} mono />
+          </SectionCard>
+        )}
+
+        {/* Действия (статусы, назначение, удаление) */}
+        <LeadActions
+          leadId={lead.id}
+          currentStage={lead.stage}
+          estimatedPrice={Number(lead.estimatedPrice ?? 0)}
+          clientAddress={lead.clientAddress ?? ''}
+          assignedToId={lead.assignedToId}
+          managers={managers}
+          surveyors={surveyors}
+          isDirector={me.role === 'director'}
+          convertedOrderId={lead.convertedOrderId}
+        />
+
+        <div className="text-meta text-text3 pt-2 flex flex-wrap gap-x-4 gap-y-1">
+          <span>IP: <span className="font-mono">{lead.ip ?? '—'}</span></span>
+          {lead.userAgent && <span className="truncate">UA: <span className="font-mono">{lead.userAgent.slice(0, 60)}</span></span>}
         </div>
       </div>
-
-      <div className="text-[11px] text-ink-400 pt-4 border-t border-line/50 flex flex-wrap gap-x-4 gap-y-1">
-        <span>IP: {lead.ip ?? '—'}</span>
-        <span className="truncate">UA: {lead.userAgent ?? '—'}</span>
-      </div>
-    </main>
-  );
-}
-
-function Row({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
-  return (
-    <div className="flex items-center gap-3 text-[14px]">
-      <span className="text-ink-400 shrink-0">{icon}</span>
-      <span className="text-[12px] text-ink-500 w-20 shrink-0">{label}</span>
-      <span className="flex-1 min-w-0 truncate">{children}</span>
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wider text-ink-500 font-medium">{label}</div>
-      <div className="text-ink-900 font-medium mt-0.5">{value}</div>
-    </div>
+    </>
   );
 }

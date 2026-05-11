@@ -73,6 +73,49 @@ export type LeadTelegramContext = {
   source: string;
 };
 
+// =====================================================================
+// Сообщение «Замер назначен» — отправляется в общий рабочий чат при
+// конверсии заявки в заказ с указанием замерщика и времени.
+// =====================================================================
+
+export type SurveyAssignTelegramContext = {
+  orderNumber:   number;
+  orderId:       string;
+  surveyorName:  string;
+  clientName:    string;
+  clientPhone:   string;
+  clientAddress: string;
+  surveyAt:      string; // ISO
+};
+
+export async function notifyOrderAssignedSurveyTelegram(
+  ctx: SurveyAssignTelegramContext,
+  baseUrl?: string,
+): Promise<void> {
+  if (!isTelegramConfigured()) return;
+
+  const at = new Date(ctx.surveyAt);
+  const when = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    day: '2-digit', month: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  }).format(at);
+
+  const lines: string[] = [];
+  lines.push(`<b>Замер назначен · №${ctx.orderNumber}</b>`);
+  lines.push('');
+  lines.push(`<b>Замерщик:</b> ${escapeHtml(ctx.surveyorName)}`);
+  lines.push(`<b>Когда:</b> <code>${escapeHtml(when)}</code> МСК`);
+  lines.push(`<b>Клиент:</b> ${escapeHtml(ctx.clientName)} · ${escapeHtml(ctx.clientPhone)}`);
+  if (ctx.clientAddress) lines.push(`<b>Адрес:</b> ${escapeHtml(ctx.clientAddress)}`);
+  if (baseUrl) {
+    lines.push('');
+    lines.push(`<a href="${baseUrl}/orders/${ctx.orderId}">Открыть заказ</a>`);
+  }
+
+  await sendTelegram(lines.join('\n'));
+}
+
 export async function notifyLeadCreatedTelegram(lead: LeadTelegramContext, baseUrl?: string): Promise<void> {
   if (!isTelegramConfigured()) return;
 

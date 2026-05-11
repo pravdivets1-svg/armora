@@ -10,6 +10,7 @@ import {
 } from '@/components/ui';
 import LiveSearch from '@/components/live-search';
 import AutoSubmitSelect from '@/components/auto-submit-select';
+import FilterSheet from './filter-sheet';
 
 export const metadata = { title: 'Заказы — Armora' };
 export const dynamic = 'force-dynamic';
@@ -49,11 +50,35 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
         title="Заказы"
         sub={pluralize(total)}
         actions={
-          (me.role === 'director' || me.role === 'manager') ? (
-            <Link href="/orders/new">
-              <Button size="sm"><Plus size={16} /> Новый</Button>
-            </Link>
-          ) : null
+          <>
+            <FilterSheet>
+              <AutoSubmitSelect
+                name="stage"
+                defaultValue={searchParams.stage ?? ''}
+                preserve={['q', 'user', 'filter']}
+              >
+                <option value="">Все этапы</option>
+                {STAGE_ORDER.map((s) => (
+                  <option key={s} value={s}>{STAGE_LABEL[s]}</option>
+                ))}
+              </AutoSubmitSelect>
+              <AutoSubmitSelect
+                name="user"
+                defaultValue={searchParams.user ?? ''}
+                preserve={['q', 'stage', 'filter']}
+              >
+                <option value="">Все исполнители</option>
+                {assignable.map((u) => (
+                  <option key={u.id} value={u.id}>{u.fullName}</option>
+                ))}
+              </AutoSubmitSelect>
+            </FilterSheet>
+            {(me.role === 'director' || me.role === 'manager') && (
+              <Link href="/orders/new">
+                <Button size="sm"><Plus size={16} /> Новый</Button>
+              </Link>
+            )}
+          </>
         }
       />
 

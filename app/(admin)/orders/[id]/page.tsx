@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
-import { StageBadge } from '@/components/stage-badge';
+import { ProgressChip } from '@/components/ui';
 import { PageBack, PageHeader } from '@/components/page-shell';
 import KeyboardShortcuts from '@/components/keyboard-shortcuts';
 import OrderForm from './order-form';
@@ -84,7 +84,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         kicker="Заказ"
         title={`№ ${order.number}`}
         sub={order.clientName}
-        meta={<StageBadge stage={order.stage} size="md" />}
+        meta={<ProgressChip stage={order.stage} />}
       />
 
       <PublicLinkBlock url={publicUrl} clientPhone={order.clientPhone} />

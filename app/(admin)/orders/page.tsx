@@ -10,7 +10,7 @@ import { requireUser } from '@/lib/auth-helpers';
 import { listOrders, listAssignableUsers } from '@/lib/orders';
 import { STAGE_LABEL, STAGE_ORDER, ROLE_LABEL } from '@/lib/labels';
 import { fmtDateTime, fmtInterval, shortName } from '@/lib/format';
-import { StageBadge } from '@/components/stage-badge';
+import { ProgressChip } from '@/components/ui';
 import { awaitingStateOf } from '@/lib/awaiting';
 import { Clock, AlertCircle as AlertCircleIcon } from 'lucide-react';
 import { EmptyState } from '@/components/empty-state';
@@ -180,7 +180,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 <td className="px-5 py-3.5 text-ink-700 max-w-[260px]">
                   <span className="block truncate" title={o.clientAddress}>{o.clientAddress}</span>
                 </td>
-                <td className="px-5 py-3.5"><StageBadge stage={o.stage} /></td>
+                <td className="px-5 py-3.5"><ProgressChip stage={o.stage} /></td>
                 <td className="px-5 py-3.5 text-ink-700">
                   {o.surveyAt ? (
                     <>
@@ -245,7 +245,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 <div className="text-[13px] text-ink-500 tabular-nums mt-0.5">{o.clientPhone}</div>
                 <div className="text-[13px] text-ink-500 truncate mt-0.5">{o.clientAddress}</div>
               </div>
-              <StageBadge stage={o.stage} />
+              <ProgressChip stage={o.stage} />
             </div>
             {(o.surveyAt || o.installAt) && (
               <div className="mt-3 text-[12px] text-ink-500 pt-3 border-t border-line space-y-0.5">

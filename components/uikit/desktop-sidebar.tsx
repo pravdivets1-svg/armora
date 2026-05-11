@@ -4,10 +4,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import type { Role } from '@prisma/client';
-import { LayoutList, Calendar, Inbox, CheckSquare, Users, LogOut } from 'lucide-react';
+import { LayoutList, Calendar, Inbox, CheckSquare, Users } from 'lucide-react';
 import { ROLE_LABEL } from '@/lib/labels';
-import { logoutAction } from '@/app/(auth)/actions';
-import { IconButton } from './button';
 
 type NavItem = {
   href: string;
@@ -73,8 +71,14 @@ export function DesktopSidebar({
           );
         })}
       </nav>
-      <div className="border-t border-borderc p-3 shrink-0">
-        <div className="flex items-center gap-3 px-2 py-1.5">
+      <div className="border-t border-borderc p-2 shrink-0">
+        <Link
+          href="/settings"
+          className={`flex items-center gap-3 px-2 py-1.5 rounded-md transition-colors duration-fast
+                      ${pathname.startsWith('/settings')
+                        ? 'bg-accent-soft text-accent'
+                        : 'hover:bg-subtle text-text2'}`}
+        >
           <div className="w-8 h-8 rounded-md bg-subtle text-text2 flex items-center justify-center text-[13px] font-semibold uppercase">
             {user.name.slice(0, 1)}
           </div>
@@ -82,12 +86,7 @@ export function DesktopSidebar({
             <p className="text-[13px] text-text1 font-medium truncate">{user.name}</p>
             <p className="text-meta text-text3 truncate">{ROLE_LABEL[role]}</p>
           </div>
-          <form action={logoutAction}>
-            <IconButton size={36} type="submit" aria-label="Выйти">
-              <LogOut size={16} />
-            </IconButton>
-          </form>
-        </div>
+        </Link>
       </div>
     </aside>
   );

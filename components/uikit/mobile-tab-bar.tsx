@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { Role } from '@prisma/client';
-import { LayoutList, Calendar, Inbox, CheckSquare } from 'lucide-react';
+import { LayoutList, Calendar, Inbox, CheckSquare, User } from 'lucide-react';
 
 type TabItem = {
   href: string;
@@ -29,6 +29,7 @@ export function MobileTabBar({
     { href: '/calendar', label: 'Расписание', icon: Calendar },
     { href: '/leads',    label: 'Заявки',     icon: Inbox,       badge: newLeads,        roles: ['director', 'manager'] as Role[] },
     { href: '/closures', label: 'Закрытие',   icon: CheckSquare, badge: pendingClosures, roles: ['director'] as Role[] },
+    { href: '/settings', label: 'Профиль',    icon: User },
   ];
   const items = all.filter((it) => !it.roles || it.roles.includes(role));
 

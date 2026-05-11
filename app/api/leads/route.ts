@@ -187,15 +187,6 @@ export async function POST(req: NextRequest) {
       process.env.NEXT_PUBLIC_BASE_URL ||
       `${req.nextUrl.protocol}//${req.headers.get('host')}`;
 
-    void notifySafe(() =>
-      sendPushToStaff({
-        title: `Новая заявка · №${lead.number}`,
-        body: `${d.clientName} · ${d.clientPhone}`,
-        url: `/leads/${lead.id}`,
-        tag: `lead-${lead.id}`,
-      }),
-    );
-
     const leadCtx = {
       number:        lead.number,
       clientName:    d.clientName,
@@ -208,30 +199,49 @@ export async function POST(req: NextRequest) {
       source:        d.source ?? 'calc',
     };
 
-    // Telegram (silent skip если env не настроен)
-    void notifyLeadCreatedTelegram(leadCtx, baseUrl)
-      .catch((e) => console.warn('[telegram] notify failed', e));
+    // ДОЖИДАЕМСЯ доставки уведомлений перед возвратом ответа.
+    // Раньше использовали void (fire-and-forget) — на Timeweb воркер мог
+    // прибить незавершённые fetch к Resend/Telegram сразу после return,
+    // и заявки с сайта оставались без email/TG. Now: даём всем шанс
+    // до 6 секунд (Promise.race с таймером), потом отвечаем клиенту.
+    const maxUserIds = await prisma.user
+      .findMany({
+        where: { role: { in: ['director', 'manager'] }, isActive: true, maxUserId: { not: null } },
+        select: { maxUserId: true },
+      })
+      .then((users) => users.map((u) => u.maxUserId!).filter(Boolean))
+      .catch(() => [] as string[]);
 
-    // Email через Resend (silent skip если RESEND_API_KEY / EMAIL_RECIPIENTS не заданы)
-    void notifyLeadCreatedEmail(leadCtx, baseUrl)
-      .catch((e) => console.warn('[email] notify failed', e));
-
-    // MAX (silent skip если MAX_BOT_TOKEN не задан)
-    void prisma.user.findMany({
-      where: { role: { in: ['director', 'manager'] }, isActive: true, maxUserId: { not: null } },
-      select: { maxUserId: true },
-    }).then((users) => {
-      const ids = users.map((u) => u.maxUserId!);
-      if (ids.length > 0) {
-        return notifyLeadCreatedMax(ids, {
+    const notifications: Promise<unknown>[] = [
+      notifySafe(() =>
+        sendPushToStaff({
+          title: `Новая заявка · №${lead.number}`,
+          body: `${d.clientName} · ${d.clientPhone}`,
+          url: `/leads/${lead.id}`,
+          tag: `lead-${lead.id}`,
+        }),
+      ),
+      notifyLeadCreatedTelegram(leadCtx, baseUrl)
+        .catch((e) => console.warn('[telegram] notify failed', e)),
+      notifyLeadCreatedEmail(leadCtx, baseUrl)
+        .catch((e) => console.warn('[email] notify failed', e)),
+    ];
+    if (maxUserIds.length > 0) {
+      notifications.push(
+        notifyLeadCreatedMax(maxUserIds, {
           number:        lead.number,
           clientName:    d.clientName,
           clientPhone:   d.clientPhone,
           clientAddress: d.clientAddress ?? null,
           comment:       d.comment ?? '',
-        }, baseUrl);
-      }
-    }).catch((e) => console.warn('[max] lead notify failed', e));
+        }, baseUrl).catch((e) => console.warn('[max] lead notify failed', e)),
+      );
+    }
+
+    await Promise.race([
+      Promise.allSettled(notifications),
+      new Promise((resolve) => setTimeout(resolve, 6000)),
+    ]);
   }
 
   return NextResponse.json(

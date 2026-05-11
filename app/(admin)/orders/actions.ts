@@ -17,6 +17,7 @@ import { diffOrderEvents, snapshotFromOrder } from '@/lib/order-events';
 import { awaitingUntilFrom } from '@/lib/awaiting';
 import { normalizePhone } from '@/lib/format';
 import type { Stage, Role } from '@prisma/client';
+import { STAGE_LABEL } from '@/lib/labels';
 
 // =====================================================================
 // Валидация форм
@@ -730,4 +731,65 @@ export async function addCommentAction(
 
   revalidatePath(`/orders/${orderId}`);
   return { ok: true };
+}
+
+// =====================================================================
+// STAGE TRANSITION — узкий action, только для смены этапа из HeroStage
+// =====================================================================
+
+export async function updateOrderStageAction(orderId: string, next: Stage): Promise<void> {
+  const me = await requireUser();
+
+  const existing = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!existing) throw new Error('Заказ не найден');
+
+  const isMine = existing.surveyorId === me.id || existing.installerId === me.id;
+  if (!isStaff(me.role) && !isMine) throw new Error('Нет доступа');
+
+  if (existing.stage === 'closed' && me.role !== 'director') {
+    throw new Error('Закрытый заказ может редактировать только директор');
+  }
+
+  if (next === 'closed') {
+    throw new Error('Закрыть заказ можно только через approveClosureAction');
+  }
+
+  if (!isStageTransitionAllowed(me.role, existing.stage, next)) {
+    throw new Error(transitionErrorMessage(me.role, existing.stage, next));
+  }
+
+  // Гейт финансов при переводе в pending_closure
+  if (next === 'pending_closure') {
+    const fin = validateClosureFinances(
+      Number(existing.totalAmount),
+      Number(existing.prepayment),
+      Number(existing.finalPayment),
+      Number(existing.costAmount),
+    );
+    if (fin) throw new Error(fin.error);
+  }
+
+  await prisma.order.update({
+    where: { id: orderId },
+    data: { stage: next },
+  });
+
+  // Audit log
+  try {
+    await prisma.orderEvent.create({
+      data: {
+        orderId,
+        authorId: me.id,
+        kind: 'stage',
+        summary: `${STAGE_LABEL[existing.stage]} → ${STAGE_LABEL[next]}`,
+        before: { stage: existing.stage } as any,
+        after: { stage: next } as any,
+      },
+    });
+  } catch (e) {
+    console.warn('[audit] failed to write stage event', e);
+  }
+
+  revalidatePath('/orders');
+  revalidatePath(`/orders/${orderId}`);
 }

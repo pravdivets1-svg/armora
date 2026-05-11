@@ -74,6 +74,7 @@ export default function OrderForm({
   role,
   mode,
   comments,
+  hideStageStepper,
 }: {
   order?: OrderData;
   action: (state: OrderActionState, fd: FormData) => Promise<OrderActionState>;
@@ -82,6 +83,7 @@ export default function OrderForm({
   role: Role;
   mode: 'create' | 'edit';
   comments?: React.ReactNode;
+  hideStageStepper?: boolean;
 }) {
   const [state, formAction] = useFormState<OrderActionState, FormData>(action, undefined);
   const p = permsFor(role);
@@ -178,7 +180,7 @@ export default function OrderForm({
       onSubmit={cancelAutosave}
     >
       {/* Stage stepper — главный action в карточке */}
-      {mode === 'edit' && order && (
+      {!hideStageStepper && mode === 'edit' && order && (
         <div>
           <StageStepper
             current={stage}

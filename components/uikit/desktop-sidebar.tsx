@@ -30,13 +30,14 @@ export function DesktopSidebar({
 }) {
   const pathname = usePathname();
 
-  const items: NavItem[] = [
+  const allItems: NavItem[] = [
     { href: '/orders',   label: 'Заказы',     icon: LayoutList },
     { href: '/calendar', label: 'Расписание', icon: Calendar },
-    { href: '/leads',    label: 'Заявки',     icon: Inbox,       badge: newLeads,        roles: ['director', 'manager'] },
-    { href: '/closures', label: 'На закрытие', icon: CheckSquare, badge: pendingClosures, roles: ['director'] },
-    { href: '/users',    label: 'Сотрудники', icon: Users,       roles: ['director'] },
-  ].filter((it) => !it.roles || it.roles.includes(role));
+    { href: '/leads',    label: 'Заявки',     icon: Inbox,       badge: newLeads,        roles: ['director', 'manager'] as Role[] },
+    { href: '/closures', label: 'На закрытие', icon: CheckSquare, badge: pendingClosures, roles: ['director'] as Role[] },
+    { href: '/users',    label: 'Сотрудники', icon: Users,       roles: ['director'] as Role[] },
+  ];
+  const items = allItems.filter((it) => !it.roles || it.roles.includes(role));
 
   return (
     <aside className="hidden lg:flex flex-col fixed top-0 left-0 bottom-0 w-sidebar

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import type { Role, Stage } from '@prisma/client';
-import { HeroStage } from '@/components/ui';
+import { HeroStage } from '@/components/uikit';
 
 export default function HeroStageBlock({
   current,

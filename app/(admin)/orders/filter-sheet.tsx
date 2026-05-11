@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { SlidersHorizontal } from 'lucide-react';
-import { Sheet, IconButton } from '@/components/ui';
+import { Sheet, IconButton } from '@/components/uikit';
 
 export default function FilterSheet({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);

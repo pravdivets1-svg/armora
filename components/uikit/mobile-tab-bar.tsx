@@ -27,8 +27,8 @@ export function MobileTabBar({
   const all: TabItem[] = [
     { href: '/orders',   label: 'Заказы',     icon: LayoutList },
     { href: '/calendar', label: 'Расписание', icon: Calendar },
-    { href: '/leads',    label: 'Заявки',     icon: Inbox,       badge: newLeads,        roles: ['director', 'manager'] },
-    { href: '/closures', label: 'Закрытие',   icon: CheckSquare, badge: pendingClosures, roles: ['director'] },
+    { href: '/leads',    label: 'Заявки',     icon: Inbox,       badge: newLeads,        roles: ['director', 'manager'] as Role[] },
+    { href: '/closures', label: 'Закрытие',   icon: CheckSquare, badge: pendingClosures, roles: ['director'] as Role[] },
   ];
   const items = all.filter((it) => !it.roles || it.roles.includes(role));
 

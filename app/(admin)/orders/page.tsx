@@ -7,7 +7,7 @@ import { listOrders, listAssignableUsers } from '@/lib/orders';
 import { STAGE_LABEL, STAGE_ORDER } from '@/lib/labels';
 import {
   PageHeader, Button, OrderCard, Empty, PillTabs,
-} from '@/components/ui';
+} from '@/components/uikit';
 import LiveSearch from '@/components/live-search';
 import AutoSubmitSelect from '@/components/auto-submit-select';
 import FilterSheet from './filter-sheet';

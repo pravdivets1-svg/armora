@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
-import { AppShell } from '@/components/ui';
+import { AppShell } from '@/components/uikit';
 import PageTransition from '@/components/page-transition';
 import ToastHost from '@/components/toast-host';
 import FaviconBadge from '@/components/favicon-badge';

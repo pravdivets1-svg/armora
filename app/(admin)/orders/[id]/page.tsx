@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import {
   PageHeader, SectionCard, KeyValueRow, IconButton,
-} from '@/components/ui';
+} from '@/components/uikit';
 import OrderForm from './order-form';
 import OrderPhotos from './order-photos';
 import AwaitingClientCard from './order-awaiting-card';

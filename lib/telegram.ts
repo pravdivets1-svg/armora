@@ -61,6 +61,17 @@ export async function sendTelegram(text: string): Promise<void> {
 // Готовое сообщение о новой заявке с сайта
 // =====================================================================
 
+export type LeadTelegramDoor = {
+  id?: number | null;
+  name?: string | null;
+  series?: string | null;
+  basePrice?: number | null;
+  purpose?: string | null;
+  finish?: string | null;
+  image?: string | null;
+  tags?: string[] | null;
+};
+
 export type LeadTelegramContext = {
   number: number;
   clientName: string;
@@ -71,7 +82,40 @@ export type LeadTelegramContext = {
   comment?: string;
   estimatedPrice?: number | null;
   source: string;
+  door?: LeadTelegramDoor | null;
 };
+
+// Отправка фото с подписью — sendPhoto API. Caption max 1024 символа.
+// Возвращает true если хотя бы одному получателю доставили.
+async function sendTelegramPhoto(photoUrl: string, caption: string): Promise<boolean> {
+  if (!isTelegramConfigured()) return false;
+  const url = `https://api.telegram.org/bot${TOKEN}/sendPhoto`;
+  let anyOk = false;
+  const tasks = CHAT_IDS.map(async (chatId) => {
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          photo: photoUrl,
+          caption,
+          parse_mode: 'HTML',
+        }),
+        signal: AbortSignal.timeout(15000),
+      });
+      if (res.ok) anyOk = true;
+      else {
+        const body = await res.text().catch(() => '');
+        console.warn('[telegram] sendPhoto failed', res.status, body);
+      }
+    } catch (e) {
+      console.warn('[telegram] sendPhoto error', e);
+    }
+  });
+  await Promise.allSettled(tasks);
+  return anyOk;
+}
 
 // =====================================================================
 // Сообщение «Замер назначен» — отправляется в общий рабочий чат при
@@ -119,9 +163,22 @@ export async function notifyOrderAssignedSurveyTelegram(
 export async function notifyLeadCreatedTelegram(lead: LeadTelegramContext, baseUrl?: string): Promise<void> {
   if (!isTelegramConfigured()) return;
 
+  const door = lead.door ?? null;
   const lines: string[] = [];
   lines.push(`<b>Новая заявка №${lead.number}</b>`);
   lines.push('');
+  if (door && door.name) {
+    const head = door.series ? `${door.name} · ${door.series}` : door.name;
+    lines.push(`<b>Модель:</b> ${escapeHtml(head)}${door.purpose ? ` · ${escapeHtml(door.purpose)}` : ''}`);
+    if (door.basePrice) {
+      lines.push(`<b>База:</b> <code>${door.basePrice.toLocaleString('ru-RU')} ₽</code>`);
+    }
+    if (door.tags && door.tags.length) {
+      lines.push('<b>Характеристики:</b>');
+      for (const t of door.tags.slice(0, 6)) lines.push(`  · ${escapeHtml(t)}`);
+    }
+    lines.push('');
+  }
   lines.push(`<b>Клиент:</b> ${escapeHtml(lead.clientName)}`);
   lines.push(`<b>Телефон:</b> ${escapeHtml(lead.clientPhone)}`);
   if (lead.clientAddress) lines.push(`<b>Адрес:</b> ${escapeHtml(lead.clientAddress)}`);
@@ -141,5 +198,14 @@ export async function notifyLeadCreatedTelegram(lead: LeadTelegramContext, baseU
     lines.push(`<a href="${baseUrl}/leads">Открыть в Armora</a>`);
   }
 
-  await sendTelegram(lines.join('\n'));
+  const message = lines.join('\n');
+
+  // Если есть URL картинки двери — пробуем sendPhoto (caption ≤ 1024 chars).
+  // Telegram покажет превью двери прямо в чате.
+  if (door?.image && message.length <= 1024) {
+    const ok = await sendTelegramPhoto(door.image, message);
+    if (ok) return;
+  }
+  // Fallback / no image / caption too long: обычный sendMessage.
+  await sendTelegram(message);
 }

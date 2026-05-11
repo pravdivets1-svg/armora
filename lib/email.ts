@@ -62,6 +62,17 @@ async function sendEmail(subject: string, html: string, text: string): Promise<v
 // Готовое сообщение о новой заявке с сайта
 // =====================================================================
 
+export type LeadEmailDoor = {
+  id?: number | null;
+  name?: string | null;
+  series?: string | null;
+  basePrice?: number | null;
+  purpose?: string | null;
+  finish?: string | null;
+  image?: string | null;
+  tags?: string[] | null;
+};
+
 export type LeadEmailContext = {
   number: number;
   clientName: string;
@@ -72,12 +83,13 @@ export type LeadEmailContext = {
   comment?: string;
   estimatedPrice?: number | null;
   source: string;
+  door?: LeadEmailDoor | null;
 };
 
 export async function notifyLeadCreatedEmail(lead: LeadEmailContext, baseUrl?: string): Promise<void> {
   if (!isEmailConfigured()) return;
 
-  const subject = `Новая заявка №${lead.number} — ${lead.clientName}`;
+  const subject = `Новая заявка №${lead.number} — ${lead.clientName}${lead.door?.name ? ` · ${lead.door.name}` : ''}`;
 
   const rows: Array<[string, string]> = [
     ['Клиент', lead.clientName],
@@ -98,10 +110,36 @@ export async function notifyLeadCreatedEmail(lead: LeadEmailContext, baseUrl?: s
       ([label, value]) => `
         <tr>
           <td style="padding:8px 16px 8px 0;color:#6b7280;font-size:13px;vertical-align:top;width:160px;">${escapeHtml(label)}</td>
-          <td style="padding:8px 0;color:#0b0d12;font-size:14px;">${escapeHtml(value)}</td>
+          <td style="padding:8px 0;color:#0b0d12;font-size:14px;white-space:pre-wrap;">${escapeHtml(value)}</td>
         </tr>`,
     )
     .join('');
+
+  // Door block — рендерится только если есть door.name или door.image
+  const door = lead.door ?? null;
+  const hasDoor = !!(door && (door.name || door.image));
+  const doorHtml = hasDoor && door
+    ? `
+      <div style="padding:16px 24px;border-bottom:1px solid #eceef1;background:#f4f5f7;">
+        <div style="font-size:11px;color:#8a93a1;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px;">Выбранная модель</div>
+        <table cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;">
+          <tr>
+            ${door.image ? `<td valign="top" style="width:140px;padding-right:16px;">
+              <img src="${escapeHtml(door.image)}" alt="${escapeHtml(door.name ?? 'Дверь')}"
+                style="width:140px;height:auto;border-radius:10px;display:block;border:1px solid #eceef1;background:#fff;" />
+            </td>` : ''}
+            <td valign="top" style="font-size:14px;color:#0b0d12;">
+              <div style="font-weight:600;font-size:16px;margin-bottom:4px;">${escapeHtml(door.name ?? '—')}</div>
+              ${door.series ? `<div style="color:#4b5260;font-size:13px;margin-bottom:6px;">Серия: ${escapeHtml(door.series)}${door.purpose ? ' · ' + escapeHtml(door.purpose) : ''}</div>` : ''}
+              ${door.basePrice ? `<div style="font-weight:600;color:#2563eb;font-size:14px;margin-bottom:8px;font-variant-numeric:tabular-nums;">База: ${door.basePrice.toLocaleString('ru-RU')} ₽</div>` : ''}
+              ${door.tags && door.tags.length
+                ? `<div style="color:#4b5260;font-size:12.5px;line-height:1.5;">${door.tags.slice(0, 8).map(t => `· ${escapeHtml(t)}`).join('<br>')}</div>`
+                : ''}
+            </td>
+          </tr>
+        </table>
+      </div>`
+    : '';
 
   const html = `
 <!DOCTYPE html>
@@ -112,6 +150,7 @@ export async function notifyLeadCreatedEmail(lead: LeadEmailContext, baseUrl?: s
         <div style="font-size:12px;color:#8a93a1;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:4px;">Armora · Новая заявка</div>
         <h1 style="margin:0;font-size:22px;color:#0b0d12;font-weight:650;letter-spacing:-0.01em;">№${lead.number} — ${escapeHtml(lead.clientName)}</h1>
       </div>
+      ${doorHtml}
       <table cellspacing="0" cellpadding="0" style="width:100%;border-collapse:collapse;padding:8px 24px;">
         ${htmlRows}
       </table>
@@ -127,11 +166,21 @@ export async function notifyLeadCreatedEmail(lead: LeadEmailContext, baseUrl?: s
   </body>
 </html>`.trim();
 
+  // Plain text — тоже добавим door
   const textLines = [
     `Новая заявка №${lead.number}`,
     '',
-    ...rows.map(([k, v]) => `${k}: ${v}`),
   ];
+  if (hasDoor && door) {
+    textLines.push('— Модель —');
+    if (door.name)      textLines.push(`Название: ${door.name}`);
+    if (door.series)    textLines.push(`Серия: ${door.series}${door.purpose ? ' · ' + door.purpose : ''}`);
+    if (door.basePrice) textLines.push(`Базовая цена: ${door.basePrice.toLocaleString('ru-RU')} ₽`);
+    if (door.tags && door.tags.length) textLines.push('Характеристики:\n  ' + door.tags.slice(0, 8).join('\n  '));
+    if (door.image)     textLines.push(`Картинка: ${door.image}`);
+    textLines.push('');
+  }
+  textLines.push(...rows.map(([k, v]) => `${k}: ${v}`));
   if (openLink) {
     textLines.push('', `Открыть: ${openLink}`);
   }

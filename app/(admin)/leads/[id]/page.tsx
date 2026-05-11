@@ -45,6 +45,9 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
       'clientName', 'clientPhone', 'clientAddress', 'comment',
       'widthMm', 'heightMm', 'estimatedPrice', 'source',
       'utmSource', 'utmMedium', 'utmCampaign',
+      // Door fields рендерятся отдельной секцией ниже
+      'doorId', 'doorName', 'doorSeries', 'doorBasePrice',
+      'doorPurpose', 'doorFinish', 'doorImage', 'doorTags',
     ]);
     for (const [k, v] of Object.entries(lead.payload as Record<string, unknown>)) {
       if (known.has(k)) continue;
@@ -52,6 +55,22 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
       payloadEntries.push([k, v]);
     }
   }
+
+  // Door info из payload (приходит с сайта-каталога)
+  const payload = (lead.payload && typeof lead.payload === 'object' && !Array.isArray(lead.payload))
+    ? (lead.payload as Record<string, unknown>)
+    : {};
+  const door = {
+    id:        typeof payload.doorId === 'number' ? payload.doorId : null,
+    name:      typeof payload.doorName === 'string' ? payload.doorName : null,
+    series:    typeof payload.doorSeries === 'string' ? payload.doorSeries : null,
+    basePrice: typeof payload.doorBasePrice === 'number' ? payload.doorBasePrice : null,
+    purpose:   typeof payload.doorPurpose === 'string' ? payload.doorPurpose : null,
+    finish:    typeof payload.doorFinish === 'string' ? payload.doorFinish : null,
+    image:     typeof payload.doorImage === 'string' ? payload.doorImage : null,
+    tags:      Array.isArray(payload.doorTags) ? (payload.doorTags as string[]) : null,
+  };
+  const hasDoor = !!(door.name || door.image);
 
   return (
     <>
@@ -128,8 +147,57 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
           )}
         </SectionCard>
 
-        {/* Параметры двери */}
-        <SectionCard title="Параметры двери">
+        {/* Дверь из каталога — если клиент выбрал конкретную модель на сайте */}
+        {hasDoor && (
+          <section className="bg-card border border-borderc rounded-lg overflow-hidden">
+            <header className="px-5 pt-5 pb-3">
+              <h2 className="text-meta uppercase tracking-wide text-text3">Выбранная модель</h2>
+            </header>
+            <div className="px-5 pb-5 flex flex-col sm:flex-row gap-4">
+              {door.image && (
+                <a href={door.image} target="_blank" rel="noreferrer" className="shrink-0">
+                  {/* Используем <img> а не next/image — это внешний URL без явного allow-host */}
+                  <img
+                    src={door.image}
+                    alt={door.name ?? 'Дверь'}
+                    className="w-full sm:w-40 max-h-56 rounded-md border border-borderc bg-subtle object-contain"
+                  />
+                </a>
+              )}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-display text-text1 mb-1 truncate">{door.name ?? '—'}</h3>
+                {(door.series || door.purpose) && (
+                  <p className="text-meta text-text3 mb-2">
+                    {door.series && `Серия: ${door.series}`}
+                    {door.series && door.purpose && ' · '}
+                    {door.purpose && door.purpose}
+                  </p>
+                )}
+                {door.basePrice != null && (
+                  <p className="text-h2 text-accent tabular-nums mb-3">
+                    Базовая цена: {Number(door.basePrice).toLocaleString('ru-RU')} ₽
+                  </p>
+                )}
+                {door.tags && door.tags.length > 0 && (
+                  <ul className="space-y-1">
+                    {door.tags.slice(0, 10).map((t) => (
+                      <li key={t} className="text-[13px] text-text2 flex gap-2">
+                        <span className="text-text3 shrink-0">·</span>
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {door.id != null && (
+                  <p className="text-meta text-text3 mt-3 tabular-nums">ID каталога: {door.id}</p>
+                )}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Параметры двери (размеры замера + ориентир. цена) */}
+        <SectionCard title="Размер и расчёт">
           <KeyValueRow label="Ширина" value={lead.widthMm ? `${lead.widthMm} мм` : '—'} mono />
           <KeyValueRow label="Высота" value={lead.heightMm ? `${lead.heightMm} мм` : '—'} mono />
           <KeyValueRow

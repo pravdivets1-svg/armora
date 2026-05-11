@@ -85,6 +85,22 @@ const leadSchema = z.object({
   utmSource:     z.string().trim().max(100).optional(),
   utmMedium:     z.string().trim().max(100).optional(),
   utmCampaign:   z.string().trim().max(100).optional(),
+  // Door info из каталога armora-catalog (опц.)
+  doorId:        z.coerce.number().int().min(0).optional().nullable()
+                  .or(z.literal('').transform(() => undefined)),
+  doorName:      z.string().trim().max(100).optional().nullable()
+                  .or(z.literal('').transform(() => undefined)),
+  doorSeries:    z.string().trim().max(50).optional().nullable()
+                  .or(z.literal('').transform(() => undefined)),
+  doorBasePrice: z.coerce.number().min(0).max(10_000_000).optional().nullable()
+                  .or(z.literal('').transform(() => undefined)),
+  doorPurpose:   z.string().trim().max(40).optional().nullable()
+                  .or(z.literal('').transform(() => undefined)),
+  doorFinish:    z.string().trim().max(40).optional().nullable()
+                  .or(z.literal('').transform(() => undefined)),
+  doorImage:     z.string().url().max(500).optional().nullable()
+                  .or(z.literal('').transform(() => undefined)),
+  doorTags:      z.array(z.string().max(200)).max(50).optional().nullable(),
 }).passthrough(); // не падаем на лишние поля — сложим их в payload
 
 function phoneDigits(s: string): string {
@@ -197,6 +213,18 @@ export async function POST(req: NextRequest) {
       comment:       d.comment ?? '',
       estimatedPrice: d.estimatedPrice ?? null,
       source:        d.source ?? 'calc',
+      door: (d.doorName || d.doorImage || d.doorId)
+        ? {
+            id:        d.doorId        ?? null,
+            name:      d.doorName      ?? null,
+            series:    d.doorSeries    ?? null,
+            basePrice: d.doorBasePrice ?? null,
+            purpose:   d.doorPurpose   ?? null,
+            finish:    d.doorFinish    ?? null,
+            image:     d.doorImage     ?? null,
+            tags:      d.doorTags      ?? null,
+          }
+        : null,
     };
 
     // ДОЖИДАЕМСЯ доставки уведомлений перед возвратом ответа.

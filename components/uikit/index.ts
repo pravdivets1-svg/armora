@@ -10,7 +10,7 @@ export * from './page-header';
 export * from './mobile-tab-bar';
 export * from './desktop-sidebar';
 export * from './app-shell';
-export * from './progress-chip';
+export * from './stage-pill';
 export * from './stage-ladder';
 export * from './hero-stage';
 export * from './order-card';

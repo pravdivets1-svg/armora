@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Stage } from '@prisma/client';
-import { ProgressChip } from './progress-chip';
+import { StagePill } from './stage-pill';
 
 function fmtRub(v: number | null | undefined): string {
   if (v == null) return '—';
@@ -21,7 +21,6 @@ export function OrderCard({
   daysInStage,
   phone,
   amount,
-  highlight,
 }: {
   href: string;
   number: string;
@@ -31,32 +30,26 @@ export function OrderCard({
   daysInStage?: number;
   phone: string | null;
   amount: number | null;
-  highlight?: string;
 }) {
   return (
     <Link
       href={href}
-      className="block bg-card border border-borderc rounded-lg p-4
-                 transition-shadow duration-fast ease-soft hover:shadow-soft-lg
+      className="block bg-card border border-borderc rounded-md px-4 py-3
+                 transition-colors duration-fast ease-soft hover:bg-subtle/60
                  focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
-      <div className="flex items-baseline justify-between gap-3 mb-1">
-        <h3 className="text-h2 text-text1 truncate">{clientName}</h3>
+      <div className="flex items-center justify-between gap-3 mb-1.5">
+        <h3 className="text-[14px] font-semibold text-text1 truncate flex-1 min-w-0">{clientName}</h3>
+        <span className="text-[14px] text-text1 font-semibold tabular-nums shrink-0">{fmtRub(amount)}</span>
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <StagePill stage={stage} daysInStage={daysInStage} />
         <span className="text-meta text-text3 tabular-nums shrink-0">№ {number}</span>
       </div>
-      <p className="text-meta text-text3 truncate mb-3">{address || '—'}</p>
-      <div className="mb-3">
-        <ProgressChip stage={stage} daysInStage={daysInStage} />
+      <div className="flex items-center justify-between gap-3 mt-1.5 text-[12.5px] text-text3">
+        <span className="truncate flex-1 min-w-0">{address || '—'}</span>
+        <span className="tabular-nums shrink-0">{fmtPhone(phone)}</span>
       </div>
-      <div className="flex items-center justify-between gap-3 text-meta">
-        <span className="text-text2 tabular-nums truncate">{fmtPhone(phone)}</span>
-        <span className="text-text1 tabular-nums font-medium shrink-0">{fmtRub(amount)}</span>
-      </div>
-      {highlight && (
-        <p className="mt-2 pt-2 border-t border-borderc text-meta text-accent tabular-nums">
-          {highlight}
-        </p>
-      )}
     </Link>
   );
 }

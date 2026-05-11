@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import type { Role, Stage } from '@prisma/client';
 import { STAGE_LABEL, STAGE_ORDER } from '@/lib/labels';
 import { isStageTransitionAllowed } from '@/lib/stage-transitions';
 import { Button } from './button';
 import { Sheet } from './sheet';
+import { StagePill } from './stage-pill';
 import { StageLadder } from './stage-ladder';
 
 function nextAllowed(current: Stage, role: Role): Stage | null {
@@ -25,7 +26,6 @@ export function HeroStage({
   current,
   role,
   enteredAt,
-  enteredBy,
   onStageChange,
   onApproveClosure,
 }: {
@@ -44,72 +44,58 @@ export function HeroStage({
   const next = nextAllowed(current, role);
   const isPendingClosureAsDirector = current === 'pending_closure' && role === 'director';
   const isPendingClosureOther = current === 'pending_closure' && role !== 'director';
-
-  const railFill = ((idx + 1) / total) * 100;
   const days = daysSince(enteredAt);
 
-  const heroBg =
-    isPendingClosureAsDirector ? 'bg-accent-soft border-accent/30'
-    : isPendingClosureOther    ? 'bg-warn2-soft border-warn2/30'
+  const cardCls =
+    isPendingClosureAsDirector ? 'bg-accent-soft border-accent/40 shadow-accent-glow'
+    : isPendingClosureOther    ? 'bg-warn2-soft border-warn2/40'
     : 'bg-card border-borderc';
 
   return (
-    <section className={`rounded-lg border ${heroBg} p-5 sm:p-6`}>
-      <p className="text-meta uppercase tracking-wide text-text3 mb-1">
-        Этап {idx + 1} из {total}
-      </p>
-      <h2 className="text-display text-text1 mb-3">{STAGE_LABEL[current]}</h2>
-
-      <div className="relative h-1.5 bg-subtle rounded-md mb-2 overflow-hidden">
-        <div
-          className="absolute inset-y-0 left-0 bg-accent rounded-md transition-all duration-slow ease-soft"
-          style={{ width: `${railFill}%` }}
-        />
-      </div>
-      <p className="text-meta text-text3 mb-5 tabular-nums">
-        {days === 0 ? 'Перешёл сюда сегодня' : `Перешёл сюда ${days} ${days === 1 ? 'день' : days < 5 ? 'дня' : 'дней'} назад`}
-        {enteredBy && <> · <span className="font-mono">{enteredBy}</span></>}
-      </p>
-
-      <div className="flex flex-col gap-2">
-        {isPendingClosureAsDirector && onApproveClosure ? (
-          <Button
-            size="lg"
-            block
-            disabled={pending}
-            onClick={() => start(() => { void onApproveClosure(); })}
-          >
-            Закрыть заказ
-            <ChevronRight size={18} />
-          </Button>
-        ) : isPendingClosureOther ? (
-          <div className="text-meta text-warn2 font-medium py-2">
-            Ожидает действия директора
-          </div>
-        ) : next ? (
-          <Button
-            size="lg"
-            block
-            disabled={pending}
-            onClick={() => start(() => { void onStageChange(next); })}
-          >
-            Передать в «{STAGE_LABEL[next]}»
-            <ChevronRight size={18} />
-          </Button>
-        ) : current === 'closed' ? (
-          <div className="text-meta text-text3 font-medium py-2">Заказ закрыт</div>
-        ) : (
-          <div className="text-meta text-text3 font-medium py-2">Доступных переходов нет</div>
-        )}
-
+    <section className={`rounded-md border ${cardCls} p-4 sm:p-5`}>
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <StagePill stage={current} daysInStage={days} size="md" />
+          <span className="text-meta text-text3 tabular-nums shrink-0">
+            · {idx + 1}/{total}
+          </span>
+        </div>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="self-start inline-flex items-center gap-1.5 text-meta text-text2 hover:text-text1 transition-colors"
+          className="text-meta text-text2 hover:text-text1 transition-colors inline-flex items-center gap-1 shrink-0"
         >
-          <ChevronDown size={14} /> Все этапы
+          Все этапы
         </button>
       </div>
+
+      {isPendingClosureAsDirector && onApproveClosure ? (
+        <Button
+          size="lg"
+          block
+          disabled={pending}
+          onClick={() => start(() => { void onApproveClosure(); })}
+        >
+          Закрыть заказ <ChevronRight size={18} />
+        </Button>
+      ) : isPendingClosureOther ? (
+        <p className="text-[14px] text-warn2 font-medium">
+          Ждёт подтверждения директора
+        </p>
+      ) : next ? (
+        <Button
+          size="lg"
+          block
+          disabled={pending}
+          onClick={() => start(() => { void onStageChange(next); })}
+        >
+          Передать в «{STAGE_LABEL[next]}» <ChevronRight size={18} />
+        </Button>
+      ) : current === 'closed' ? (
+        <p className="text-[14px] text-text3">Заказ закрыт</p>
+      ) : (
+        <p className="text-[14px] text-text3">Нет доступных переходов</p>
+      )}
 
       <Sheet open={open} onClose={() => setOpen(false)} title="Этапы заказа">
         <StageLadder

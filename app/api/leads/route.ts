@@ -29,9 +29,9 @@ export const runtime = 'nodejs';
 // но для MVP этого достаточно. При масштабировании — Redis/Postgres.
 
 const RL_WINDOW_MS = 60 * 60 * 1000; // 1 час
-// 50/час с одного IP — комфортный запас для офисов за NAT, семей на одном
-// WiFi и интенсивного тестирования. Анти-спам остаётся (50 руками не сделать).
-const RL_MAX = 50;
+// 500/час — фактически отключено для людей, остаётся защита только от ботов
+// (которые умеют сотни RPS). Анти-спам реальная защита — honeypot ниже.
+const RL_MAX = 500;
 const rateMap = new Map<string, number[]>();
 
 function rateLimitOk(ip: string): boolean {
@@ -137,6 +137,7 @@ export async function POST(req: NextRequest) {
 
   // Rate limit (до парсинга — экономим работу на потоке спама)
   if (!rateLimitOk(ip)) {
+    console.warn('[leads] rate limit hit', { ip, ua: userAgent, count: rateMap.get(ip)?.length ?? 0, limit: RL_MAX });
     return NextResponse.json(
       { ok: false, error: 'Слишком много заявок. Попробуйте через час.' },
       { status: 429, headers: corsHeaders },

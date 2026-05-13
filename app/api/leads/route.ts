@@ -29,7 +29,9 @@ export const runtime = 'nodejs';
 // но для MVP этого достаточно. При масштабировании — Redis/Postgres.
 
 const RL_WINDOW_MS = 60 * 60 * 1000; // 1 час
-const RL_MAX = 5;
+// 5 → 30: 5/час блокирует офисы за одним NAT и обычное тестирование.
+// 30/час = ~1 заявка в 2 минуты — анти-спам сохраняется, легит-трафик проходит.
+const RL_MAX = 30;
 const rateMap = new Map<string, number[]>();
 
 function rateLimitOk(ip: string): boolean {

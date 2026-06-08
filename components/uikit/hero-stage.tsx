@@ -99,6 +99,24 @@ export function HeroStage({
         <p className="text-[14px] text-text3">Нет доступных переходов</p>
       )}
 
+      {/* Директор: возможность закрыть заказ напрямую из любой стадии. */}
+      {role === 'director' && current !== 'closed' && current !== 'pending_closure' && onApproveClosure && (
+        <button
+          type="button"
+          onClick={() => {
+            if (confirm('Закрыть заказ напрямую без подтверждения этапов?')) {
+              start(() => { void onApproveClosure(); });
+            }
+          }}
+          disabled={pending}
+          className="block w-full mt-2 text-meta text-text3 hover:text-text1
+                     transition-colors text-center underline-offset-2 hover:underline
+                     disabled:opacity-50"
+        >
+          или закрыть напрямую
+        </button>
+      )}
+
       <Sheet open={open} onClose={() => setOpen(false)} title="Этапы заказа">
         <StageLadder
           current={current}

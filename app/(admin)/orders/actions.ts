@@ -617,25 +617,22 @@ export async function closeFromAwaitingAction(orderId: string) {
 // APPROVE CLOSURE — директор подтверждает закрытие
 // =====================================================================
 
+// Директор закрывает заказ. Раньше:
+//   - блок: order.stage должен быть pending_closure (→ 500 если нет)
+//   - блок: все 4 финансовых поля обязательны (→ 500 если нет)
+// Теперь:
+//   - закрыть можно из ЛЮБОЙ незакрытой стадии (директор знает что делает)
+//   - финансы — рекомендация, не блокер (можно закрыть мусорный/тестовый заказ)
+//   - already-closed → noop, без ошибки
 export async function approveClosureAction(orderId: string) {
   const me = await requireUser();
   if (me.role !== 'director') throw new Error('Forbidden');
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) throw new Error('Not found');
+  if (order.stage === 'closed') return; // already closed — silent noop
 
-  if (order.stage !== 'pending_closure') {
-    throw new Error('Order is not in pending_closure stage');
-  }
-
-  // Контрольная проверка финансов
-  const fin = validateClosureFinances(
-    Number(order.totalAmount),
-    Number(order.prepayment),
-    Number(order.finalPayment),
-    Number(order.costAmount),
-  );
-  if (fin) throw new Error(fin.error);
+  const fromStage = order.stage;
 
   await prisma.order.update({
     where: { id: orderId },
@@ -644,6 +641,34 @@ export async function approveClosureAction(orderId: string) {
       tokenExpiresAt: tokenExpiresFor('closed', order.tokenExpiresAt),
     },
   });
+
+  // Audit log: запись о закрытии (+ stage-переход если пришли не из pending_closure)
+  try {
+    if (fromStage !== 'pending_closure') {
+      await prisma.orderEvent.create({
+        data: {
+          orderId,
+          authorId: me.id,
+          kind: 'stage',
+          summary: `${STAGE_LABEL[fromStage]} → ${STAGE_LABEL['closed']}`,
+          before: { stage: fromStage } as any,
+          after: { stage: 'closed' } as any,
+        },
+      });
+    }
+    await prisma.orderEvent.create({
+      data: {
+        orderId,
+        authorId: me.id,
+        kind: 'closed',
+        summary: fromStage === 'pending_closure' ? 'Заказ закрыт' : 'Заказ закрыт напрямую директором',
+        before: { stage: fromStage } as any,
+        after: { stage: 'closed' } as any,
+      },
+    });
+  } catch (e) {
+    console.warn('[audit] failed to write closure event', e);
+  }
 
   revalidatePath('/orders');
   revalidatePath('/closures');

@@ -71,8 +71,10 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
   const publicUrl = `${baseUrl}/order/${order.publicToken}`;
 
-  const canApproveClosure =
-    me.role === 'director' && order.stage === 'pending_closure';
+  // Директор может закрыть заказ из любой стадии (не только pending_closure).
+  // Кнопка отрисуется в HeroStage по-разному: на pending_closure — главная accent CTA;
+  // на остальных стадиях — секондари-линк «Закрыть напрямую».
+  const canApproveClosure = me.role === 'director' && order.stage !== 'closed';
 
   const stageAction = updateOrderStageAction.bind(null, order.id) as (next: Stage) => Promise<void>;
   const approveAction = canApproveClosure

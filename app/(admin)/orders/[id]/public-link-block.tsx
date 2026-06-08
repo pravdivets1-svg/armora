@@ -27,17 +27,17 @@ export default function PublicLinkBlock({
           readOnly
           value={url}
           onClick={(e) => (e.target as HTMLInputElement).select()}
-          className="flex-1 bg-canvas border border-line text-ink-700
+          className="flex-1 bg-subtle border border-borderc/70 text-text2
                      rounded-md px-3 py-2 text-[12px] font-mono
-                     focus:outline-none focus:border-ink-900/25 focus:ring-4 focus:ring-ink-900/5"
+                     focus:outline-none focus:border-text1/20 focus:ring-2 focus:ring-text1/5"
           aria-label="Ссылка для клиента"
         />
         <button
           type="button"
           onClick={copy}
           className="inline-flex items-center justify-center gap-1.5 px-4 h-10 rounded-md
-                     text-[13px] bg-white hover:bg-canvas text-ink-900 border border-line
-                     hover:border-ink-900/20 transition-colors"
+                     text-[13px] border border-borderc text-text2
+                     hover:bg-subtle/70 hover:text-text1 transition-colors"
         >
           {copied ? <><Check size={14} /> Скопировано</> : <><Copy size={14} /> Скопировать</>}
         </button>

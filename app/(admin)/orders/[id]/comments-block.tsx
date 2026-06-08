@@ -24,8 +24,8 @@ function SubmitBtn() {
       disabled={pending}
       aria-label="Отправить комментарий"
       className="inline-flex items-center justify-center gap-1.5 w-10 h-10 rounded-md
-                 text-[14px] bg-white hover:bg-canvas text-ink-900 border border-line
-                 hover:border-ink-900/20 disabled:opacity-50 transition-colors shrink-0"
+                 text-[14px] bg-text1 text-white
+                 hover:bg-text1/90 disabled:opacity-50 transition-colors shrink-0"
     >
       <Send size={14} />
     </button>
@@ -54,23 +54,23 @@ export default function CommentsBlock({
   return (
     <Card title="Комментарии исполнителей" icon={<MessageSquare size={12} />}>
       {comments.length === 0 ? (
-        <div className="text-[13px] text-ink-400 mb-4">Комментариев пока нет</div>
+        <div className="text-[13px] text-text3 mb-3">Комментариев пока нет —</div>
       ) : (
-        <ul className="space-y-3 text-[14px] mb-4">
+        <ul className="divide-y divide-borderc/60 text-[14px] mb-3 -mt-1">
           {comments.map((c) => (
-            <li key={c.id} className="border-l-2 border-line pl-3">
-              <div className="text-[12px] text-ink-500">
-                <span className="font-medium text-ink-900">{c.author.fullName}</span>
+            <li key={c.id} className="py-2.5 first:pt-1">
+              <div className="text-[12px] text-text3 tabular-nums">
+                <span className="font-medium text-text1">{c.author.fullName}</span>
                 <span> · {ROLE_LABEL[c.author.role].toLowerCase()} · {fmtDateTime(c.createdAt)}</span>
               </div>
-              <div className="mt-1 whitespace-pre-wrap break-words text-ink-900">{c.text}</div>
+              <div className="mt-1 whitespace-pre-wrap break-words text-text1">{c.text}</div>
             </li>
           ))}
         </ul>
       )}
 
       {state && !state.ok && (
-        <div className="mb-2 flex items-start gap-2 rounded-md bg-bad-soft border border-bad/20 px-3 py-2 text-[13px] text-bad">
+        <div className="mb-2 flex items-start gap-2 rounded-md bg-bad2-soft border border-bad2/20 px-3 py-2 text-[13px] text-bad2">
           <AlertCircle size={13} className="mt-0.5 shrink-0" />
           <span>{state.error}</span>
         </div>

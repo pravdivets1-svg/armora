@@ -100,12 +100,12 @@ export default function OrderPhotos({
   return (
     <Card title="Фото" icon={<FileImage size={12} />}>
       {/* Загрузка */}
-      <div className="flex flex-wrap items-center gap-2 mb-4">
+      <div className="flex flex-wrap items-center gap-2 mb-3">
         <select
           value={uploadKind}
           onChange={(e) => setUploadKind(e.target.value as PhotoMeta['kind'])}
-          className="h-10 rounded-md border border-line bg-white px-3 text-[13px] text-ink-900
-                     focus:outline-none focus:border-ink-900/25 focus:ring-4 focus:ring-ink-900/5"
+          className="h-10 rounded-md border border-borderc bg-card px-3 text-[13px] text-text1
+                     focus:outline-none focus:border-text1/20 focus:ring-2 focus:ring-text1/5"
           aria-label="Тип фото"
         >
           {KINDS.map((k) => (
@@ -114,7 +114,7 @@ export default function OrderPhotos({
         </select>
         <label
           className={`inline-flex items-center justify-center gap-2 px-4 h-10 rounded-md text-[13px]
-                      bg-ink-900 hover:bg-ink-700 text-white font-medium transition-colors cursor-pointer
+                      bg-text1 hover:bg-text1/90 text-white font-medium transition-colors cursor-pointer
                       ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
         >
           {uploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
@@ -128,25 +128,25 @@ export default function OrderPhotos({
             onChange={(e) => handleFiles(e.target.files)}
           />
         </label>
-        <span className="text-[11px] text-ink-400">JPEG/PNG/WebP · до 5 МБ</span>
+        <span className="text-[11px] text-text3">JPEG/PNG/WebP · до 5 МБ</span>
       </div>
 
       {/* Сетка */}
       {photos.length === 0 ? (
-        <div className="text-[13px] text-ink-400 italic">Фото пока нет.</div>
+        <div className="text-[13px] text-text3">Фото пока нет —</div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
           {photos.map((p) => {
             const src = `/api/orders/${orderId}/photos/${p.id}`;
             return (
               <figure
                 key={p.id}
-                className="relative group rounded-md overflow-hidden border border-line bg-canvas"
+                className="relative group rounded-md overflow-hidden border border-borderc bg-subtle"
               >
                 <button
                   type="button"
                   onClick={() => setLightbox(src)}
-                  className="block w-full aspect-[4/3] bg-ink-900/[0.03] focus:outline-none focus:ring-4 focus:ring-ink-900/10"
+                  className="block w-full aspect-[4/3] bg-subtle focus:outline-none focus:ring-2 focus:ring-text1/15"
                   aria-label="Открыть фото"
                 >
                   <img
@@ -156,17 +156,17 @@ export default function OrderPhotos({
                     loading="lazy"
                   />
                 </button>
-                <figcaption className="px-2 py-1.5 text-[11px] text-ink-500 flex items-center justify-between gap-2 bg-white">
+                <figcaption className="px-2 py-1.5 text-[11px] text-text3 flex items-center justify-between gap-2 bg-card border-t border-borderc/60">
                   <span className="truncate">
-                    <span className="text-ink-900 font-medium">{KIND_LABEL[p.kind]}</span>
+                    <span className="text-text1 font-medium">{KIND_LABEL[p.kind]}</span>
                     {p.author && <> · {p.author.fullName.split(' ').slice(-1)[0]}</>}
-                    <span className="block text-ink-400">{fmtDateTime(p.createdAt)}</span>
+                    <span className="block text-text3 tabular-nums">{fmtDateTime(p.createdAt)}</span>
                   </span>
                   <button
                     type="button"
                     onClick={() => remove(p.id)}
                     className="shrink-0 w-7 h-7 inline-flex items-center justify-center rounded
-                               text-ink-400 hover:text-bad hover:bg-bad/5 transition-colors"
+                               text-text3 hover:text-bad2 hover:bg-bad2-soft transition-colors"
                     aria-label="Удалить фото"
                     title="Удалить"
                   >

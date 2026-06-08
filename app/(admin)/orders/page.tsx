@@ -82,7 +82,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
         }
       />
 
-      <div className="px-4 lg:px-6 pt-4 space-y-4 max-w-6xl mx-auto">
+      <div className="px-4 lg:px-6 pt-4 space-y-3 max-w-6xl mx-auto">
         <div className="flex items-center gap-2">
           <div className="flex-1">
             <LiveSearch
@@ -140,7 +140,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             }
           />
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-3 pb-8">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5 pb-8">
             {items.map((o) => (
               <OrderCard
                 key={o.id}
@@ -162,17 +162,19 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             <Link
               href={{ query: { ...searchParams, page: Math.max(1, page - 1) } }}
               aria-disabled={page === 1}
-              className={`${page === 1 ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1'}`}
+              className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-borderc/70
+                          ${page === 1 ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1 hover:bg-subtle/70'}`}
             >
-              ← Назад
+              <span aria-hidden>‹</span> Назад
             </Link>
-            <span className="tabular-nums">{page} / {pageCount}</span>
+            <span className="tabular-nums text-text2">{page} <span className="text-text3">/</span> {pageCount}</span>
             <Link
               href={{ query: { ...searchParams, page: Math.min(pageCount, page + 1) } }}
               aria-disabled={page === pageCount}
-              className={`${page === pageCount ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1'}`}
+              className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-borderc/70
+                          ${page === pageCount ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1 hover:bg-subtle/70'}`}
             >
-              Вперёд →
+              Вперёд <span aria-hidden>›</span>
             </Link>
           </nav>
         )}

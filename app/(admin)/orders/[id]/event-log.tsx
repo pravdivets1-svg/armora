@@ -34,47 +34,47 @@ const KIND_META: Record<OrderEventKind, { icon: typeof History; tone: 'default' 
 };
 
 const TONE_CLASSES = {
-  default: { dot: 'bg-ink-900/[0.08] text-ink-700', text: 'text-ink-900' },
-  accent:  { dot: 'bg-accent-soft text-accent-softText', text: 'text-ink-900' },
-  ok:      { dot: 'bg-ok-soft text-ok', text: 'text-ink-900' },
-  warn:    { dot: 'bg-warn-soft text-warn-softText', text: 'text-ink-900' },
-  bad:     { dot: 'bg-bad-soft text-bad', text: 'text-ink-900' },
+  default: { dot: 'bg-subtle text-text2',           text: 'text-text1' },
+  accent:  { dot: 'bg-subtle text-text2',           text: 'text-text1' },
+  ok:      { dot: 'bg-ok2-soft text-ok2',           text: 'text-text1' },
+  warn:    { dot: 'bg-warn2-soft text-warn2',       text: 'text-text1' },
+  bad:     { dot: 'bg-bad2-soft text-bad2',         text: 'text-text1' },
 } as const;
 
 export default function EventLog({ events }: { events: Event[] }) {
   if (events.length === 0) {
     return (
       <Card title="История изменений" icon={<History size={12} />}>
-        <div className="text-[13px] text-ink-400">Изменений пока нет</div>
+        <div className="text-[13px] text-text3">Изменений пока нет —</div>
       </Card>
     );
   }
 
   return (
     <Card title="История изменений" icon={<History size={12} />}>
-      <ol className="relative space-y-3">
-        {/* Вертикальная линия слева */}
-        <div className="absolute left-[15px] top-2 bottom-2 w-px bg-line" aria-hidden />
+      <ol className="relative">
+        {/* Вертикальная линия слева — едва заметная */}
+        <div className="absolute left-[15px] top-3 bottom-3 w-px bg-borderc" aria-hidden />
         {events.map((e) => {
           const meta = KIND_META[e.kind];
           const tone = TONE_CLASSES[meta.tone];
           const Icon = meta.icon;
           return (
-            <li key={e.id} className="relative flex items-start gap-3 pl-0">
+            <li key={e.id} className="relative flex items-start gap-3 pl-0 py-2 first:pt-0 last:pb-0">
               <div
                 className={`relative z-10 inline-flex items-center justify-center
                             w-8 h-8 rounded-full ${tone.dot} shrink-0
-                            ${meta.isFinance ? 'ring-2 ring-warn-soft' : ''}`}
+                            ring-4 ring-card`}
               >
-                <Icon size={14} />
+                <Icon size={13} />
               </div>
-              <div className="flex-1 min-w-0 pt-1">
-                <div className={`text-[14px] ${tone.text} ${meta.isFinance ? 'font-medium' : ''}`}>
+              <div className="flex-1 min-w-0 pt-1.5">
+                <div className={`text-[13.5px] ${tone.text} ${meta.isFinance ? 'font-medium' : ''}`}>
                   {e.summary}
                 </div>
-                <div className="text-[11px] text-ink-500 mt-0.5">
+                <div className="text-[11px] text-text3 mt-0.5 tabular-nums">
                   {e.author
-                    ? <><span className="text-ink-700">{e.author.fullName}</span> · {ROLE_LABEL[e.author.role].toLowerCase()}</>
+                    ? <><span className="text-text2">{e.author.fullName}</span> · {ROLE_LABEL[e.author.role].toLowerCase()}</>
                     : <span>система</span>}
                   {' · '}
                   {fmtDateTime(e.createdAt)}

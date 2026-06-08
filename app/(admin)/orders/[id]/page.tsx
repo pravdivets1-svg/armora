@@ -87,7 +87,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         backHref="/orders"
       />
 
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-4 space-y-3 pb-[88px] lg:pb-12">
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-4 space-y-2.5 pb-[88px] lg:pb-12">
         <HeroStageBlock
           current={order.stage}
           role={me.role}

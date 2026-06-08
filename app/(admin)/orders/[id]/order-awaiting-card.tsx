@@ -89,20 +89,20 @@ export default function AwaitingClientCard({
           onChange={handleToggle}
           className="mt-0.5 w-4 h-4 accent-accent"
         />
-        <span className="text-[13px] text-ink-700 leading-snug">
+        <span className="text-[13px] text-text2 leading-snug">
           Клиент должен дать связь / перезвонить / прислать данные
         </span>
-        {saving && <span className="text-[11px] text-ink-400 ml-1">…</span>}
+        {saving && <span className="text-[11px] text-text3 ml-1">…</span>}
       </label>
 
       {state.kind === 'silent' && (
-        <div className="mt-3 inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-ink-900/[0.04] text-ink-500 text-[12px]">
+        <div className="mt-3 inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-subtle text-text2 text-[12px] tabular-nums">
           <Clock size={12} />
           Осталось {state.daysLeft} {plural(state.daysLeft, 'день', 'дня', 'дней')} тишины
         </div>
       )}
       {state.kind === 'overdue' && (
-        <div className="mt-3 inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-bad/10 text-bad text-[12px] font-medium">
+        <div className="mt-3 inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-bad2-soft text-bad2 text-[12px] font-medium tabular-nums">
           <AlertCircle size={12} />
           Просрочено на {state.overdueDays} {plural(state.overdueDays, 'день', 'дня', 'дней')} — нужно решение
         </div>
@@ -141,8 +141,8 @@ function DecisionButton({
   const [pending, setPending] = useState(false);
   const cls =
     tone === 'bad'
-      ? 'border-bad/30 text-bad hover:bg-bad/5'
-      : 'border-line text-ink-900 hover:bg-canvas';
+      ? 'border-bad2/30 text-bad2 hover:bg-bad2-soft'
+      : 'border-borderc text-text2 hover:bg-subtle/70 hover:text-text1';
   return (
     <button
       type="button"
@@ -151,7 +151,7 @@ function DecisionButton({
         setPending(true);
         try { await onClick(); } finally { setPending(false); }
       }}
-      className={`inline-flex items-center justify-center gap-1.5 px-3 h-9 rounded-md text-[12px] bg-white border transition-colors disabled:opacity-50 ${cls}`}
+      className={`inline-flex items-center justify-center gap-1.5 px-3 h-9 rounded-md text-[12.5px] font-medium border bg-card transition-colors disabled:opacity-50 ${cls}`}
     >
       {pending ? '…' : label}
     </button>

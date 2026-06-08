@@ -13,7 +13,7 @@ import { flushSync } from 'react-dom';
 import { Save, AlertCircle, CheckCircle2, AlertTriangle, Lock, Phone } from 'lucide-react';
 import type { Stage, Role } from '@prisma/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Card, Input, Textarea, Select, Button, FieldLabel } from '@/components/ui';
+import { Card, Input, Textarea, Select, FieldLabel } from '@/components/ui';
 import { fmtMoney, phoneDigits } from '@/lib/format';
 import { Metric } from '@/components/metric';
 import StageStepper from '@/components/stage-stepper';
@@ -171,7 +171,7 @@ export default function OrderForm({
     <form
       ref={formRef}
       action={formAction}
-      className="space-y-5"
+      className="space-y-3"
       // Любое изменение в любом поле формы — взводим таймер autosave.
       // Используем onInput, потому что onChange на checkbox/select работает,
       // но для текстовых полей onInput даёт мгновенный отклик при печати.
@@ -192,7 +192,7 @@ export default function OrderForm({
       )}
 
       {state && !state.ok && (
-        <div className="flex items-start gap-2 rounded-md bg-bad/5 border-l-4 border-l-bad border-y border-r border-y-bad/15 border-r-bad/15 px-4 py-2.5 text-[14px] text-bad">
+        <div className="flex items-start gap-2 rounded-md bg-bad2-soft border border-bad2/20 px-3 py-2 text-[13px] text-bad2">
           <AlertCircle size={14} className="mt-0.5 shrink-0" />
           <span>{state.error}</span>
         </div>
@@ -201,25 +201,25 @@ export default function OrderForm({
           в sticky-баре снизу. Большая плашка нужна только для ошибок. */}
 
       {negativeMargin && p.canSeeCost && (
-        <div className="flex items-start gap-2 rounded-md bg-amber-500/10 border-l-4 border-l-amber-500 border-y border-r border-y-amber-500/20 border-r-amber-500/20 px-4 py-2.5 text-[14px] text-amber-800">
+        <div className="flex items-start gap-2 rounded-md bg-warn2-soft border border-warn2/20 px-3 py-2 text-[13px] text-warn2">
           <AlertTriangle size={14} className="mt-0.5 shrink-0" />
           <span>
-            <strong>Внимание:</strong> себестоимость ({fmtMoney(cost)}) выше цены по договору ({fmtMoney(total)}).
+            <strong className="font-semibold">Внимание:</strong> себестоимость ({fmtMoney(cost)}) выше цены по договору ({fmtMoney(total)}).
             Заказ убыточен на {fmtMoney(cost - total)}.
           </span>
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* Левая колонка */}
-        <div className="md:col-span-2 space-y-4">
+        <div className="md:col-span-2 space-y-3">
 
           <Card title="Клиент">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <label>
                 <FieldLabel>ФИО</FieldLabel>
                 <Input name="clientName" defaultValue={order?.clientName} disabled={disableClient} className="mt-1" />
-                {fe['clientName'] && <span className="text-xs text-bad mt-1 block">{fe['clientName']}</span>}
+                {fe['clientName'] && <span className="text-xs text-bad2 mt-1 block">{fe['clientName']}</span>}
               </label>
               <label>
                 <FieldLabel>Телефон</FieldLabel>
@@ -232,12 +232,12 @@ export default function OrderForm({
                   />
                   <PhoneActions phone={order?.clientPhone ?? ''} />
                 </div>
-                {fe['clientPhone'] && <span className="text-xs text-bad mt-1 block">{fe['clientPhone']}</span>}
+                {fe['clientPhone'] && <span className="text-xs text-bad2 mt-1 block">{fe['clientPhone']}</span>}
               </label>
               <label className="md:col-span-2">
                 <FieldLabel>Адрес установки</FieldLabel>
                 <AddressField defaultValue={order?.clientAddress} disabled={disableClient} />
-                {fe['clientAddress'] && <span className="text-xs text-bad mt-1 block">{fe['clientAddress']}</span>}
+                {fe['clientAddress'] && <span className="text-xs text-bad2 mt-1 block">{fe['clientAddress']}</span>}
               </label>
             </div>
           </Card>
@@ -277,7 +277,7 @@ export default function OrderForm({
                   onChange={(e) => setTotal(Number(e.target.value) || 0)}
                   className="mt-1 tabular-nums" min={0}
                 />
-                {fe['totalAmount'] && <span className="text-xs text-bad mt-1 block">{fe['totalAmount']}</span>}
+                {fe['totalAmount'] && <span className="text-xs text-bad2 mt-1 block">{fe['totalAmount']}</span>}
               </label>
               <label>
                 <FieldLabel>Аванс получен, ₽</FieldLabel>
@@ -287,7 +287,7 @@ export default function OrderForm({
                   onChange={(e) => setPrepay(Number(e.target.value) || 0)}
                   className="mt-1 tabular-nums" min={0}
                 />
-                {fe['prepayment'] && <span className="text-xs text-bad mt-1 block">{fe['prepayment']}</span>}
+                {fe['prepayment'] && <span className="text-xs text-bad2 mt-1 block">{fe['prepayment']}</span>}
               </label>
               <label>
                 <FieldLabel>Остаток получен, ₽</FieldLabel>
@@ -297,7 +297,7 @@ export default function OrderForm({
                   onChange={(e) => setFinalPay(Number(e.target.value) || 0)}
                   className="mt-1 tabular-nums" min={0}
                 />
-                {fe['finalPayment'] && <span className="text-xs text-bad mt-1 block">{fe['finalPayment']}</span>}
+                {fe['finalPayment'] && <span className="text-xs text-bad2 mt-1 block">{fe['finalPayment']}</span>}
               </label>
 
               {p.canSeeCost && (
@@ -305,7 +305,7 @@ export default function OrderForm({
                   <FieldLabel>
                     <span className="inline-flex items-center gap-1">
                       Себестоимость, ₽
-                      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-ink-900/[0.06] text-ink-700 text-[9px] tracking-wider normal-case">
+                      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-subtle text-text2 text-[9px] tracking-wider normal-case">
                         <Lock size={8} /> приватно
                       </span>
                     </span>
@@ -316,20 +316,20 @@ export default function OrderForm({
                     onChange={(e) => setCost(Number(e.target.value) || 0)}
                     className="mt-1 tabular-nums" min={0}
                   />
-                  {fe['costAmount'] && <span className="text-xs text-bad mt-1 block">{fe['costAmount']}</span>}
+                  {fe['costAmount'] && <span className="text-xs text-bad2 mt-1 block">{fe['costAmount']}</span>}
                 </label>
               )}
             </div>
 
             {/* Сводка вычисляемых: единый блок, выделен фоном — это не инпуты */}
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 px-4 py-3 rounded-md bg-canvas border border-line">
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 px-4 py-3 rounded-md bg-subtle border border-borderc/60">
               <Metric label="К доплате клиентом" value={fmtMoney(remaining)} size="md" />
               {p.canSeeCost && (
                 <Metric
                   label={
                     <span className="inline-flex items-center gap-1">
                       Маржа
-                      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-ink-900/[0.06] text-ink-700 text-[9px] tracking-wider normal-case">
+                      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-subtle text-text2 text-[9px] tracking-wider normal-case">
                         <Lock size={8} /> приватно
                       </span>
                     </span>
@@ -346,13 +346,13 @@ export default function OrderForm({
         </div>
 
         {/* Правая колонка */}
-        <aside className="space-y-4">
+        <aside className="space-y-3">
           {/* Этап управляется только через горизонтальный StageStepper выше.
               Селект убран как избыточный — здесь только скрытое поле, чтобы
               значение stage уходило в server action при сабмите формы. */}
           <input type="hidden" name="stage" value={stage} />
           {fe['stage'] && (
-            <div className="rounded-md bg-bad/5 border-l-4 border-l-bad px-3 py-2 text-[12px] text-bad">
+            <div className="rounded-md bg-bad2-soft border border-bad2/20 px-3 py-2 text-[12px] text-bad2">
               {fe['stage']}
             </div>
           )}
@@ -374,11 +374,11 @@ export default function OrderForm({
                 placeholder="до"
               />
             </div>
-            <p className="text-[11px] text-ink-400 mt-1">
+            <p className="text-[11px] text-text3 mt-1">
               Второе поле — конец интервала. Оставьте пустым, если время точное.
             </p>
-            {fe['surveyAt']    && <span className="text-xs text-bad mt-1 block">{fe['surveyAt']}</span>}
-            {fe['surveyEndAt'] && <span className="text-xs text-bad mt-1 block">{fe['surveyEndAt']}</span>}
+            {fe['surveyAt']    && <span className="text-xs text-bad2 mt-1 block">{fe['surveyAt']}</span>}
+            {fe['surveyEndAt'] && <span className="text-xs text-bad2 mt-1 block">{fe['surveyEndAt']}</span>}
             <label className="block mt-3">
               <FieldLabel>Замерщик</FieldLabel>
               <Select name="surveyorId" defaultValue={order?.surveyorId ?? ''} disabled={disableClient} className="mt-1">
@@ -407,11 +407,11 @@ export default function OrderForm({
                 placeholder="до"
               />
             </div>
-            <p className="text-[11px] text-ink-400 mt-1">
+            <p className="text-[11px] text-text3 mt-1">
               Второе поле — конец интервала. Оставьте пустым, если время точное.
             </p>
-            {fe['installAt']    && <span className="text-xs text-bad mt-1 block">{fe['installAt']}</span>}
-            {fe['installEndAt'] && <span className="text-xs text-bad mt-1 block">{fe['installEndAt']}</span>}
+            {fe['installAt']    && <span className="text-xs text-bad2 mt-1 block">{fe['installAt']}</span>}
+            {fe['installEndAt'] && <span className="text-xs text-bad2 mt-1 block">{fe['installEndAt']}</span>}
             <label className="block mt-3">
               <FieldLabel>Установщик</FieldLabel>
               <Select name="installerId" defaultValue={order?.installerId ?? ''} disabled={disableClient} className="mt-1">
@@ -428,7 +428,7 @@ export default function OrderForm({
       {/* Sticky bottom bar: всегда виден на скролле длинной формы.
           В режиме edit — кнопка Сохранить заменена на индикатор autosave;
           в режиме create — оставлена явная кнопка Создать. */}
-      <div className="sticky bottom-0 -mx-6 px-6 py-3 bg-canvas/90 backdrop-blur-md border-t border-line z-10">
+      <div className="sticky bottom-0 -mx-6 px-6 py-2.5 bg-app/90 backdrop-blur-md border-t border-borderc/70 z-10">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-6">
             <Metric
@@ -465,37 +465,44 @@ function AutosaveStatus({ state }: { state: OrderActionState }) {
   const { pending } = useFormStatus();
   if (pending) {
     return (
-      <span className="inline-flex items-center gap-2 text-[12px] text-ink-500">
-        <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+      <span className="inline-flex items-center gap-2 text-[12px] text-text2 tabular-nums">
+        <span className="w-1.5 h-1.5 rounded-full bg-text2 animate-pulse" />
         Сохранение…
       </span>
     );
   }
   if (state?.ok) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-[12px] text-ok">
+      <span className="inline-flex items-center gap-1.5 text-[12px] text-ok2">
         <CheckCircle2 size={13} /> Сохранено
       </span>
     );
   }
   if (state && !state.ok) {
     return (
-      <span className="inline-flex items-center gap-1.5 text-[12px] text-bad">
+      <span className="inline-flex items-center gap-1.5 text-[12px] text-bad2">
         <AlertCircle size={13} /> Не сохранено
       </span>
     );
   }
   return (
-    <span className="text-[12px] text-ink-400">Сохраняется автоматически</span>
+    <span className="text-[12px] text-text3">Сохраняется автоматически</span>
   );
 }
 
 function SaveButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" disabled={pending}>
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md
+                 bg-text1 text-white text-[13.5px] font-medium
+                 hover:bg-text1/90 transition-colors
+                 disabled:opacity-50 disabled:cursor-not-allowed"
+    >
       <Save size={14} /> {pending ? 'Сохранение…' : label}
-    </Button>
+    </button>
   );
 }
 
@@ -516,9 +523,9 @@ function PhoneActions({ phone }: { phone: string }) {
   const disabled = digits.length < 5;
   const tel = `tel:+${digits}`;
   const cls =
-    'inline-flex items-center justify-center w-10 h-10 rounded-md border border-line ' +
-    'bg-white hover:bg-canvas text-ink-900 hover:border-ink-900/20 transition-colors ' +
-    'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white';
+    'inline-flex items-center justify-center w-10 h-10 rounded-md border border-borderc ' +
+    'bg-card hover:bg-subtle/70 text-text2 hover:text-text1 transition-colors ' +
+    'disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-card';
   if (disabled) {
     return (
       <button type="button" disabled className={cls} aria-label="Позвонить (нет номера)">

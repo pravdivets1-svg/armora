@@ -21,7 +21,7 @@ export default async function NewOrderPage() {
   const installers = assignable.filter((u) => u.role === 'installer');
 
   return (
-    <main className="max-w-5xl mx-auto px-6 py-6 space-y-5">
+    <main className="max-w-4xl mx-auto px-4 lg:px-6 py-4 space-y-3">
       <PageBack href="/orders" label="Все заказы" />
       <PageHeader kicker="Создать" title="Новый заказ" />
 

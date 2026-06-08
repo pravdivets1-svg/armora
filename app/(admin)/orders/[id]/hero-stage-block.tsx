@@ -67,7 +67,7 @@ export default function HeroStageBlock({
       {/* Sticky bottom CTA — только на мобиле, дублирует primary action HeroStage */}
       {showStickyCta && (
         <div
-          className="lg:hidden fixed inset-x-0 z-30 px-4 pt-2 pb-3 bg-app/95 backdrop-blur border-t border-borderc"
+          className="lg:hidden fixed inset-x-0 z-30 px-4 pt-2 pb-3 bg-app/95 backdrop-blur border-t border-borderc/60"
           style={{ bottom: 'calc(64px + env(safe-area-inset-bottom))' }}
         >
           {isPendingClosureDirector ? (

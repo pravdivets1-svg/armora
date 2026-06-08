@@ -43,13 +43,13 @@ export default function AddressField({
         onClick={openMap}
         disabled={!trimmed}
         title={trimmed ? 'Открыть на Яндекс.Картах' : 'Введите адрес'}
-        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-[14px]
-                   bg-white hover:bg-canvas text-ink-900 border border-line
-                   disabled:opacity-40 disabled:pointer-events-none"
+        className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-md text-[13.5px]
+                   text-text2 hover:text-text1 border border-borderc hover:bg-subtle/70
+                   disabled:opacity-40 disabled:pointer-events-none transition-colors"
       >
         <MapPin size={14} />
         На карте
-        <ExternalLink size={12} className="text-ink-500" />
+        <ExternalLink size={12} className="text-text3" />
       </button>
     </div>
   );

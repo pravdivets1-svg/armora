@@ -7,10 +7,7 @@ import { CheckCircle2, XCircle, AlertTriangle, ChevronRight } from 'lucide-react
 import { requireRole } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { fmtMoney, fmtDateTime } from '@/lib/format';
-import { Metric, MetricCard } from '@/components/metric';
-import { EmptyState } from '@/components/empty-state';
-import { Button } from '@/components/ui';
-import { PageHeader } from '@/components/page-shell';
+import { Empty, PageHeader, Button } from '@/components/uikit';
 import { approveAction, rejectAction } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -39,159 +36,187 @@ export default async function ClosuresPage() {
   const totalMargin = totalSum - totalCost;
 
   return (
-    <main className="max-w-6xl mx-auto px-6 py-6 space-y-5">
+    <>
       <PageHeader
         title="На закрытие"
-        sub="Заказы, поданные на подтверждение. Только директор может закрыть."
+        sub="Заказы, поданные на подтверждение"
       />
 
-      {orders.length === 0 ? (
-        <EmptyState
-          icon={CheckCircle2}
-          title="Очередь пустая"
-          description="Нет заказов, ожидающих закрытия"
-        />
-      ) : (
-        <>
-          {/* Stat-ряд: единый стиль через MetricCard, без 3 разных цветных tinted-фонов */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <MetricCard>
-              <Metric label="В очереди" value={orders.length} size="lg" tone="default" />
-            </MetricCard>
-            <MetricCard>
-              <Metric label="Сумма по договорам" value={fmtMoney(totalSum)} size="lg" tone="default" />
-            </MetricCard>
-            <MetricCard>
-              <Metric
+      <main className="max-w-5xl mx-auto px-4 lg:px-6 py-4 space-y-3 pb-12">
+        {orders.length === 0 ? (
+          <Empty
+            icon={CheckCircle2}
+            title="Очередь пустая"
+            hint="Нет заказов, ожидающих закрытия"
+          />
+        ) : (
+          <>
+            {/* Сводка — плоский ряд, без цветных tinted-фонов */}
+            <div className="bg-card border border-borderc rounded-lg grid grid-cols-3 divide-x divide-borderc/60">
+              <SummaryCell label="В очереди" value={String(orders.length)} />
+              <SummaryCell label="Сумма договоров" value={fmtMoney(totalSum)} />
+              <SummaryCell
                 label="Совокупная маржа"
                 value={(totalMargin >= 0 ? '+' : '') + fmtMoney(totalMargin)}
-                size="lg"
                 tone={totalMargin >= 0 ? 'ok' : 'bad'}
               />
-            </MetricCard>
-          </div>
+            </div>
 
-          <div className="space-y-3">
-            {orders.map((o) => {
-              const remainingForClient = Math.max(0, Number(o.totalAmount) - Number(o.prepayment) - Number(o.finalPayment));
-              const margin = Number(o.totalAmount) - Number(o.costAmount);
-              const negativeMargin = Number(o.costAmount) > Number(o.totalAmount);
-              const incompleteFinances =
-                Number(o.totalAmount) <= 0 ||
-                Number(o.prepayment) <= 0 ||
-                Number(o.finalPayment) <= 0 ||
-                Number(o.costAmount) <= 0;
+            <ul className="bg-card border border-borderc rounded-lg divide-y divide-borderc/60">
+              {orders.map((o) => {
+                const remainingForClient = Math.max(
+                  0,
+                  Number(o.totalAmount) - Number(o.prepayment) - Number(o.finalPayment),
+                );
+                const margin = Number(o.totalAmount) - Number(o.costAmount);
+                const negativeMargin = Number(o.costAmount) > Number(o.totalAmount);
+                const incompleteFinances =
+                  Number(o.totalAmount) <= 0 ||
+                  Number(o.prepayment) <= 0 ||
+                  Number(o.finalPayment) <= 0 ||
+                  Number(o.costAmount) <= 0;
 
-              return (
-                <div key={o.id} className="bg-white border border-line rounded-lg overflow-hidden">
-                  {/* Шапка карточки: слева клиент, справа hero-маржа */}
-                  <div className="flex items-stretch justify-between gap-4 px-5 py-4 border-b border-line">
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[11px] text-ink-500 uppercase tracking-wider">№ {o.number}</div>
+                const warnings: { text: string; tone: 'bad' | 'warn' }[] = [];
+                if (incompleteFinances) {
+                  warnings.push({ text: 'Не все 4 финансовых поля заполнены — закрытие невозможно', tone: 'bad' });
+                }
+                if (negativeMargin) {
+                  warnings.push({
+                    text: `Себестоимость выше цены — убыток ${fmtMoney(Number(o.costAmount) - Number(o.totalAmount))}`,
+                    tone: 'warn',
+                  });
+                }
+                if (remainingForClient > 0) {
+                  warnings.push({ text: `Клиент должен ещё ${fmtMoney(remainingForClient)}`, tone: 'warn' });
+                }
+
+                return (
+                  <li key={o.id} className="px-4 lg:px-5 py-3.5 hover:bg-subtle/60 transition-colors">
+                    {/* Шапка: клиент слева, сумма + маржа справа */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-meta text-text3 tabular-nums">№ {o.number}</span>
+                        </div>
+                        <Link
+                          href={`/orders/${o.id}`}
+                          className="block mt-0.5 text-text1 font-medium truncate hover:underline"
+                        >
+                          {o.clientName}
+                        </Link>
+                        <div className="text-meta text-text2 truncate mt-0.5">{o.clientAddress}</div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="text-h2 tabular-nums text-text1">{fmtMoney(o.totalAmount as any)}</div>
+                        <div
+                          className={`text-meta tabular-nums mt-0.5 ${
+                            margin >= 0 ? 'text-ok2' : 'text-bad2'
+                          }`}
+                        >
+                          маржа {(margin >= 0 ? '+' : '') + fmtMoney(margin)}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Финансы — компактный inline-ряд */}
+                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-meta text-text3">
+                      <FinCell label="Аванс" value={fmtMoney(o.prepayment as any)} />
+                      <FinCell label="Остаток" value={fmtMoney(o.finalPayment as any)} />
+                      <FinCell label="Себест." value={fmtMoney(o.costAmount as any)} />
+                      <FinCell
+                        label="Назначения"
+                        value={`${o.surveyor?.fullName ?? '—'} · ${o.installer?.fullName ?? '—'}`}
+                      />
+                      {o.installAt && (
+                        <FinCell label="Установка" value={fmtDateTime(o.installAt)} />
+                      )}
+                    </div>
+
+                    {/* Алармы */}
+                    {warnings.length > 0 && (
+                      <div className="mt-2 space-y-1">
+                        {warnings.map((w, i) => (
+                          <div
+                            key={i}
+                            className={`flex items-start gap-1.5 text-meta ${
+                              w.tone === 'bad' ? 'text-bad2' : 'text-warn2'
+                            }`}
+                          >
+                            <AlertTriangle size={12} className="shrink-0 mt-0.5" />
+                            <span>{w.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Действия */}
+                    <div className="mt-3 flex items-center justify-between gap-2">
                       <Link
                         href={`/orders/${o.id}`}
-                        className="font-semibold text-ink-900 truncate block hover:underline mt-0.5"
+                        className="inline-flex items-center gap-1 text-meta text-text2 hover:text-text1"
                       >
-                        {o.clientName}
+                        Открыть карточку
+                        <ChevronRight size={12} />
                       </Link>
-                      <div className="text-[12px] text-ink-500 truncate mt-0.5">{o.clientAddress}</div>
+                      <div className="flex gap-2">
+                        <form action={rejectAction.bind(null, o.id)}>
+                          <Button
+                            type="submit"
+                            variant="secondary"
+                            size="sm"
+                            title="Вернуть в «Установлена» для доработки"
+                          >
+                            <XCircle size={14} /> Вернуть
+                          </Button>
+                        </form>
+                        <form action={approveAction.bind(null, o.id)}>
+                          <Button
+                            type="submit"
+                            variant="primary"
+                            size="sm"
+                            disabled={incompleteFinances}
+                            className="!bg-accent hover:!bg-accent-deep"
+                          >
+                            <CheckCircle2 size={14} /> Закрыть заказ
+                          </Button>
+                        </form>
+                      </div>
                     </div>
-                    {/* Hero маржа — самое важное число для директора */}
-                    <Metric
-                      label="Маржа"
-                      value={(margin >= 0 ? '+' : '') + fmtMoney(margin)}
-                      tone={margin >= 0 ? 'ok' : 'bad'}
-                      size="md"
-                      className="text-right items-end shrink-0"
-                    />
-                  </div>
-
-                  {/* Финансы — все в одном весе, маржа выше */}
-                  <div className="px-5 py-3 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-2 text-[13px] border-b border-line/60">
-                    <Cell label="Договор"        value={fmtMoney(o.totalAmount as any)} />
-                    <Cell label="Аванс"          value={fmtMoney(o.prepayment as any)} />
-                    <Cell label="Остаток получен" value={fmtMoney(o.finalPayment as any)} />
-                    <Cell label="Себестоимость"  value={fmtMoney(o.costAmount as any)} muted />
-                  </div>
-
-                  {/* Алармы */}
-                  {(incompleteFinances || negativeMargin || remainingForClient > 0) && (
-                    <div className="px-5 py-3 space-y-1.5 bg-canvas/50">
-                      {incompleteFinances && (
-                        <div className="flex items-center gap-2 text-[12px] text-bad">
-                          <AlertTriangle size={12} />
-                          Не все 4 финансовых поля заполнены — закрытие невозможно
-                        </div>
-                      )}
-                      {negativeMargin && (
-                        <div className="flex items-center gap-2 text-[12px] text-warn-softText">
-                          <AlertTriangle size={12} />
-                          Себестоимость выше цены — заказ убыточен на {fmtMoney(Number(o.costAmount) - Number(o.totalAmount))}
-                        </div>
-                      )}
-                      {remainingForClient > 0 && (
-                        <div className="flex items-center gap-2 text-[12px] text-warn-softText">
-                          <AlertTriangle size={12} />
-                          Клиент должен ещё {fmtMoney(remainingForClient)}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Назначения */}
-                  <div className="px-5 py-2.5 text-[12px] text-ink-500 flex items-center gap-2 flex-wrap">
-                    <span>Замер: <span className="text-ink-700">{o.surveyor?.fullName ?? '—'}</span></span>
-                    {o.surveyAt && <span className="text-ink-400">· {fmtDateTime(o.surveyAt)}</span>}
-                    <span className="text-ink-400">|</span>
-                    <span>Установка: <span className="text-ink-700">{o.installer?.fullName ?? '—'}</span></span>
-                    {o.installAt && <span className="text-ink-400">· {fmtDateTime(o.installAt)}</span>}
-                    <Link
-                      href={`/orders/${o.id}`}
-                      className="ml-auto inline-flex items-center gap-1 text-ink-700 hover:text-ink-900 font-medium"
-                    >
-                      Открыть карточку <ChevronRight size={12} />
-                    </Link>
-                  </div>
-
-                  {/* Действия — sticky-стиль bottom bar */}
-                  <div className="px-5 py-3 border-t border-line bg-canvas/40 flex gap-2">
-                    <form action={approveAction.bind(null, o.id)} className="flex-1">
-                      <Button
-                        type="submit"
-                        variant="success"
-                        disabled={incompleteFinances}
-                        className="w-full"
-                      >
-                        <CheckCircle2 size={14} /> Подтвердить и закрыть
-                      </Button>
-                    </form>
-                    <form action={rejectAction.bind(null, o.id)}>
-                      <Button
-                        type="submit"
-                        variant="secondary"
-                        title="Вернуть в «Установлена» для доработки"
-                      >
-                        <XCircle size={14} /> Вернуть
-                      </Button>
-                    </form>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </>
-      )}
-    </main>
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </main>
+    </>
   );
 }
 
-function Cell({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
+function SummaryCell({
+  label,
+  value,
+  tone = 'default',
+}: {
+  label: string;
+  value: string;
+  tone?: 'default' | 'ok' | 'bad';
+}) {
+  const cls =
+    tone === 'ok' ? 'text-ok2' : tone === 'bad' ? 'text-bad2' : 'text-text1';
   return (
-    <div>
-      <div className="text-[10px] uppercase tracking-wider text-ink-500 font-medium">{label}</div>
-      <div className={`mt-0.5 font-semibold tabular-nums ${muted ? 'text-ink-700' : 'text-ink-900'}`}>
-        {value}
-      </div>
+    <div className="px-4 py-3 min-w-0">
+      <div className="text-meta text-text3">{label}</div>
+      <div className={`mt-0.5 text-h2 tabular-nums truncate ${cls}`}>{value}</div>
     </div>
+  );
+}
+
+function FinCell({ label, value }: { label: string; value: string }) {
+  return (
+    <span className="inline-flex items-baseline gap-1">
+      <span className="text-text3">{label}</span>
+      <span className="text-text1 tabular-nums">{value}</span>
+    </span>
   );
 }

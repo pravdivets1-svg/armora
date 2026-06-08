@@ -165,8 +165,9 @@ export default function NotificationsBlock() {
   if (env === 'unsupported') {
     return (
       <SectionCard title="Уведомления">
-        <p className="text-[14px] text-text2">
-          Ваш браузер не поддерживает push-уведомления. Откройте Armora в Chrome, Safari (на iOS 16.4+) или Firefox.
+        <p className="text-meta text-text2">
+          Ваш браузер не поддерживает push-уведомления. Откройте Armora в Chrome,
+          Safari (на iOS 16.4+) или Firefox.
         </p>
       </SectionCard>
     );
@@ -175,30 +176,23 @@ export default function NotificationsBlock() {
   if (env === 'ios-need-pwa') {
     return (
       <SectionCard title="Уведомления на iPhone">
-        <p className="text-[14px] text-text1 mb-3">
-          Чтобы получать уведомления, установите Armora как приложение:
-        </p>
-        <ol className="space-y-3 text-[14px] text-text2">
-          <li className="flex gap-3">
-            <span className="shrink-0 w-6 h-6 rounded-md bg-accent-soft text-accent text-[12px] font-semibold flex items-center justify-center">1</span>
-            <span>В Safari нажмите кнопку <Share size={14} className="inline -mt-0.5" /> «Поделиться» внизу экрана.</span>
+        <StatusRow
+          icon={<Smartphone size={16} className="text-text3" />}
+          title="Установите Armora как приложение"
+          hint="Push-уведомления на iOS доступны только в режиме «Home Screen»."
+        />
+        <ol className="mt-3 space-y-1.5 text-meta text-text3 list-decimal pl-4 marker:text-text3">
+          <li>
+            В Safari нажмите <Share size={12} className="inline -mt-0.5" /> «Поделиться» внизу экрана.
           </li>
-          <li className="flex gap-3">
-            <span className="shrink-0 w-6 h-6 rounded-md bg-accent-soft text-accent text-[12px] font-semibold flex items-center justify-center">2</span>
-            <span>Выберите <b>«На экран Домой»</b> <Plus size={14} className="inline -mt-0.5" />.</span>
+          <li>
+            Выберите <span className="text-text2">«На экран Домой»</span>{' '}
+            <Plus size={12} className="inline -mt-0.5" />.
           </li>
-          <li className="flex gap-3">
-            <span className="shrink-0 w-6 h-6 rounded-md bg-accent-soft text-accent text-[12px] font-semibold flex items-center justify-center">3</span>
-            <span>Закройте Safari и откройте Armora с иконки на экране Домой <Smartphone size={14} className="inline -mt-0.5" />.</span>
-          </li>
-          <li className="flex gap-3">
-            <span className="shrink-0 w-6 h-6 rounded-md bg-accent-soft text-accent text-[12px] font-semibold flex items-center justify-center">4</span>
-            <span>Зайдите в «Профиль» — здесь появится кнопка «Включить уведомления».</span>
-          </li>
+          <li>Закройте Safari и откройте Armora с иконки на экране Домой.</li>
+          <li>Зайдите в «Профиль» — здесь появится кнопка «Включить уведомления».</li>
         </ol>
-        <p className="text-meta text-text3 mt-4">
-          Требуется iOS 16.4 или новее.
-        </p>
+        <p className="text-meta text-text3 mt-3">Требуется iOS 16.4 или новее.</p>
       </SectionCard>
     );
   }
@@ -207,15 +201,11 @@ export default function NotificationsBlock() {
   if (perm === 'denied') {
     return (
       <SectionCard title="Уведомления">
-        <div className="flex items-start gap-3 text-[14px]">
-          <BellOff size={18} className="text-bad2 shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-text1 font-medium">Заблокированы</p>
-            <p className="text-text3 text-meta mt-1">
-              Откройте Настройки устройства → Armora → Уведомления → разрешите уведомления. Затем вернитесь сюда.
-            </p>
-          </div>
-        </div>
+        <StatusRow
+          icon={<BellOff size={16} className="text-bad2" />}
+          title="Заблокированы"
+          hint="Откройте Настройки устройства → Armora → Уведомления → разрешите. Затем вернитесь сюда."
+        />
       </SectionCard>
     );
   }
@@ -223,18 +213,18 @@ export default function NotificationsBlock() {
   if (sub === 'yes') {
     return (
       <SectionCard title="Уведомления">
-        <div className="flex items-start gap-3 text-[14px] mb-3">
-          <BellRing size={18} className="text-ok2 shrink-0 mt-0.5" />
-          <div className="flex-1">
-            <p className="text-text1 font-medium">Включены</p>
-            <p className="text-text3 text-meta mt-1">
-              Вы получите уведомление о новой заявке, изменении этапа и других важных событиях.
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="secondary" onClick={test} disabled={busy}>Отправить тест</Button>
-          <Button variant="ghost" onClick={disable} disabled={busy}>Отключить</Button>
+        <StatusRow
+          icon={<BellRing size={16} className="text-ok2" />}
+          title="Включены"
+          hint="Вы получите уведомление о новой заявке, изменении этапа и других важных событиях."
+        />
+        <div className="mt-3 flex gap-2">
+          <Button variant="secondary" size="sm" onClick={test} disabled={busy}>
+            Отправить тест
+          </Button>
+          <Button variant="ghost" size="sm" onClick={disable} disabled={busy}>
+            Отключить
+          </Button>
         </div>
         {error && <p className="text-meta text-bad2 mt-2">{error}</p>}
       </SectionCard>
@@ -243,19 +233,40 @@ export default function NotificationsBlock() {
 
   return (
     <SectionCard title="Уведомления">
-      <div className="flex items-start gap-3 text-[14px] mb-3">
-        <Bell size={18} className="text-text3 shrink-0 mt-0.5" />
-        <div className="flex-1">
-          <p className="text-text1 font-medium">Не включены</p>
-          <p className="text-text3 text-meta mt-1">
-            Включите, чтобы получать уведомления о новых заявках и заказах даже когда приложение закрыто.
-          </p>
-        </div>
-      </div>
-      <Button onClick={enable} disabled={busy} block>
+      <StatusRow
+        icon={<Bell size={16} className="text-text3" />}
+        title="Не включены"
+        hint="Включите, чтобы получать уведомления о новых заявках и заказах даже когда приложение закрыто."
+      />
+      <Button
+        onClick={enable}
+        disabled={busy}
+        block
+        className="mt-3 !bg-text1 hover:!bg-text1/90 !text-white !border-transparent"
+      >
         {busy ? 'Включаем…' : 'Включить уведомления'}
       </Button>
       {error && <p className="text-meta text-bad2 mt-2">{error}</p>}
     </SectionCard>
+  );
+}
+
+function StatusRow({
+  icon,
+  title,
+  hint,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <div className="flex items-start gap-2.5">
+      <span className="shrink-0 mt-0.5">{icon}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-text1 font-medium text-[14px] leading-5">{title}</p>
+        <p className="text-meta text-text3 mt-0.5">{hint}</p>
+      </div>
+    </div>
   );
 }

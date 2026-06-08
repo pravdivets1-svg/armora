@@ -3,7 +3,7 @@
 import { requireRole } from '@/lib/auth-helpers';
 import UserForm from '../user-form';
 import { createUserAction } from '../actions';
-import { PageHeader } from '@/components/page-shell';
+import { PageHeader } from '@/components/uikit';
 
 export const metadata = { title: 'Новый сотрудник — Armora' };
 
@@ -11,9 +11,11 @@ export default async function NewUserPage() {
   await requireRole(['director']);
 
   return (
-    <main className="max-w-3xl mx-auto px-6 py-6 space-y-5">
-      <PageHeader kicker="Создать" title="Новый сотрудник" />
-      <UserForm action={createUserAction} mode="create" />
-    </main>
+    <>
+      <PageHeader title="Новый сотрудник" sub="Создание учётной записи" backHref="/users" />
+      <main className="max-w-2xl mx-auto px-4 lg:px-6 py-4 pb-12">
+        <UserForm action={createUserAction} mode="create" />
+      </main>
+    </>
   );
 }

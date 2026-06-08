@@ -9,10 +9,10 @@
 //   роль    — director | manager | surveyor | installer
 
 import { useFormState, useFormStatus } from 'react-dom';
-import { Save, AlertCircle, User as UserIcon, IdCard } from 'lucide-react';
+import { Save, AlertCircle } from 'lucide-react';
 import type { Role } from '@prisma/client';
-import { Card, Input, Select, Button, FieldLabel } from '@/components/ui';
-import { PageBack } from '@/components/page-shell';
+import { Input, Select, FieldLabel } from '@/components/ui';
+import { SectionCard, Button } from '@/components/uikit';
 import UndoDeleteButton from '@/components/undo-delete-button';
 import { ROLE_LABEL } from '@/lib/labels';
 import { deleteUserAction, type UserActionState } from './actions';
@@ -41,20 +41,21 @@ export default function UserForm({
     state && !state.ok && state.fieldErrors ? state.fieldErrors[k] : undefined;
 
   return (
-    <div className="space-y-6">
-      <PageBack href="/users" label="Все сотрудники" />
-
+    <div className="space-y-2.5">
       {state && !state.ok && (
-        <div className="bg-white border border-line border-l-4 border-l-bad rounded-lg px-4 py-3
-                        flex items-start gap-2.5 shadow-soft">
-          <AlertCircle size={16} className="text-bad mt-0.5 shrink-0" />
-          <div className="text-[14px] text-ink-900">{state.error}</div>
+        <div
+          className="bg-card border border-borderc rounded-lg px-4 py-3
+                     flex items-start gap-2 text-[14px] text-bad2"
+          role="alert"
+        >
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+          <div>{state.error}</div>
         </div>
       )}
 
-      <form action={formAction} className="space-y-6">
-        <Card title="Учётная запись" icon={<IdCard size={12} />}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form action={formAction} className="space-y-2.5">
+        <SectionCard title="Учётная запись">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Логин" hint="Ровно 6 символов: латиница и цифры" error={fe('login')}>
               <div className="relative">
                 <Input
@@ -66,9 +67,12 @@ export default function UserForm({
                   required
                   pattern="[a-z0-9]{6}"
                   autoComplete="off"
-                  className="pr-32 font-mono"
+                  className="pr-32 font-mono tabular-nums"
                 />
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[12px] text-ink-500 font-mono">
+                <span
+                  className="absolute right-3 top-1/2 -translate-y-1/2
+                             text-meta text-text3 font-mono pointer-events-none"
+                >
                   @armora.local
                 </span>
               </div>
@@ -88,14 +92,14 @@ export default function UserForm({
                 minLength={mode === 'create' ? 5 : 0}
                 required={mode === 'create'}
                 autoComplete="new-password"
-                className="font-mono"
+                className="font-mono tabular-nums"
               />
             </Field>
           </div>
-        </Card>
+        </SectionCard>
 
-        <Card title="Личные данные" icon={<UserIcon size={12} />}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <SectionCard title="Личные данные">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="ФИО" error={fe('fullName')}>
               <Input
                 name="fullName"
@@ -112,15 +116,20 @@ export default function UserForm({
                 name="phone"
                 defaultValue={user?.phone ?? ''}
                 placeholder="+7 916 000-00-00"
+                className="tabular-nums"
               />
             </Field>
 
-            <Field label="MAX ID" hint="Числовой user_id в мессенджере MAX — для уведомлений" error={fe('maxUserId')}>
+            <Field
+              label="MAX ID"
+              hint="Числовой user_id в мессенджере MAX — для уведомлений"
+              error={fe('maxUserId')}
+            >
               <Input
                 name="maxUserId"
                 defaultValue={user?.maxUserId ?? ''}
                 placeholder="123456789"
-                className="font-mono"
+                className="font-mono tabular-nums"
               />
             </Field>
 
@@ -131,15 +140,13 @@ export default function UserForm({
                 ))}
               </Select>
               {user?.isSelf && (
-                <div className="text-[11px] text-ink-500 mt-1">
-                  Свою роль изменить нельзя
-                </div>
+                <div className="text-meta text-text3 mt-1">Свою роль изменить нельзя</div>
               )}
             </Field>
           </div>
-        </Card>
+        </SectionCard>
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-3 pt-1">
           {mode === 'edit' && user && !user.isSelf ? (
             <DeleteButton userId={user.id} />
           ) : <span />}
@@ -160,9 +167,9 @@ function Field({
       <FieldLabel>{label}</FieldLabel>
       <div className="mt-1">{children}</div>
       {error ? (
-        <div className="text-[12px] text-bad mt-1">{error}</div>
+        <div className="text-meta text-bad2 mt-1">{error}</div>
       ) : hint ? (
-        <div className="text-[11px] text-ink-500 mt-1">{hint}</div>
+        <div className="text-meta text-text3 mt-1">{hint}</div>
       ) : null}
     </label>
   );
@@ -171,7 +178,12 @@ function Field({
 function SubmitButton({ mode }: { mode: 'create' | 'edit' }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant="primary" disabled={pending}>
+    <Button
+      type="submit"
+      variant="primary"
+      disabled={pending}
+      className="!bg-text1 hover:!bg-text1/90 !text-white !border-transparent !shadow-none"
+    >
       <Save size={14} />
       {pending ? 'Сохранение…' : mode === 'create' ? 'Создать сотрудника' : 'Сохранить'}
     </Button>

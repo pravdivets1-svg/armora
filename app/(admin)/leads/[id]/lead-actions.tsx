@@ -48,8 +48,8 @@ export default function LeadActions({
   const [convertOpen, setConvertOpen] = useState(false);
 
   return (
-    <div className="space-y-3">
-      {/* Главный CTA — sticky на мобиле */}
+    <div className="space-y-2.5">
+      {/* Главный CTA — sticky на мобиле. Accent оставлен — это ключевая конверсия. */}
       {!convertedOrderId && currentStage !== 'spam' && (
         <>
           <div className="lg:hidden fixed inset-x-0 z-30 px-4 pt-2 pb-3 bg-app/95 backdrop-blur border-t border-borderc"
@@ -142,39 +142,42 @@ function ConvertSheet({
 
   return (
     <Sheet open={open} onClose={onClose} title="Создать заказ">
-      <form action={formAction} className="space-y-4">
+      <form action={formAction} className="space-y-3.5">
         <div>
-          <label className="block text-meta text-text3 font-medium mb-1">Цена по договору, ₽</label>
+          <label className="block text-meta text-text3 mb-1">Цена по договору, ₽</label>
           <input
             type="number"
             name="totalAmount"
             defaultValue={estimatedPrice > 0 ? estimatedPrice : ''}
             placeholder="0"
             min={0}
-            className="w-full h-11 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px] tabular-nums
-                       focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+            className="w-full h-10 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px] tabular-nums font-medium
+                       focus:outline-none focus:border-text2 focus:ring-1 focus:ring-text2/20
+                       transition-colors duration-fast"
           />
         </div>
 
         <div>
-          <label className="block text-meta text-text3 font-medium mb-1">Адрес клиента</label>
+          <label className="block text-meta text-text3 mb-1">Адрес клиента</label>
           <input
             type="text"
             name="clientAddress"
             defaultValue={clientAddress}
             placeholder="Город, улица, дом, квартира"
-            className="w-full h-11 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px]
-                       focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+            className="w-full h-10 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px]
+                       focus:outline-none focus:border-text2 focus:ring-1 focus:ring-text2/20
+                       transition-colors duration-fast"
           />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-meta text-text3 font-medium mb-1">Замерщик</label>
+            <label className="block text-meta text-text3 mb-1">Замерщик</label>
             <select
               name="surveyorId"
-              className="w-full h-11 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px]
-                         focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+              className="w-full h-10 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px]
+                         focus:outline-none focus:border-text2 focus:ring-1 focus:ring-text2/20
+                         transition-colors duration-fast"
               defaultValue=""
             >
               <option value="">— не назначать —</option>
@@ -184,12 +187,13 @@ function ConvertSheet({
             </select>
           </div>
           <div>
-            <label className="block text-meta text-text3 font-medium mb-1">Дата и время замера</label>
+            <label className="block text-meta text-text3 mb-1">Дата и время замера</label>
             <input
               type="datetime-local"
               name="surveyAt"
-              className="w-full h-11 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px] tabular-nums
-                         focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+              className="w-full h-10 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px] tabular-nums
+                         focus:outline-none focus:border-text2 focus:ring-1 focus:ring-text2/20
+                         transition-colors duration-fast"
             />
           </div>
         </div>
@@ -265,8 +269,9 @@ function AssignForm({
         name="userId"
         defaultValue={assignedToId ?? ''}
         onChange={(e) => (e.currentTarget.form as HTMLFormElement | null)?.requestSubmit()}
-        className="w-full h-11 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px]
-                   focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
+        className="w-full h-10 px-3 rounded-md bg-card border border-borderc text-[16px] lg:text-[14px]
+                   focus:outline-none focus:border-text2 focus:ring-1 focus:ring-text2/20
+                   transition-colors duration-fast"
       >
         <option value="">— не назначен —</option>
         {managers.map((m) => (

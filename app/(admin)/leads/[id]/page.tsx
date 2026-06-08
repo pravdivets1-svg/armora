@@ -80,13 +80,13 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
         backHref="/leads"
       />
 
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-4 space-y-3 pb-[120px] lg:pb-12">
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-3 space-y-2.5 pb-[120px] lg:pb-12">
 
         {/* Pill + meta строкой */}
         <div className="flex flex-wrap items-center gap-2">
           <LeadPill stage={lead.stage} size="md" />
-          <span className="text-meta text-text3">
-            {fmtDateTime(lead.createdAt)} · источник: <span className="font-mono">{lead.source}</span>
+          <span className="text-meta text-text3 tabular-nums">
+            {fmtDateTime(lead.createdAt)} <span className="text-text3/60">•</span> источник: <span className="font-mono">{lead.source}</span>
           </span>
         </div>
 
@@ -94,22 +94,22 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
         {lead.convertedOrder && (
           <Link
             href={`/orders/${lead.convertedOrder.id}`}
-            className="flex items-center gap-3 rounded-md bg-ok2-soft border border-ok2/30 px-4 py-3
-                       transition-transform duration-fast active:scale-[0.99]"
+            className="flex items-center gap-2.5 rounded-md bg-ok2-soft border border-ok2/25 px-3.5 py-2.5
+                       transition-colors duration-fast hover:bg-ok2-soft/80"
           >
-            <Tag size={16} className="text-ok2 shrink-0" />
-            <div className="flex-1 text-[14px] text-text1">
-              По этой заявке создан <span className="font-semibold">заказ №{lead.convertedOrder.number}</span>
+            <Tag size={14} className="text-ok2 shrink-0" />
+            <div className="flex-1 text-[13.5px] text-text1">
+              По этой заявке создан <span className="font-semibold tabular-nums">заказ №{lead.convertedOrder.number}</span>
             </div>
-            <ExternalLink size={14} className="text-ok2 shrink-0" />
+            <ExternalLink size={13} className="text-ok2 shrink-0" />
           </Link>
         )}
 
         {/* SPAM баннер */}
         {lead.stage === 'spam' && (
-          <div className="flex items-start gap-2.5 rounded-md bg-bad2-soft border border-bad2/30 px-4 py-3">
-            <AlertCircle size={16} className="text-bad2 mt-0.5 shrink-0" />
-            <div className="text-[14px] text-text1">
+          <div className="flex items-start gap-2.5 rounded-md bg-bad2-soft border border-bad2/25 px-3.5 py-2.5">
+            <AlertCircle size={14} className="text-bad2 mt-0.5 shrink-0" />
+            <div className="text-[13.5px] text-text1">
               Заявка помечена как спам автоматически (заполнено honeypot-поле). Проверьте перед действием.
             </div>
           </div>
@@ -147,39 +147,39 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
           )}
         </SectionCard>
 
-        {/* Дверь из каталога — если клиент выбрал конкретную модель на сайте */}
+        {/* Дверь из каталога — если клиент выбрал конкретную модель на сайте.
+            Linear-стиль: ведёт себя как обычная SectionCard, цена нейтральная (без accent),
+            картинка скромная без тени. */}
         {hasDoor && (
-          <section className="bg-card border border-borderc rounded-lg overflow-hidden">
-            <header className="px-5 pt-5 pb-3">
-              <h2 className="text-meta uppercase tracking-wide text-text3">Выбранная модель</h2>
-            </header>
-            <div className="px-5 pb-5 flex flex-col sm:flex-row gap-4">
+          <SectionCard title="Выбранная модель">
+            <div className="flex flex-col sm:flex-row gap-4">
               {door.image && (
                 <a href={door.image} target="_blank" rel="noreferrer" className="shrink-0">
                   {/* Используем <img> а не next/image — это внешний URL без явного allow-host */}
                   <img
                     src={door.image}
                     alt={door.name ?? 'Дверь'}
-                    className="w-full sm:w-40 max-h-56 rounded-md border border-borderc bg-subtle object-contain"
+                    className="w-full sm:w-32 max-h-48 rounded-md border border-borderc bg-subtle object-contain"
                   />
                 </a>
               )}
               <div className="flex-1 min-w-0">
-                <h3 className="text-display text-text1 mb-1 truncate">{door.name ?? '—'}</h3>
+                <h3 className="text-[15px] font-semibold text-text1 mb-1 truncate">{door.name ?? '—'}</h3>
                 {(door.series || door.purpose) && (
                   <p className="text-meta text-text3 mb-2">
-                    {door.series && `Серия: ${door.series}`}
-                    {door.series && door.purpose && ' · '}
+                    {door.series && <>Серия: <span className="text-text2">{door.series}</span></>}
+                    {door.series && door.purpose && <span className="text-text3/60"> • </span>}
                     {door.purpose && door.purpose}
                   </p>
                 )}
                 {door.basePrice != null && (
-                  <p className="text-h2 text-accent tabular-nums mb-3">
-                    Базовая цена: {Number(door.basePrice).toLocaleString('ru-RU')} ₽
+                  <p className="text-[14px] text-text1 tabular-nums mb-2.5">
+                    <span className="text-text3">Базовая цена:</span>{' '}
+                    <span className="font-semibold">{Number(door.basePrice).toLocaleString('ru-RU')} ₽</span>
                   </p>
                 )}
                 {door.tags && door.tags.length > 0 && (
-                  <ul className="space-y-1">
+                  <ul className="space-y-0.5">
                     {door.tags.slice(0, 10).map((t) => (
                       <li key={t} className="text-[13px] text-text2 flex gap-2">
                         <span className="text-text3 shrink-0">·</span>
@@ -189,11 +189,11 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
                   </ul>
                 )}
                 {door.id != null && (
-                  <p className="text-meta text-text3 mt-3 tabular-nums">ID каталога: {door.id}</p>
+                  <p className="text-meta text-text3 mt-2.5 tabular-nums">ID каталога: {door.id}</p>
                 )}
               </div>
             </div>
-          </section>
+          </SectionCard>
         )}
 
         {/* Параметры двери (размеры замера + ориентир. цена) */}
@@ -251,7 +251,7 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
         />
 
         <div className="text-meta text-text3 pt-2 flex flex-wrap gap-x-4 gap-y-1">
-          <span>IP: <span className="font-mono">{lead.ip ?? '—'}</span></span>
+          <span>IP: <span className="font-mono tabular-nums">{lead.ip ?? '—'}</span></span>
           {lead.userAgent && <span className="truncate">UA: <span className="font-mono">{lead.userAgent.slice(0, 60)}</span></span>}
         </div>
       </div>

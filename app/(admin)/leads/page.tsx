@@ -126,7 +126,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
     <>
       <PageHeader title="Заявки" sub={`${leads.length} в текущем фильтре`} />
 
-      <div className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 space-y-4 pb-12">
+      <div className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 space-y-3 pb-12">
 
         {/* Поиск */}
         <LiveSearch
@@ -150,22 +150,24 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
         />
 
         {/* Hero — последняя новая заявка.
-            Внешняя обёртка — <div>, чтобы внутри жил <a tel:>. Кнопка «Открыть» — отдельный <Link>. */}
+            Linear-стиль: тонкая hairline-карточка, без яркого фона, dot-индикатор статуса. */}
         {heroLead && (
-          <div className="rounded-lg border border-accent/40 bg-accent-soft p-4 sm:p-5">
-            <div className="flex items-center gap-2 text-meta uppercase tracking-wide text-accent mb-1">
-              <span className="inline-flex items-center h-5 px-1.5 rounded text-[10px] font-semibold tracking-wide bg-accent text-card">
-                Новая
+          <div className="rounded-md border border-borderc bg-card px-4 py-3">
+            <div className="flex items-center gap-2 text-meta text-text3 mb-1.5">
+              <span className="relative flex h-1.5 w-1.5 shrink-0">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-accent opacity-60 animate-ping" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
               </span>
-              <span>·</span>
+              <span className="font-medium text-accent">Новая заявка</span>
+              <span className="text-text3/60">•</span>
               <span className="tabular-nums">№ {heroLead.number}</span>
-              <span>·</span>
-              <span className="tabular-nums">{fmtRelative(heroLead.createdAt)} назад</span>
+              <span className="text-text3/60">•</span>
+              <span className="tabular-nums">{fmtRelative(heroLead.createdAt)}</span>
             </div>
-            <h2 className="text-h1 text-text1 mb-1 truncate">{heroLead.clientName}</h2>
+            <h2 className="text-[15px] font-semibold text-text1 mb-1 truncate">{heroLead.clientName}</h2>
             <div className="text-[13px] text-text2 flex items-center gap-3 flex-wrap mb-3 tabular-nums">
-              <a href={`tel:${heroLead.clientPhone}`} className="inline-flex items-center gap-1.5 hover:text-accent">
-                <Phone size={12} /> {fmtPhone(heroLead.clientPhone)}
+              <a href={`tel:${heroLead.clientPhone}`} className="inline-flex items-center gap-1.5 hover:text-text1">
+                <Phone size={12} className="text-text3" /> {fmtPhone(heroLead.clientPhone)}
               </a>
               {heroLead.clientAddress && <span className="text-text3 truncate max-w-[200px]">{heroLead.clientAddress}</span>}
               {(heroLead.widthMm || heroLead.heightMm) && (
@@ -174,13 +176,13 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
             </div>
             <Link
               href={`/leads/${heroLead.id}`}
-              className="inline-flex items-center justify-center gap-2 h-9 px-3 rounded-md
-                         bg-accent hover:bg-accent-deep text-white font-medium text-[13px]
+              className="inline-flex items-center justify-center gap-2 h-8 px-3 rounded-md
+                         bg-text1 hover:bg-text1/90 text-white font-medium text-[13px]
                          transition-colors duration-fast
-                         active:scale-[0.98]
                          focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
             >
               Открыть заявку
+              <ChevronRight size={14} />
             </Link>
           </div>
         )}
@@ -199,21 +201,21 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                 if (!items || items.length === 0) return null;
                 return (
                   <section key={b}>
-                    <div className="sticky top-[56px] lg:top-[64px] z-10 -mx-4 lg:-mx-6 px-4 lg:px-6 py-2 bg-app/85 backdrop-blur">
+                    <div className="sticky top-[56px] lg:top-[64px] z-10 -mx-4 lg:-mx-6 px-4 lg:px-6 py-1.5 bg-app/85 backdrop-blur">
                       <div className="flex items-baseline justify-between gap-2">
-                        <h3 className="text-[13px] font-semibold text-text2 tracking-tight">{BUCKET_LABEL[b]}</h3>
+                        <h3 className="text-meta uppercase tracking-wide text-text3">{BUCKET_LABEL[b]}</h3>
                         <span className="text-meta text-text3 tabular-nums">{items.length}</span>
                       </div>
                     </div>
 
-                    <div className="space-y-1 mt-1.5">
+                    {/* Одна карточка с divide-y вместо набора отдельных строк */}
+                    <div className="mt-1.5 bg-card border border-borderc rounded-md divide-y divide-borderc/60 overflow-hidden">
                       {items.map((lead) => (
                         <div
                           key={lead.id}
-                          className="relative rounded-md transition-all duration-fast
-                                     bg-card border border-borderc
-                                     hover:bg-subtle/60 active:scale-[0.995]
-                                     has-[input:checked]:border-accent has-[input:checked]:bg-accent-soft/40"
+                          className="relative transition-colors duration-fast
+                                     hover:bg-subtle/60
+                                     has-[input:checked]:bg-accent-soft/40"
                         >
                           <label
                             className="absolute left-2 top-1/2 -translate-y-1/2 z-10 cursor-pointer p-2 text-text3 hover:text-text1"
@@ -222,21 +224,21 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                             <input
                               type="checkbox"
                               data-lead-id={lead.id}
-                              className="w-4 h-4 accent-accent cursor-pointer"
+                              className="w-3.5 h-3.5 accent-accent cursor-pointer"
                             />
                           </label>
 
                           <Link
                             href={`/leads/${lead.id}`}
-                            className="absolute inset-0 z-0 rounded-md"
+                            className="absolute inset-0 z-0"
                             aria-label={`Открыть заявку №${lead.number} от ${lead.clientName}`}
                           />
 
-                          <div className="relative z-[1] pointer-events-none flex items-center gap-3 pl-10 pr-3 py-3">
+                          <div className="relative z-[1] pointer-events-none flex items-center gap-3 pl-10 pr-3 py-2.5">
                             <div
-                              className={`shrink-0 w-9 h-9 rounded-md flex items-center justify-center text-[13px] font-semibold
+                              className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold
                                 ${lead.stage === 'new'
-                                  ? 'bg-accent text-card'
+                                  ? 'bg-accent-soft text-accent'
                                   : 'bg-subtle text-text2'}`}
                             >
                               {initial(lead.clientName)}
@@ -244,7 +246,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
 
                             <div className="flex-1 min-w-0">
                               <div className="flex items-baseline justify-between gap-2">
-                                <p className="text-[14px] font-semibold text-text1 truncate flex-1 min-w-0">
+                                <p className="text-[13.5px] font-medium text-text1 truncate flex-1 min-w-0">
                                   {lead.clientName}
                                 </p>
                                 <span className="text-meta text-text3 tabular-nums shrink-0">{fmtRelative(lead.createdAt)}</span>
@@ -257,7 +259,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                               </div>
                             </div>
 
-                            <ChevronRight size={16} className="text-text3 shrink-0" />
+                            <ChevronRight size={14} className="text-text3 shrink-0" />
                           </div>
                         </div>
                       ))}

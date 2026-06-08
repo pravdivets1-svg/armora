@@ -1,54 +1,57 @@
 import { Skeleton } from '@/components/skeletons';
 
+// Скелет под Linear/Vercel-ленту: hairline-секция, плотные ряды.
+// Геометрия совпадает с финальной разметкой страницы, чтобы не было
+// «прыжка» при гидрации.
+
 export default function Loading() {
   return (
-    <main className="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-6">
-      {/* Шапка */}
-      <div className="space-y-2">
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-9 w-64" />
+    <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 pb-12 space-y-4">
+      {/* Hero: следующее событие */}
+      <div className="rounded-md border border-borderc bg-card px-4 py-3.5 pl-5 space-y-2">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-4 w-14" />
+          <Skeleton className="h-3 w-10" />
+          <Skeleton className="h-3 w-12" />
+        </div>
+        <Skeleton className="h-7 w-40" />
+        <Skeleton className="h-3 w-20" />
+        <div className="pt-1 space-y-1.5">
+          <Skeleton className="h-4 w-48" />
+          <Skeleton className="h-3 w-56" />
+        </div>
       </div>
 
-      {/* Stats-bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="rounded-xl bg-ink-900/[0.07] h-[116px]" />
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="rounded-xl bg-white border border-line px-4 py-4 space-y-3">
-            <Skeleton className="h-2.5 w-16" />
-            <Skeleton className="h-10 w-12" />
-            <Skeleton className="h-2.5 w-10" />
+      {/* 21-дневная лента */}
+      <section className="rounded-md border border-borderc bg-card overflow-hidden">
+        {[true, false, false, true, false, false, true].map((withEvents, gi) => (
+          <div
+            key={gi}
+            className={gi > 0 ? 'border-t border-borderc' : ''}
+          >
+            <div className="px-4 py-2 flex items-baseline gap-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-3 w-12" />
+            </div>
+            {withEvents ? (
+              <ul className="divide-y divide-borderc/60">
+                {Array.from({ length: gi === 0 ? 2 : 1 }).map((_, i) => (
+                  <li key={i} className="px-4 py-2.5 min-h-[44px] flex items-center gap-3">
+                    <Skeleton className="h-3 w-10" />
+                    <Skeleton className="h-4 w-14" />
+                    <Skeleton className="h-3 flex-1" />
+                    <Skeleton className="h-3 w-10" />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="px-4 py-3">
+                <Skeleton className="h-3 w-16" />
+              </div>
+            )}
           </div>
         ))}
-      </div>
-
-      {/* Timeline */}
-      <div className="space-y-8">
-        {[5, 3].map((count, gi) => (
-          <div key={gi}>
-            {/* День */}
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-2 h-2 rounded-full bg-ink-300" />
-              <Skeleton className="h-4 w-40" />
-            </div>
-            {/* Карточки */}
-            <div className="ml-[9px] pl-6 space-y-2 border-l border-line">
-              {Array.from({ length: count }).map((_, i) => (
-                <div key={i} className="bg-white border border-line border-l-[3px] border-l-ink-200
-                                        rounded-xl px-4 py-3.5 flex gap-4">
-                  <div className="shrink-0 w-16 space-y-2">
-                    <Skeleton className="h-7 w-14" />
-                    <Skeleton className="h-4 w-12" />
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-4 w-40" />
-                    <Skeleton className="h-3 w-56" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      </section>
     </main>
   );
 }

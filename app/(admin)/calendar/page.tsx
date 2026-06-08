@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { MapPin, CalendarClock, AlertTriangle } from 'lucide-react';
+import { CalendarClock } from 'lucide-react';
 
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { loadSchedule, type ScheduleEvent } from '@/lib/schedule';
@@ -12,6 +12,11 @@ import NextEventCard from './next-event-card';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Расписание — Armora' };
+
+// 21-дневная лента: сегодня и +20 вперёд. Прошлые события показываем
+// отдельным блоком сверху, без растягивания ленты в прошлое — иначе она
+// перестанет читаться с телефона.
+const HORIZON_DAYS = 21;
 
 export default async function CalendarPage({
   searchParams,
@@ -30,6 +35,10 @@ export default async function CalendarPage({
       })
     : [];
 
+  const today = mskDayStart(now);
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+
+  // Группируем события по МСК-дню.
   const byDay = new Map<string, ScheduleEvent[]>();
   for (const e of events) {
     const key = mskDayKey(e.at);
@@ -37,11 +46,19 @@ export default async function CalendarPage({
     byDay.get(key)!.push(e);
   }
 
-  const today = mskDayStart(now);
-  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+  // Просрочка отдельно — над лентой будущего.
+  const overdueEvents = events.filter((e) => e.at < today);
 
-  // Next upcoming event (для hero-блока)
-  const nextEvent = events.find((e) => e.at >= now) ?? events.find((e) => e.isOverdue) ?? null;
+  // Лента 21 день от сегодня.
+  const horizon: { key: string; date: Date; events: ScheduleEvent[] }[] = [];
+  for (let i = 0; i < HORIZON_DAYS; i++) {
+    const d = new Date(today.getTime() + i * 24 * 60 * 60 * 1000);
+    const key = mskDayKey(d);
+    horizon.push({ key, date: d, events: byDay.get(key) ?? [] });
+  }
+
+  // Next upcoming event для hero-блока (включая сегодня).
+  const nextEvent = events.find((e) => e.at >= now) ?? null;
 
   const showRoute = !isStaff(me.role);
   const todayPoints = showRoute
@@ -57,22 +74,13 @@ export default async function CalendarPage({
         }))
     : [];
 
-  const summaryParts: string[] = [];
-  if (summary.todayCount > 0) {
-    summaryParts.push(`${summary.todayCount} ${summary.todayCount === 1 ? 'событие' : summary.todayCount < 5 ? 'события' : 'событий'} сегодня`);
-  }
-  if (summary.surveysCount > 0) summaryParts.push(`${summary.surveysCount} замеров`);
-  if (summary.installsCount > 0) summaryParts.push(`${summary.installsCount} установок`);
-  if (isStaff(me.role) && summary.overdueCount > 0) {
-    summaryParts.push(`${summary.overdueCount} просрочено`);
-  }
-  const subline = summaryParts.length > 0 ? summaryParts.join(' · ') : 'Расписание чистое';
+  const subline = `${HORIZON_DAYS} дней · ваше расписание`;
 
   return (
     <>
-      <PageHeader title="Расписание" sub={subline} />
+      <PageHeader title="Календарь" sub={subline} />
 
-      <div className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 space-y-4 pb-12">
+      <div className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 pb-12 space-y-4">
 
         {/* Фильтр сотрудников */}
         {isStaff(me.role) && assignable.length > 0 && (
@@ -82,7 +90,7 @@ export default async function CalendarPage({
           />
         )}
 
-        {/* Hero: следующее событие или просрочка */}
+        {/* Hero: следующее событие */}
         {nextEvent && (
           <NextEventCard
             orderId={nextEvent.orderId}
@@ -101,23 +109,26 @@ export default async function CalendarPage({
           <TodayRouteCard points={todayPoints} />
         )}
 
-        {/* Алерт для staff если есть просрочка */}
-        {isStaff(me.role) && summary.overdueCount > 0 && (
-          <Link
-            href="#overdue"
-            className="flex items-center gap-3 rounded-md bg-bad2-soft border border-bad2/30
-                       px-4 py-3 text-[14px] text-text1 transition-transform duration-fast active:scale-[0.99]"
+        {/* Просрочка — компактный список над лентой */}
+        {overdueEvents.length > 0 && (
+          <section
+            id="overdue"
+            aria-label="Просроченные события"
+            className="rounded-md border border-borderc bg-card"
           >
-            <AlertTriangle size={16} className="text-bad2 shrink-0" />
-            <span className="flex-1">
-              <span className="font-semibold text-bad2">{summary.overdueCount}</span>{' '}
-              {summary.overdueCount === 1 ? 'просроченное событие' : 'просроченных событий'}
-            </span>
-            <span className="text-meta text-bad2/80">К списку →</span>
-          </Link>
+            <header className="flex items-baseline justify-between px-4 pt-3 pb-2 border-b border-borderc/60">
+              <h2 className="text-h2 text-bad2">Просрочено</h2>
+              <span className="text-meta text-text3 tabular-nums">{overdueEvents.length}</span>
+            </header>
+            <ul className="divide-y divide-borderc/60">
+              {overdueEvents.map((e) => (
+                <EventRow key={e.id} event={e} tone="past" />
+              ))}
+            </ul>
+          </section>
         )}
 
-        {/* Пусто */}
+        {/* Пусто — нет событий и не показывать ленту смысла нет */}
         {events.length === 0 && (
           <Empty
             icon={CalendarClock}
@@ -126,104 +137,171 @@ export default async function CalendarPage({
           />
         )}
 
-        {/* Дни — без timeline-линии, c sticky-заголовком */}
-        <div className="space-y-5">
-          {[...byDay.entries()].map(([key, dayEvents]) => {
-            const date = dayEvents[0].at;
-            const isToday = isSameMskDay(date, today);
-            const isTomorrow = isSameMskDay(date, tomorrow);
-            const isPast = date < today;
+        {/* 21-дневная лента: hairline-список дней */}
+        <section
+          aria-label="Лента 21 день"
+          className="rounded-md border border-borderc bg-card overflow-hidden"
+        >
+          {horizon.map((day, idx) => {
+            const isToday = isSameMskDay(day.date, today);
+            const isTomorrow = isSameMskDay(day.date, tomorrow);
+            const hasEvents = day.events.length > 0;
 
-            const dayPrefix = isPast ? 'Просрочено' : isToday ? 'Сегодня' : isTomorrow ? 'Завтра' : null;
-            const dayFull = new Intl.DateTimeFormat('ru-RU', {
-              timeZone: 'Europe/Moscow',
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-            }).format(date);
+            const weekday = new Intl.DateTimeFormat('ru-RU', {
+              timeZone: 'Europe/Moscow', weekday: 'short',
+            }).format(day.date);
+            const dayMonth = new Intl.DateTimeFormat('ru-RU', {
+              timeZone: 'Europe/Moscow', day: 'numeric', month: 'short',
+            }).format(day.date);
+
+            const dayPrefix = isToday ? 'Сегодня' : isTomorrow ? 'Завтра' : null;
+            const isWeekend = ['сб', 'вс'].includes(weekday.toLowerCase());
 
             return (
-              <section
-                key={key}
-                id={isPast ? 'overdue' : isToday ? 'today' : undefined}
+              <div
+                key={day.key}
+                id={isToday ? 'today' : undefined}
+                className={[
+                  'relative',
+                  idx > 0 ? 'border-t border-borderc' : '',
+                  isToday ? 'bg-accent/[0.02]' : '',
+                ].join(' ')}
               >
-                <div className="sticky top-[56px] lg:top-[64px] z-10 -mx-4 lg:-mx-6 px-4 lg:px-6 py-2 bg-app/85 backdrop-blur">
+                {isToday && (
+                  <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[2px] bg-accent" />
+                )}
+
+                {/* Заголовок дня — sticky на мобильном */}
+                <div className={[
+                  'sticky top-[56px] lg:top-[64px] z-10',
+                  'px-4 py-2 bg-card/90 backdrop-blur',
+                  hasEvents ? '' : '',
+                ].join(' ')}>
                   <div className="flex items-baseline gap-2">
                     {dayPrefix && (
-                      <span className={`text-[15px] font-semibold tracking-tight
-                        ${isPast ? 'text-bad2' : isToday ? 'text-accent' : 'text-text1'}`}>
+                      <span className={`text-h2 ${isToday ? 'text-accent' : 'text-text1'}`}>
                         {dayPrefix}
                       </span>
                     )}
-                    <span className={`capitalize ${dayPrefix ? 'text-meta text-text3' : 'text-[15px] font-semibold text-text1'}`}>
-                      {dayFull}
+                    {!dayPrefix && (
+                      <span className={`text-h2 capitalize ${isWeekend ? 'text-text2' : 'text-text1'}`}>
+                        {weekday}
+                      </span>
+                    )}
+                    <span className="text-meta tabular-nums text-text3">
+                      {dayMonth}
                     </span>
-                    <span className="ml-auto text-meta text-text3 tabular-nums">
-                      {dayEvents.length}
-                    </span>
+                    {hasEvents && (
+                      <span className="ml-auto text-meta tabular-nums text-text3">
+                        {day.events.length}
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-1.5 mt-2">
-                  {dayEvents.map((e) => {
-                    const kindIsSurvey = e.kind === 'survey';
-                    const stripe = e.isOverdue ? 'bg-bad2' : kindIsSurvey ? 'bg-info2' : 'bg-ok2';
-                    const kindLabel = kindIsSurvey ? 'замер' : 'установка';
-
-                    return (
-                      <Link
+                {/* Контент дня */}
+                {hasEvents ? (
+                  <ul className="divide-y divide-borderc/60">
+                    {day.events.map((e) => (
+                      <EventRow
                         key={e.id}
-                        href={`/orders/${e.orderId}`}
-                        className="group relative block bg-card border border-borderc rounded-md
-                                   transition-all duration-fast active:scale-[0.99]
-                                   hover:bg-subtle/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-                      >
-                        <span className={`absolute left-0 top-2 bottom-2 w-1 rounded-r-md ${stripe}`} />
-                        <div className="flex items-center gap-4 pl-4 pr-3 py-3">
-                          <div className="shrink-0 w-12 text-right">
-                            <div className={`text-[18px] font-semibold tabular-nums leading-none
-                                            ${e.isOverdue ? 'text-bad2' : 'text-text1'}`}>
-                              {fmtTime(e.at)}
-                            </div>
-                            <div className="text-[10px] uppercase tracking-wide text-text3 mt-1">
-                              {kindLabel}
-                            </div>
-                          </div>
-
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-baseline gap-2">
-                              <p className="text-[14px] font-semibold text-text1 truncate flex-1 min-w-0">
-                                {e.clientName}
-                              </p>
-                              <span className="text-meta text-text3 tabular-nums shrink-0">№ {e.number}</span>
-                            </div>
-                            {e.clientAddress && (
-                              <p className="text-[12.5px] text-text3 truncate mt-0.5">
-                                {e.clientAddress}
-                              </p>
-                            )}
-                          </div>
-
-                          {e.worker && (
-                            <div className="shrink-0">
-                              <div
-                                className="w-8 h-8 rounded-md bg-subtle text-text2 text-[11px] font-semibold flex items-center justify-center"
-                                title={e.worker.fullName}
-                              >
-                                {initials(e.worker.fullName)}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </section>
+                        event={e}
+                        tone={isToday ? 'today' : 'future'}
+                      />
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="px-4 py-3">
+                    <p className="text-meta text-text3">Свободно</p>
+                  </div>
+                )}
+              </div>
             );
           })}
-        </div>
+        </section>
       </div>
     </>
+  );
+}
+
+// =========================================================================
+// Ряд события — плоский, плотный, hairline между рядами.
+// =========================================================================
+
+function EventRow({
+  event: e,
+  tone,
+}: {
+  event: ScheduleEvent;
+  tone: 'past' | 'today' | 'future';
+}) {
+  const kindIsSurvey = e.kind === 'survey';
+  const kindLabel = kindIsSurvey ? 'Замер' : 'Установка';
+
+  // Бейдж типа — пастельный, 16px высотой.
+  const kindBadge = kindIsSurvey
+    ? 'bg-info2/[0.08] text-info2'
+    : 'bg-ok2/[0.08] text-ok2';
+
+  const isPast = tone === 'past';
+  const rowDim = isPast ? 'opacity-60' : '';
+
+  return (
+    <li className={rowDim}>
+      <Link
+        href={`/orders/${e.orderId}`}
+        className="flex items-center gap-3 px-4 py-2.5 min-h-[44px]
+                   transition-colors duration-fast
+                   hover:bg-subtle/60 active:scale-[0.99]
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+      >
+        {/* Время */}
+        <span className={`shrink-0 w-12 text-[14px] tabular-nums
+                          ${isPast ? 'text-bad2' : 'text-text2'}`}>
+          {fmtTime(e.at)}
+        </span>
+
+        {/* Бейдж типа — 16px */}
+        <span className={`shrink-0 inline-flex items-center h-4 px-1.5 rounded text-[10.5px]
+                          font-semibold uppercase tracking-wide ${kindBadge}`}>
+          {kindLabel}
+        </span>
+
+        {/* Клиент + адрес — одна строка с truncate */}
+        <span className="flex-1 min-w-0 flex items-baseline gap-2">
+          <span className="text-[14px] text-text1 truncate">
+            {e.clientName}
+          </span>
+          {e.clientAddress && (
+            <span className="hidden sm:inline text-[13px] text-text3 truncate">
+              · {e.clientAddress}
+            </span>
+          )}
+        </span>
+
+        {/* № заказа */}
+        <span className="shrink-0 text-[12px] tabular-nums text-text3">
+          № {e.number}
+        </span>
+
+        {/* Аватар-исполнитель */}
+        {e.worker && (
+          <span
+            title={e.worker.fullName}
+            className="shrink-0 w-6 h-6 rounded-full bg-subtle text-text2
+                       text-[10px] font-semibold flex items-center justify-center"
+          >
+            {initials(e.worker.fullName)}
+          </span>
+        )}
+      </Link>
+
+      {/* Адрес отдельной строкой на мобильном */}
+      {e.clientAddress && (
+        <p className="sm:hidden px-4 pb-2 -mt-1 text-[12.5px] text-text3 truncate">
+          {e.clientAddress}
+        </p>
+      )}
+    </li>
   );
 }

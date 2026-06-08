@@ -2,6 +2,10 @@
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
+// Фильтр сотрудников в стиле PillTabs (uikit): hairline-пиллы, активный —
+// тёмная заливка text1, неактивный — card с border-borderc. Геометрия
+// один-в-один с PillTabs из uikit, чтобы не плодить визуальные диалекты.
+
 export default function CalendarUserFilter({
   users,
   selected,
@@ -16,52 +20,71 @@ export default function CalendarUserFilter({
     const sp = new URLSearchParams(params.toString());
     if (userId) sp.set('user', userId);
     else sp.delete('user');
-    router.push(`/calendar?${sp.toString()}`);
+    const qs = sp.toString();
+    router.push(qs ? `/calendar?${qs}` : '/calendar');
   }
 
   const surveyors = users.filter((u) => u.role === 'surveyor');
   const installers = users.filter((u) => u.role === 'installer');
 
-  const pill =
-    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12.5px] font-medium transition-colors cursor-pointer whitespace-nowrap';
-  const active = 'bg-ink-900 text-white shadow-soft';
-  const inactive = 'bg-white border border-line text-ink-700 hover:border-ink-400 hover:text-ink-900';
-
   return (
-    <div className="flex flex-wrap gap-1.5">
-      <button type="button" onClick={() => navigate('')} className={`${pill} ${!selected ? active : inactive}`}>
+    <div
+      className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-4 px-4 pb-1"
+      style={{
+        maskImage: 'linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to right, black 0%, black calc(100% - 24px), transparent 100%)',
+      }}
+    >
+      <Pill active={!selected} onClick={() => navigate('')}>
         Все
-      </button>
-      {surveyors.length > 0 && (
-        <span className="flex items-center self-center px-1 text-[11px] text-ink-400 uppercase tracking-wider">
-          Замер
-        </span>
-      )}
+      </Pill>
+
+      {surveyors.length > 0 && <GroupLabel>Замер</GroupLabel>}
       {surveyors.map((u) => (
-        <button
-          key={u.id}
-          type="button"
-          onClick={() => navigate(u.id)}
-          className={`${pill} ${selected === u.id ? active : inactive}`}
-        >
+        <Pill key={u.id} active={selected === u.id} onClick={() => navigate(u.id)}>
           {u.fullName.split(' ')[0]}
-        </button>
+        </Pill>
       ))}
-      {installers.length > 0 && (
-        <span className="flex items-center self-center px-1 text-[11px] text-ink-400 uppercase tracking-wider">
-          Монтаж
-        </span>
-      )}
+
+      {installers.length > 0 && <GroupLabel>Монтаж</GroupLabel>}
       {installers.map((u) => (
-        <button
-          key={u.id}
-          type="button"
-          onClick={() => navigate(u.id)}
-          className={`${pill} ${selected === u.id ? active : inactive}`}
-        >
+        <Pill key={u.id} active={selected === u.id} onClick={() => navigate(u.id)}>
           {u.fullName.split(' ')[0]}
-        </button>
+        </Pill>
       ))}
     </div>
+  );
+}
+
+function Pill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 inline-flex items-center h-9 px-3.5 rounded-md text-[13px] font-medium
+                  transition-colors duration-fast ease-soft whitespace-nowrap
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-accent
+                  ${active
+                    ? 'bg-text1 text-card'
+                    : 'bg-card border border-borderc text-text2 hover:text-text1'}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function GroupLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="shrink-0 flex items-center self-center px-1 text-[11px] uppercase tracking-wider text-text3">
+      {children}
+    </span>
   );
 }

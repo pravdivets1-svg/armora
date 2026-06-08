@@ -15,3 +15,4 @@ export * from './lead-pill';
 export * from './stage-ladder';
 export * from './hero-stage';
 export * from './order-card';
+export * from './interval-picker';

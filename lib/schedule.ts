@@ -8,8 +8,9 @@
 //     (заказ физически у нас в работе, даже если установка уже назначена).
 //
 // Просрочка:
-//   - Просрочен замер  = stage === 'survey_scheduled'  И surveyAt < сейчас
-//   - Просрочена устан = stage === 'ready_to_install'  И installAt < сейчас
+//   - День назначения — НЕ просрочка (есть весь день, чтобы внести инфу).
+//   - С полуночи следующего МСК-дня — просрочка.
+//   - daysOverdue: 0 = сегодня/будущее, 1 = вчера, 2+ = старше → плавная цветовая шкала.
 
 import { prisma } from '@/lib/prisma';
 import type { Role } from '@prisma/client';
@@ -25,6 +26,8 @@ export type ScheduleEvent = {
   kind: EventKind;
   at: Date;
   isOverdue: boolean;
+  /** Сколько целых МСК-дней назад событие. 0 = сегодня/будущее, 1 = вчера, 2 = позавчера, … */
+  daysOverdue: number;
   clientName: string;
   clientPhone: string;
   clientAddress: string;
@@ -88,36 +91,51 @@ export async function loadSchedule(
       : Promise.resolve(0),
   ]);
 
-  const surveys: ScheduleEvent[] = surveyOrders.map((o) => ({
-    id: `${o.id}:s`,
-    orderId: o.id,
-    number: o.number,
-    kind: 'survey',
-    at: o.surveyAt!,
-    isOverdue: o.surveyAt!.getTime() < now.getTime(),
-    clientName: o.clientName,
-    clientPhone: o.clientPhone,
-    clientAddress: o.clientAddress,
-    worker: o.surveyor ? { id: o.surveyor.id, fullName: o.surveyor.fullName } : null,
-  }));
+  const todayStart = mskDayStart(now);
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  function daysOverdueOf(at: Date): number {
+    const diff = todayStart.getTime() - mskDayStart(at).getTime();
+    return diff > 0 ? Math.round(diff / DAY_MS) : 0;
+  }
 
-  const installs: ScheduleEvent[] = installOrders.map((o) => ({
-    id: `${o.id}:i`,
-    orderId: o.id,
-    number: o.number,
-    kind: 'install',
-    at: o.installAt!,
-    isOverdue: o.installAt!.getTime() < now.getTime(),
-    clientName: o.clientName,
-    clientPhone: o.clientPhone,
-    clientAddress: o.clientAddress,
-    worker: o.installer ? { id: o.installer.id, fullName: o.installer.fullName } : null,
-  }));
+  const surveys: ScheduleEvent[] = surveyOrders.map((o) => {
+    const d = daysOverdueOf(o.surveyAt!);
+    return {
+      id: `${o.id}:s`,
+      orderId: o.id,
+      number: o.number,
+      kind: 'survey' as const,
+      at: o.surveyAt!,
+      isOverdue: d > 0,
+      daysOverdue: d,
+      clientName: o.clientName,
+      clientPhone: o.clientPhone,
+      clientAddress: o.clientAddress,
+      worker: o.surveyor ? { id: o.surveyor.id, fullName: o.surveyor.fullName } : null,
+    };
+  });
+
+  const installs: ScheduleEvent[] = installOrders.map((o) => {
+    const d = daysOverdueOf(o.installAt!);
+    return {
+      id: `${o.id}:i`,
+      orderId: o.id,
+      number: o.number,
+      kind: 'install' as const,
+      at: o.installAt!,
+      isOverdue: d > 0,
+      daysOverdue: d,
+      clientName: o.clientName,
+      clientPhone: o.clientPhone,
+      clientAddress: o.clientAddress,
+      worker: o.installer ? { id: o.installer.id, fullName: o.installer.fullName } : null,
+    };
+  });
 
   const events = [...surveys, ...installs].sort((a, b) => a.at.getTime() - b.at.getTime());
 
   // Сводка. Границы суток считаем в МСК (сервер в UTC).
-  const today = mskDayStart(now);
+  const today = todayStart;
   const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
 
   const summary: ScheduleSummary = {

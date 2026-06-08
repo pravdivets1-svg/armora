@@ -4,17 +4,33 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ChevronRight, MapPin } from 'lucide-react';
 
-// Тонкая, плоская карточка-«следующее событие» в духе Linear:
-// hairline-border, без заливок, акценты только через цвет текста и
-// тонкую полосу слева. Никакой пульсации/тяжёлых теней.
+// Тонкая, плоская карточка-«следующее событие» в духе Linear.
+//
+// Цветовая шкала «горячести» (по daysOverdue из серверной выборки):
+//   today/future — нейтрал (или accent если совсем скоро)
+//   1 день после — warn (мягкий оранж)
+//   2+ дней     — bad (красный)
 
-function formatCountdown(targetMs: number): { primary: string; secondary: string; tone: 'live' | 'soon' | 'far' | 'past' } {
+type Tone = 'live' | 'soon' | 'far' | 'warn' | 'past';
+
+function formatCountdown(targetMs: number, daysOverdue: number): { primary: string; secondary: string; tone: Tone } {
   const diff = targetMs - Date.now();
   if (diff <= 0) {
     const past = Math.abs(diff);
     const m = Math.floor(past / 60_000);
-    if (m < 60) return { primary: `${m} мин назад`, secondary: 'просрочено', tone: 'past' };
     const h = Math.floor(m / 60);
+    // День назначения — событие «идёт» / «было сегодня», не «просрочено»
+    if (daysOverdue === 0) {
+      if (m < 60) return { primary: `${m} мин назад`, secondary: 'идёт сегодня', tone: 'live' };
+      if (h < 24) return { primary: `${h} ч назад`, secondary: 'идёт сегодня', tone: 'live' };
+    }
+    // Вчера — мягкое предупреждение
+    if (daysOverdue === 1) {
+      if (m < 60) return { primary: `${m} мин назад`, secondary: 'вчера, нужно решение', tone: 'warn' };
+      if (h < 48) return { primary: `${h} ч назад`, secondary: 'вчера, нужно решение', tone: 'warn' };
+    }
+    // 2+ дней — настоящая просрочка
+    if (m < 60) return { primary: `${m} мин назад`, secondary: 'просрочено', tone: 'past' };
     if (h < 24) return { primary: `${h} ч назад`, secondary: 'просрочено', tone: 'past' };
     return { primary: `${Math.floor(h / 24)} д назад`, secondary: 'просрочено', tone: 'past' };
   }
@@ -36,6 +52,7 @@ export default function NextEventCard({
   workerName,
   atIso,
   timeLabel,
+  daysOverdue = 0,
 }: {
   orderId: string;
   kind: 'survey' | 'install';
@@ -45,6 +62,7 @@ export default function NextEventCard({
   workerName?: string;
   atIso: string;
   timeLabel: string;
+  daysOverdue?: number;
 }) {
   const target = new Date(atIso).getTime();
   const [, setTick] = useState(0);
@@ -53,18 +71,19 @@ export default function NextEventCard({
     return () => clearInterval(id);
   }, []);
 
-  const cd = formatCountdown(target);
+  const cd = formatCountdown(target, daysOverdue);
   const isSurvey = kind === 'survey';
   const kindLabel = isSurvey ? 'Замер' : 'Установка';
 
-  // Левая полоса — единственный цветовой акцент.
   const stripe =
     cd.tone === 'past' ? 'bg-bad2' :
+    cd.tone === 'warn' ? 'bg-warn2' :
     cd.tone === 'live' || cd.tone === 'soon' ? 'bg-accent' :
     isSurvey ? 'bg-info2' : 'bg-ok2';
 
   const primaryColor =
     cd.tone === 'past' ? 'text-bad2' :
+    cd.tone === 'warn' ? 'text-warn2' :
     cd.tone === 'live' || cd.tone === 'soon' ? 'text-accent' :
     'text-text1';
 

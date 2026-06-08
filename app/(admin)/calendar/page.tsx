@@ -47,7 +47,9 @@ export default async function CalendarPage({
   }
 
   // Просрочка отдельно — над лентой будущего.
-  const overdueEvents = events.filter((e) => e.at < today);
+  // День назначения = НЕ просрочка (есть весь день для действий).
+  // Просрочка начинается со следующего МСК-дня.
+  const overdueEvents = events.filter((e) => e.daysOverdue > 0);
 
   // Лента 21 день от сегодня.
   const horizon: { key: string; date: Date; events: ScheduleEvent[] }[] = [];
@@ -57,8 +59,12 @@ export default async function CalendarPage({
     horizon.push({ key, date: d, events: byDay.get(key) ?? [] });
   }
 
-  // Next upcoming event для hero-блока (включая сегодня).
-  const nextEvent = events.find((e) => e.at >= now) ?? null;
+  // Next upcoming event для hero-блока (включая сегодня — даже если время прошло).
+  const nextEvent =
+    events.find((e) => e.daysOverdue === 0 && e.at >= now)
+    ?? events.find((e) => e.daysOverdue === 0)
+    ?? events.find((e) => e.at >= now)
+    ?? null;
 
   const showRoute = !isStaff(me.role);
   const todayPoints = showRoute
@@ -101,6 +107,7 @@ export default async function CalendarPage({
             workerName={nextEvent.worker?.fullName}
             atIso={nextEvent.at.toISOString()}
             timeLabel={fmtTime(nextEvent.at)}
+            daysOverdue={nextEvent.daysOverdue}
           />
         )}
 
@@ -243,8 +250,15 @@ function EventRow({
     ? 'bg-info2/[0.08] text-info2'
     : 'bg-ok2/[0.08] text-ok2';
 
-  const isPast = tone === 'past';
-  const rowDim = isPast ? 'opacity-60' : '';
+  // Плавная цветовая шкала по daysOverdue:
+  //   0 (сегодня/будущее) — нейтрал text-text2
+  //   1 (вчера)           — warn text-warn2
+  //   2+                  — bad text-bad2
+  const timeColor =
+    e.daysOverdue >= 2 ? 'text-bad2' :
+    e.daysOverdue === 1 ? 'text-warn2' :
+    'text-text2';
+  const rowDim = tone === 'past' ? (e.daysOverdue >= 2 ? 'opacity-60' : 'opacity-80') : '';
 
   return (
     <li className={rowDim}>
@@ -256,8 +270,7 @@ function EventRow({
                    focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
       >
         {/* Время */}
-        <span className={`shrink-0 w-12 text-[14px] tabular-nums
-                          ${isPast ? 'text-bad2' : 'text-text2'}`}>
+        <span className={`shrink-0 w-12 text-[14px] tabular-nums ${timeColor}`}>
           {fmtTime(e.at)}
         </span>
 

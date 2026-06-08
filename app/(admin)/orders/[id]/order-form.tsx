@@ -14,6 +14,7 @@ import { Save, AlertCircle, CheckCircle2, AlertTriangle, Lock, Phone } from 'luc
 import type { Stage, Role } from '@prisma/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, Input, Textarea, Select, FieldLabel } from '@/components/ui';
+import { IntervalPicker, SURVEY_DEFAULT_HOURS, INSTALL_DEFAULT_HOURS } from '@/components/uikit';
 import { fmtMoney, phoneDigits } from '@/lib/format';
 import { Metric } from '@/components/metric';
 import StageStepper from '@/components/stage-stepper';
@@ -358,25 +359,14 @@ export default function OrderForm({
           )}
 
           <Card title="Замер">
-            <FieldLabel>Дата и интервал</FieldLabel>
-            <div className="mt-1 grid grid-cols-2 gap-2">
-              <Input
-                type="datetime-local" name="surveyAt"
-                defaultValue={toLocalInputValue(order?.surveyAt ?? null)}
-                disabled={disableClient}
-                aria-label="Начало интервала замера"
-              />
-              <Input
-                type="datetime-local" name="surveyEndAt"
-                defaultValue={toLocalInputValue(order?.surveyEndAt ?? null)}
-                disabled={disableClient}
-                aria-label="Конец интервала замера"
-                placeholder="до"
-              />
-            </div>
-            <p className="text-[11px] text-text3 mt-1">
-              Второе поле — конец интервала. Оставьте пустым, если время точное.
-            </p>
+            <IntervalPicker
+              name="survey"
+              defaultStart={order?.surveyAt ?? null}
+              defaultEnd={order?.surveyEndAt ?? null}
+              defaultDurationHours={SURVEY_DEFAULT_HOURS}
+              disabled={disableClient}
+              onChange={scheduleAutosave}
+            />
             {fe['surveyAt']    && <span className="text-xs text-bad2 mt-1 block">{fe['surveyAt']}</span>}
             {fe['surveyEndAt'] && <span className="text-xs text-bad2 mt-1 block">{fe['surveyEndAt']}</span>}
             <label className="block mt-3">
@@ -391,25 +381,14 @@ export default function OrderForm({
           </Card>
 
           <Card title="Установка">
-            <FieldLabel>Дата и интервал</FieldLabel>
-            <div className="mt-1 grid grid-cols-2 gap-2">
-              <Input
-                type="datetime-local" name="installAt"
-                defaultValue={toLocalInputValue(order?.installAt ?? null)}
-                disabled={disableClient}
-                aria-label="Начало интервала установки"
-              />
-              <Input
-                type="datetime-local" name="installEndAt"
-                defaultValue={toLocalInputValue(order?.installEndAt ?? null)}
-                disabled={disableClient}
-                aria-label="Конец интервала установки"
-                placeholder="до"
-              />
-            </div>
-            <p className="text-[11px] text-text3 mt-1">
-              Второе поле — конец интервала. Оставьте пустым, если время точное.
-            </p>
+            <IntervalPicker
+              name="install"
+              defaultStart={order?.installAt ?? null}
+              defaultEnd={order?.installEndAt ?? null}
+              defaultDurationHours={INSTALL_DEFAULT_HOURS}
+              disabled={disableClient}
+              onChange={scheduleAutosave}
+            />
             {fe['installAt']    && <span className="text-xs text-bad2 mt-1 block">{fe['installAt']}</span>}
             {fe['installEndAt'] && <span className="text-xs text-bad2 mt-1 block">{fe['installEndAt']}</span>}
             <label className="block mt-3">

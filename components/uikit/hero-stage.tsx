@@ -47,8 +47,8 @@ export function HeroStage({
   const days = daysSince(enteredAt);
 
   const cardCls =
-    isPendingClosureAsDirector ? 'bg-accent-soft border-accent/40 shadow-accent-glow'
-    : isPendingClosureOther    ? 'bg-warn2-soft border-warn2/40'
+    isPendingClosureAsDirector ? 'bg-accent/[0.06] border-accent/25'
+    : isPendingClosureOther    ? 'bg-warn2/[0.07] border-warn2/25'
     : 'bg-card border-borderc';
 
   return (
@@ -71,6 +71,7 @@ export function HeroStage({
 
       {isPendingClosureAsDirector && onApproveClosure ? (
         <Button
+          variant="accent"
           size="lg"
           block
           disabled={pending}
@@ -84,6 +85,7 @@ export function HeroStage({
         </p>
       ) : next ? (
         <Button
+          variant="accent"
           size="lg"
           block
           disabled={pending}

@@ -1,14 +1,13 @@
 // Аватар-инициалы с цветовой заливкой по роли.
-// Помогает мгновенно идентифицировать "кто я сейчас" в шапке + используется
-// в списках сотрудников (назначения, комментарии).
+// Используется в шапке + в списках сотрудников.
 
 import type { Role } from '@prisma/client';
 
 const ROLE_COLORS: Record<Role, { bg: string; text: string; ring: string }> = {
-  director:  { bg: 'bg-ink-900',     text: 'text-white',         ring: 'ring-ink-900/10' },
+  director:  { bg: 'bg-text1',       text: 'text-white',         ring: 'ring-text1/10' },
   manager:   { bg: 'bg-accent',      text: 'text-white',         ring: 'ring-accent/10' },
-  surveyor:  { bg: 'bg-blue-100',    text: 'text-blue-800',      ring: 'ring-blue-200/40' },
-  installer: { bg: 'bg-emerald-100', text: 'text-emerald-800',   ring: 'ring-emerald-200/40' },
+  surveyor:  { bg: 'bg-info2/10',    text: 'text-info2',         ring: 'ring-info2/20' },
+  installer: { bg: 'bg-ok2/10',      text: 'text-ok2',           ring: 'ring-ok2/20' },
 };
 
 const SIZES = {

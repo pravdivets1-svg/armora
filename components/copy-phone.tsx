@@ -1,7 +1,6 @@
 'use client';
 
-// Клик по телефону → копирует номер, кнопка мигает "Скопировано".
-// Используется в таблице заказов и карточках лидов.
+// Клик по телефону → копирует номер. Используется в таблице заказов и карточках лидов.
 
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
@@ -10,7 +9,7 @@ export default function CopyPhone({ phone }: { phone: string }) {
   const [copied, setCopied] = useState(false);
 
   async function copy(e: React.MouseEvent) {
-    e.preventDefault(); // не переходить по overlay-ссылке строки
+    e.preventDefault();
     e.stopPropagation();
     try {
       await navigator.clipboard.writeText(phone);
@@ -27,14 +26,14 @@ export default function CopyPhone({ phone }: { phone: string }) {
       className={`group inline-flex items-center gap-1.5 tabular-nums text-[14px]
                   rounded px-0.5 -mx-0.5 transition-colors
                   ${copied
-                    ? 'text-ok'
-                    : 'text-ink-700 hover:text-ink-900'}`}
+                    ? 'text-ok2'
+                    : 'text-text2 hover:text-text1'}`}
     >
       <span>{phone}</span>
       <span className={`opacity-0 group-hover:opacity-100 transition-opacity ${copied ? 'opacity-100' : ''}`}>
         {copied
-          ? <Check size={12} className="text-ok" />
-          : <Copy size={11} className="text-ink-400" />}
+          ? <Check size={12} className="text-ok2" />
+          : <Copy size={11} className="text-text3" />}
       </span>
     </button>
   );

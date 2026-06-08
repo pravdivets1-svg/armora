@@ -242,7 +242,7 @@ export default function NotificationsBlock() {
         onClick={enable}
         disabled={busy}
         block
-        className="mt-3 !bg-text1 hover:!bg-text1/90 !text-white !border-transparent"
+        className="mt-3"
       >
         {busy ? 'Включаем…' : 'Включить уведомления'}
       </Button>

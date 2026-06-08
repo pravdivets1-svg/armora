@@ -1,15 +1,7 @@
 'use client';
 
 // Command Palette — Cmd+K / "/" / клик по триггеру в шапке.
-// Объединяет глобальный поиск и быстрые действия:
-//   - Создать заказ (director+manager)
-//   - Перейти: Заказы / Расписание / На закрытие
-//   - Прыжок к "Сегодня" в расписании
-//   - Свободный поиск → /orders?q=<value>
-//
-// Без внешних зависимостей: своя реализация фильтра + клавиатурная навигация.
-// Для замыкания фокус-trap'а используем простой подход: при открытии — input
-// получает focus, при Esc — закрываем; клик по backdrop — закрываем.
+// Объединяет глобальный поиск и быстрые действия.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -92,7 +84,6 @@ export default function CommandPalette({ role }: { role: Role }) {
     return list;
   }, [role, go]);
 
-  // Фильтр + динамический "поисковый" пункт
   const filtered = useMemo<Item[]>(() => {
     const q = query.trim().toLowerCase();
     const base = q
@@ -111,7 +102,6 @@ export default function CommandPalette({ role }: { role: Role }) {
     return base;
   }, [items, query, go]);
 
-  // Группировка
   const grouped = useMemo(() => {
     const map = new Map<Item['group'], Item[]>();
     for (const it of filtered) {
@@ -121,7 +111,6 @@ export default function CommandPalette({ role }: { role: Role }) {
     return [...map.entries()];
   }, [filtered]);
 
-  // Глобальный хоткей открытия
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       const target = e.target as HTMLElement | null;
@@ -142,7 +131,6 @@ export default function CommandPalette({ role }: { role: Role }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  // Фокус на input при открытии
   useEffect(() => {
     if (open) {
       const t = setTimeout(() => inputRef.current?.focus(), 30);
@@ -150,7 +138,6 @@ export default function CommandPalette({ role }: { role: Role }) {
     }
   }, [open]);
 
-  // Сброс активного при фильтре
   useEffect(() => { setActiveIdx(0); }, [query]);
 
   function onPaletteKey(e: React.KeyboardEvent) {
@@ -179,16 +166,16 @@ export default function CommandPalette({ role }: { role: Role }) {
         type="button"
         onClick={() => setOpen(true)}
         className="hidden 2xl:inline-flex items-center gap-2 w-64
-                   bg-ink-900/[0.04] hover:bg-ink-900/[0.06]
-                   border border-transparent hover:border-ink-900/10
-                   rounded-lg pl-3 pr-2 py-1.5 text-[13px] text-ink-500
+                   bg-subtle/70 hover:bg-subtle
+                   border border-transparent hover:border-borderc
+                   rounded-lg pl-3 pr-2 py-1.5 text-[13px] text-text3
                    transition-colors"
         aria-label="Открыть command palette"
       >
-        <Search size={14} className="text-ink-400" />
+        <Search size={14} className="text-text3" />
         <span className="flex-1 text-left">Поиск или команда…</span>
-        <span className="inline-flex items-center gap-0.5 text-[10px] text-ink-500
-                         border border-line bg-white rounded px-1.5 py-0.5 font-mono leading-none">
+        <span className="inline-flex items-center gap-0.5 text-[10px] text-text3
+                         border border-borderc bg-card rounded px-1.5 py-0.5 font-mono leading-none">
           <CmdIcon size={9} /> K
         </span>
       </button>
@@ -197,7 +184,7 @@ export default function CommandPalette({ role }: { role: Role }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="2xl:hidden w-10 h-10 inline-flex items-center justify-center rounded-md text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06]"
+        className="2xl:hidden w-10 h-10 inline-flex items-center justify-center rounded-md text-text3 hover:text-text1 hover:bg-subtle"
         aria-label="Поиск"
       >
         <Search size={16} />
@@ -210,7 +197,7 @@ export default function CommandPalette({ role }: { role: Role }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-50 bg-ink-900/40 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-text1/40 backdrop-blur-sm"
             onClick={close}
           >
             <motion.div
@@ -219,34 +206,34 @@ export default function CommandPalette({ role }: { role: Role }) {
               exit={{ opacity: 0, y: -8, scale: 0.98 }}
               transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
               className="mx-auto mt-[12vh] max-w-xl w-[calc(100%-2rem)]
-                         bg-white rounded-2xl border border-line shadow-soft-lg
+                         bg-card rounded-2xl border border-borderc shadow-soft-lg
                          overflow-hidden"
               onClick={(e) => e.stopPropagation()}
               onKeyDown={onPaletteKey}
               role="dialog"
               aria-label="Command palette"
             >
-              <div className="flex items-center gap-3 px-5 py-4 border-b border-line">
-                <Search size={18} className="text-ink-400 shrink-0" />
+              <div className="flex items-center gap-3 px-5 py-4 border-b border-borderc">
+                <Search size={18} className="text-text3 shrink-0" />
                 <input
                   ref={inputRef}
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Поиск заказов или команда…"
                   className="flex-1 bg-transparent border-0 outline-none text-[15px]
-                             text-ink-900 placeholder:text-ink-400"
+                             text-text1 placeholder:text-text3"
                 />
-                <kbd className="text-[10px] text-ink-500 border border-line bg-canvas rounded px-1.5 py-0.5 font-mono leading-none">
+                <kbd className="text-[10px] text-text3 border border-borderc bg-subtle rounded px-1.5 py-0.5 font-mono leading-none">
                   Esc
                 </kbd>
               </div>
               <div className="max-h-[60vh] overflow-y-auto py-2">
                 {filtered.length === 0 && (
-                  <div className="px-5 py-10 text-center text-[13px] text-ink-500">Ничего не найдено</div>
+                  <div className="px-5 py-10 text-center text-[13px] text-text3">Ничего не найдено</div>
                 )}
                 {grouped.map(([group, list]) => (
                   <div key={group} className="px-2 pb-2">
-                    <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] text-ink-400 font-medium">
+                    <div className="px-3 py-1.5 text-[10px] uppercase tracking-[0.15em] text-text3 font-medium">
                       {group}
                     </div>
                     {list.map((it) => {
@@ -260,21 +247,21 @@ export default function CommandPalette({ role }: { role: Role }) {
                           onMouseEnter={() => setActiveIdx(idx)}
                           onClick={() => it.onRun()}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left
-                                      ${active ? 'bg-ink-900/[0.05]' : 'hover:bg-ink-900/[0.03]'}`}
+                                      ${active ? 'bg-subtle' : 'hover:bg-subtle/60'}`}
                         >
-                          <Icon size={16} className={active ? 'text-ink-900' : 'text-ink-500'} />
+                          <Icon size={16} className={active ? 'text-text1' : 'text-text3'} />
                           <div className="flex-1 min-w-0">
-                            <div className="text-[14px] text-ink-900 font-medium">{it.label}</div>
-                            {it.hint && <div className="text-[12px] text-ink-500 mt-0.5 truncate">{it.hint}</div>}
+                            <div className="text-[14px] text-text1 font-medium">{it.label}</div>
+                            {it.hint && <div className="text-[12px] text-text3 mt-0.5 truncate">{it.hint}</div>}
                           </div>
-                          {active && <ArrowRight size={14} className="text-ink-400" />}
+                          {active && <ArrowRight size={14} className="text-text3" />}
                         </button>
                       );
                     })}
                   </div>
                 ))}
               </div>
-              <div className="px-5 py-2.5 border-t border-line bg-canvas/50 text-[11px] text-ink-500
+              <div className="px-5 py-2.5 border-t border-borderc bg-subtle/50 text-[11px] text-text3
                               flex items-center justify-between">
                 <span>↑↓ навигация · Enter — выполнить</span>
                 <span className="inline-flex items-center gap-1">

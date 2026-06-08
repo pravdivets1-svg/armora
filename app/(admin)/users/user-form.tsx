@@ -182,7 +182,6 @@ function SubmitButton({ mode }: { mode: 'create' | 'edit' }) {
       type="submit"
       variant="primary"
       disabled={pending}
-      className="!bg-text1 hover:!bg-text1/90 !text-white !border-transparent !shadow-none"
     >
       <Save size={14} />
       {pending ? 'Сохранение…' : mode === 'create' ? 'Создать сотрудника' : 'Сохранить'}

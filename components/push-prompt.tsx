@@ -112,17 +112,17 @@ export default function PushPrompt() {
       role="dialog"
       aria-label="Включить уведомления"
       className="fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-40
-                 bg-white border border-line rounded-xl shadow-soft
+                 bg-card border border-borderc rounded-xl shadow-soft
                  p-4 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-4"
     >
-      <div className="w-9 h-9 rounded-full bg-ink-900 text-white inline-flex items-center justify-center shrink-0">
+      <div className="w-9 h-9 rounded-full bg-text1 text-white inline-flex items-center justify-center shrink-0">
         <Bell size={16} />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="font-semibold text-ink-900 text-[14px] leading-tight">
+        <div className="font-semibold text-text1 text-[14px] leading-tight">
           Включить уведомления
         </div>
-        <p className="text-[13px] text-ink-600 mt-1 leading-snug">
+        <p className="text-[13px] text-text2 mt-1 leading-snug">
           Чтобы не пропускать новые заявки, замеры и установки — даже когда вкладка закрыта.
         </p>
         <div className="flex items-center gap-2 mt-3">
@@ -130,8 +130,8 @@ export default function PushPrompt() {
             type="button"
             onClick={enable}
             disabled={state === 'busy'}
-            className="px-3 py-1.5 rounded-md bg-ink-900 text-white text-[13px] font-medium
-                       hover:bg-ink-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 rounded-md bg-text1 text-white text-[13px] font-medium
+                       hover:bg-text1/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {state === 'busy' ? 'Включаем…' : 'Включить'}
           </button>
@@ -139,8 +139,8 @@ export default function PushPrompt() {
             type="button"
             onClick={dismiss}
             disabled={state === 'busy'}
-            className="px-3 py-1.5 rounded-md text-ink-500 text-[13px] hover:text-ink-900
-                       hover:bg-ink-900/[0.06] transition-colors"
+            className="px-3 py-1.5 rounded-md text-text3 text-[13px] hover:text-text1
+                       hover:bg-subtle transition-colors"
           >
             Не сейчас
           </button>
@@ -150,7 +150,7 @@ export default function PushPrompt() {
         type="button"
         onClick={dismiss}
         aria-label="Закрыть"
-        className="text-ink-400 hover:text-ink-700 p-1 -mt-1 -mr-1 rounded shrink-0"
+        className="text-text3 hover:text-text2 p-1 -mt-1 -mr-1 rounded shrink-0"
       >
         <X size={14} />
       </button>

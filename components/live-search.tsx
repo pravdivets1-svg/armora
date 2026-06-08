@@ -1,8 +1,6 @@
 'use client';
 
 // Поиск с debounce: автоматически отправляет форму через 600ms после ввода.
-// Показывает spinner пока идёт навигация (useTransition).
-// Очистка — крестик появляется когда есть текст.
 
 import { useRef, useState, useTransition } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
@@ -18,7 +16,6 @@ export default function LiveSearch({
   name?: string;
   defaultValue?: string;
   placeholder?: string;
-  /** Имена других query-параметров, которые нужно сохранить при поиске */
   preserve?: string[];
   className?: string;
 }) {
@@ -56,8 +53,7 @@ export default function LiveSearch({
 
   return (
     <div className={`relative flex-1 min-w-0 ${className}`}>
-      {/* Иконка слева: loader когда грузится, иначе лупа */}
-      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none z-10">
+      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text3 pointer-events-none z-10">
         {isPending
           ? <Loader2 size={14} className="animate-spin" />
           : <Search size={14} />
@@ -71,10 +67,10 @@ export default function LiveSearch({
         aria-label={placeholder}
         autoComplete="off"
         className={`block w-full min-w-0 pl-10 pr-9 h-10 rounded-md text-[14px]
-                    bg-ink-900/[0.04] border border-transparent text-ink-900
-                    shadow-[inset_0_1px_2px_rgba(15,15,15,0.06)]
-                    placeholder:text-ink-400
-                    focus:outline-none focus:bg-white focus:border-ink-900/25 focus:ring-4 focus:ring-ink-900/5 focus:shadow-none
+                    bg-subtle/70 border border-transparent text-text1
+                    placeholder:text-text3
+                    focus:outline-none focus:bg-card focus:border-text2/30 focus:ring-1 focus:ring-text2/20
+                    transition-colors
                     ${isPending ? 'opacity-75' : ''}`}
       />
       {value && (
@@ -84,7 +80,7 @@ export default function LiveSearch({
           aria-label="Очистить поиск"
           className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10
                      w-5 h-5 flex items-center justify-center rounded
-                     text-ink-400 hover:text-ink-900 hover:bg-ink-900/[0.06]
+                     text-text3 hover:text-text1 hover:bg-subtle
                      transition-colors"
         >
           <X size={12} />

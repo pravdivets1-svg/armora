@@ -1,18 +1,19 @@
-// UI-примитивы. OkoCRM-style: синий акцент, чистые карточки.
+// Legacy UI-примитивы. Linear/Vercel tokens: subtle borders, neutral palette.
+// Используется в формах вне uikit-зоны (логин, /users, /orders/[id]).
 
 import { forwardRef } from 'react';
 
-// text-[16px] на мобиле обязателен — иначе iOS Safari делает auto-zoom при фокусе.
-// На lg+ возвращаем 14px для визуальной плотности.
+// text-[16px] на мобиле — иначе iOS Safari зумит при фокусе.
+// На lg+ возвращаем 14px для плотности.
 const inputBase =
   'block w-full min-w-0 max-w-full box-border ' +
-  'bg-white border border-line text-ink-900 rounded-md ' +
-  'px-3 py-2 text-[16px] lg:text-[14px] leading-6 placeholder:text-ink-400 ' +
-  'focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/20 ' +
-  'disabled:bg-canvas disabled:text-ink-500';
+  'bg-card border border-borderc text-text1 rounded-md ' +
+  'px-3 py-2 text-[16px] lg:text-[14px] leading-6 placeholder:text-text3 ' +
+  'focus:outline-none focus:border-text2 focus:ring-1 focus:ring-text2/30 ' +
+  'disabled:bg-subtle disabled:text-text3';
 
 export const FieldLabel = ({ children }: { children: React.ReactNode }) => (
-  <span className="text-[12px] tracking-wide text-ink-500 font-medium">
+  <span className="text-[12px] tracking-wide text-text3 font-medium">
     {children}
   </span>
 );
@@ -42,17 +43,20 @@ export function Select({ className = '', children, ...rest }: SelectProps) {
 }
 
 // =====================================================================
-// Button
+// Button (legacy — для форм вне uikit-зоны)
 // =====================================================================
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'success' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'success' | 'danger' | 'accent';
 
 const BTN_VARIANT: Record<ButtonVariant, string> = {
-  primary:   'bg-accent hover:bg-accent-hover text-white font-medium',
-  secondary: 'bg-white hover:bg-canvas text-ink-900 border border-line',
-  ghost:     'text-ink-700 hover:bg-canvas',
-  success:   'bg-ok hover:bg-[#15803d] text-white font-medium',
-  danger:    'text-bad hover:bg-bad/5 border border-transparent',
+  // primary = нейтральный near-black, по дефолту
+  primary:   'bg-text1 hover:bg-text1/90 text-white font-medium',
+  // accent = синий, только для критичных CTA
+  accent:    'bg-accent hover:bg-accent-hover text-white font-medium',
+  secondary: 'bg-card hover:bg-subtle text-text1 border border-borderc',
+  ghost:     'text-text2 hover:bg-subtle hover:text-text1',
+  success:   'bg-ok2 hover:bg-ok2/90 text-white font-medium',
+  danger:    'text-bad2 hover:bg-bad2-soft border border-transparent',
 };
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -64,6 +68,7 @@ export function Button({ variant = 'primary', className = '', children, ...rest 
     <button
       className={`inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-md
                   text-[13.5px] disabled:opacity-50 disabled:cursor-not-allowed
+                  transition-colors duration-fast ease-soft
                   ${BTN_VARIANT[variant]} ${className}`}
       {...rest}
     >
@@ -73,7 +78,7 @@ export function Button({ variant = 'primary', className = '', children, ...rest 
 }
 
 // =====================================================================
-// Card — белый блок с тонкой рамкой
+// Card — белый блок с тонкой рамкой (плоский, без тени)
 // =====================================================================
 
 export function Card({
@@ -88,9 +93,9 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`bg-white border border-line rounded-lg p-5 shadow-soft ${className}`}>
+    <section className={`bg-card border border-borderc rounded-lg p-5 ${className}`}>
       {title && (
-        <div className="flex items-center gap-2 text-[12px] text-ink-500 font-medium mb-4 pb-3 border-b border-line">
+        <div className="flex items-center gap-2 text-[12px] text-text3 font-medium mb-4 pb-3 border-b border-borderc/60">
           {icon}
           {title}
         </div>

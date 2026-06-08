@@ -36,8 +36,8 @@ export default function DensityToggle() {
       onClick={toggle}
       title={density === 'comfortable' ? 'Компактный режим' : 'Просторный режим'}
       className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md
-                 text-[12px] text-ink-500 hover:text-ink-900
-                 border border-line hover:border-ink-900/20 bg-white transition-colors"
+                 text-[12px] text-text3 hover:text-text1
+                 border border-borderc hover:border-text2/40 bg-card transition-colors"
     >
       {density === 'comfortable' ? <Rows3 size={13} /> : <Rows2 size={13} />}
       <span className="hidden md:inline">{density === 'comfortable' ? 'Просторно' : 'Компактно'}</span>

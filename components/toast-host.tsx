@@ -42,11 +42,11 @@ export default function ToastHost() {
         position="bottom-right"
         toastOptions={{
           classNames: {
-            toast: 'rounded-xl border border-line bg-white shadow-soft-lg text-ink-900',
+            toast: 'rounded-xl border border-borderc bg-card shadow-soft-lg text-text1',
             title: 'text-[14px] font-medium',
-            description: 'text-[13px] text-ink-500',
-            success: 'border-l-4 border-l-ok',
-            error:   'border-l-4 border-l-bad',
+            description: 'text-[13px] text-text3',
+            success: 'border-l-4 border-l-ok2',
+            error:   'border-l-4 border-l-bad2',
           },
         }}
       />

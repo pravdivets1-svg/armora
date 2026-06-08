@@ -1,5 +1,4 @@
 // Универсальные skeleton-блоки для loading.tsx.
-// Использование: <SkeletonRow /> <SkeletonCard /> <SkeletonHeader />.
 
 export function Skeleton({ className = '' }: { className?: string }) {
   return <div className={`skeleton ${className}`} aria-hidden="true" />;
@@ -17,7 +16,7 @@ export function SkeletonHeader() {
 
 export function SkeletonRow() {
   return (
-    <div className="bg-white border border-line rounded-lg p-4 space-y-2">
+    <div className="bg-card border border-borderc rounded-lg p-4 space-y-2">
       <div className="flex items-center justify-between gap-4">
         <Skeleton className="h-3 w-16" />
         <Skeleton className="h-5 w-24" />
@@ -32,7 +31,7 @@ export function SkeletonStatRow({ count = 3 }: { count?: number }) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
       {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="rounded-2xl border border-line bg-white p-5 md:p-6 space-y-3">
+        <div key={i} className="rounded-2xl border border-borderc bg-card p-5 md:p-6 space-y-3">
           <Skeleton className="h-3 w-20" />
           <Skeleton className="h-9 w-16" />
         </div>
@@ -43,9 +42,9 @@ export function SkeletonStatRow({ count = 3 }: { count?: number }) {
 
 export function SkeletonTable({ rows = 6 }: { rows?: number }) {
   return (
-    <div className="bg-white border border-line rounded-2xl overflow-hidden">
+    <div className="bg-card border border-borderc rounded-2xl overflow-hidden">
       {Array.from({ length: rows }).map((_, i) => (
-        <div key={i} className="flex items-center gap-4 px-5 py-4 border-b border-line/60 last:border-0">
+        <div key={i} className="flex items-center gap-4 px-5 py-4 border-b border-borderc/60 last:border-0">
           <Skeleton className="h-4 w-8" />
           <Skeleton className="h-4 flex-1 max-w-[200px]" />
           <Skeleton className="h-4 w-32" />

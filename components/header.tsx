@@ -1,6 +1,5 @@
 // TopBar — правая часть шапки (поиск, пользователь, push, logout).
-// Гамбургер-кнопка живёт в AdminShell (клиентский).
-// Этот компонент — серверный, принимает данные пропсами из layout.tsx.
+// Серверный компонент, принимает данные пропсами из layout.tsx.
 
 import { Suspense } from 'react';
 import { LogOut } from 'lucide-react';
@@ -29,8 +28,8 @@ export default function Header({ user }: HeaderProps) {
         <div className="hidden md:flex items-center gap-2 text-[13px] px-2">
           <RoleAvatar role={user.role} name={user.name} />
           <div className="flex flex-col leading-tight">
-            <span className="text-ink-900 font-medium truncate max-w-[140px]">{user.name}</span>
-            <span className="text-ink-500 text-[11px]">{ROLE_LABEL[user.role].toLowerCase()}</span>
+            <span className="text-text1 font-medium truncate max-w-[140px]">{user.name}</span>
+            <span className="text-text3 text-[11px]">{ROLE_LABEL[user.role].toLowerCase()}</span>
           </div>
         </div>
       )}
@@ -40,7 +39,7 @@ export default function Header({ user }: HeaderProps) {
           type="submit"
           aria-label="Выйти"
           title="Выйти"
-          className="text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.05]
+          className="text-text3 hover:text-text1 hover:bg-subtle
                      w-9 h-9 inline-flex items-center justify-center rounded-md transition-colors"
         >
           <LogOut size={15} />

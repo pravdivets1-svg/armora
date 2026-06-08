@@ -172,10 +172,9 @@ export default async function ClosuresPage() {
                         <form action={approveAction.bind(null, o.id)}>
                           <Button
                             type="submit"
-                            variant="primary"
+                            variant="accent"
                             size="sm"
                             disabled={incompleteFinances}
-                            className="!bg-accent hover:!bg-accent-deep"
                           >
                             <CheckCircle2 size={14} /> Закрыть заказ
                           </Button>

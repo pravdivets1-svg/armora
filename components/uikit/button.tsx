@@ -2,11 +2,16 @@
 
 import { forwardRef } from 'react';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'dark' | 'accent' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
+// primary = нейтральный near-black (Linear default).
+// dark    = алиас primary, явное имя если хочется подчеркнуть.
+// accent  = синий, только для критичных stage-CTA (перевод этапа, конверсия лида).
 const VARIANT: Record<Variant, string> = {
-  primary:   'bg-accent text-white hover:bg-accent-deep active:bg-accent-deep shadow-card',
+  primary:   'bg-text1 text-white hover:bg-text1/90 active:bg-text1/95',
+  dark:      'bg-text1 text-white hover:bg-text1/90 active:bg-text1/95',
+  accent:    'bg-accent text-white hover:bg-accent-deep active:bg-accent-deep',
   secondary: 'bg-card text-text1 border border-borderc hover:bg-subtle',
   ghost:     'text-text2 hover:bg-subtle hover:text-text1',
   danger:    'text-bad2 hover:bg-bad2-soft',

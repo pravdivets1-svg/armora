@@ -45,8 +45,8 @@ export default function StageStepper({
 
   return (
     <div
-      className="flex items-stretch overflow-x-auto rounded-xl border border-line bg-white
-                 -mx-1 px-1 py-1 gap-0.5 scrollbar-none shadow-soft"
+      className="flex items-stretch overflow-x-auto rounded-xl border border-borderc bg-card
+                 -mx-1 px-1 py-1 gap-0.5 scrollbar-none"
       role="tablist"
       aria-label="Этап заказа"
     >
@@ -60,19 +60,19 @@ export default function StageStepper({
           'flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-[12px] font-medium whitespace-nowrap shrink-0 transition-colors';
         let look: string;
         if (isCurrent) {
-          look = 'bg-accent text-white shadow-accent-glow';
+          look = 'bg-accent text-white';
         } else if (isPast) {
-          look = 'text-ink-700';
+          look = 'text-text2';
         } else if (interactive) {
-          look = 'text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.04]';
+          look = 'text-text3 hover:text-text1 hover:bg-subtle/70';
         } else {
-          look = 'text-ink-300';
+          look = 'text-text3/60';
         }
 
         const inner = (
           <>
-            {isPast && <Check size={11} className="text-ok shrink-0" />}
-            {!isPast && !isCurrent && !interactive && <Lock size={10} className="text-ink-300 shrink-0" />}
+            {isPast && <Check size={11} className="text-ok2 shrink-0" />}
+            {!isPast && !isCurrent && !interactive && <Lock size={10} className="text-text3/60 shrink-0" />}
             {!isPast && !isCurrent && interactive && (
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-current opacity-40 shrink-0" />
             )}

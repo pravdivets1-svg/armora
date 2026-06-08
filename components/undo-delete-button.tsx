@@ -71,8 +71,8 @@ export default function UndoDeleteButton({
   }
 
   const cls = variant === 'danger'
-    ? 'text-bad hover:bg-bad/5 disabled:opacity-50'
-    : 'text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06] disabled:opacity-50';
+    ? 'text-bad2 hover:bg-bad2-soft disabled:opacity-50'
+    : 'text-text3 hover:text-text1 hover:bg-subtle disabled:opacity-50';
 
   return (
     <button

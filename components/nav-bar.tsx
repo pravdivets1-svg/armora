@@ -1,10 +1,8 @@
 'use client';
 
 // Навигация шапки.
-// Десктоп (md+): inline-таблетки с layoutId-pill анимацией активного пункта.
-// Мобильно (<md): кнопка-гамбургер раскрывает выпадающий список пунктов.
-// Это нужно потому что у директора 5 пунктов + лого + поиск + аватар + push +
-// logout не помещаются в одну строку на узких экранах и уезжали вправо.
+// Десктоп (xl+): inline-таблетки с layoutId-pill анимацией активного пункта.
+// Мобильно (<xl): кнопка-гамбургер раскрывает выпадающий список.
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -18,10 +16,8 @@ export default function NavBar({ items }: { items: NavItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  // Закрываем мобильное меню при переходе по ссылке (pathname изменился)
   useEffect(() => { setOpen(false); }, [pathname]);
 
-  // Esc закрывает
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
@@ -29,14 +25,11 @@ export default function NavBar({ items }: { items: NavItem[] }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  // Сумма всех бейджей — для индикатора на гамбургере
   const totalBadge = items.reduce((s, i) => s + (i.badge || 0), 0);
 
   return (
     <>
-      {/* Десктоп: inline pills (только на широких экранах от xl=1280px,
-          т.к. у директора 5 пунктов + лого + поиск + push + logout не
-          помещаются в одну строку даже на стандартном 13"-ноутбуке 1366px). */}
+      {/* Десктоп: inline pills */}
       <LayoutGroup id="nav">
         <nav className="hidden xl:flex items-center gap-1 relative">
           {items.map((item) => {
@@ -46,12 +39,12 @@ export default function NavBar({ items }: { items: NavItem[] }) {
                 key={item.href}
                 href={item.href}
                 className={`relative inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[14px] z-10 whitespace-nowrap
-                            ${active ? 'text-ink-900 font-semibold' : 'text-ink-500 hover:text-ink-900 font-medium'}`}
+                            ${active ? 'text-text1 font-semibold' : 'text-text3 hover:text-text1 font-medium'}`}
               >
                 {active && (
                   <motion.span
                     layoutId="nav-pill"
-                    className="absolute inset-0 rounded-full bg-ink-900/[0.06] -z-10"
+                    className="absolute inset-0 rounded-full bg-text1/[0.06] -z-10"
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -68,14 +61,14 @@ export default function NavBar({ items }: { items: NavItem[] }) {
         </nav>
       </LayoutGroup>
 
-      {/* Мобильно: кнопка-гамбургер */}
+      {/* Мобильно: гамбургер */}
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-label="Меню"
         aria-expanded={open}
         className="xl:hidden relative w-10 h-10 inline-flex items-center justify-center rounded-md
-                   text-ink-500 hover:text-ink-900 hover:bg-ink-900/[0.06] transition-colors"
+                   text-text3 hover:text-text1 hover:bg-subtle transition-colors"
       >
         {open ? <X size={18} /> : <Menu size={18} />}
         {!open && totalBadge > 0 && (
@@ -92,7 +85,7 @@ export default function NavBar({ items }: { items: NavItem[] }) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="xl:hidden fixed inset-0 top-16 bg-ink-900/20 z-20"
+              className="xl:hidden fixed inset-0 top-16 bg-text1/20 z-20"
               onClick={() => setOpen(false)}
             />
             <motion.nav
@@ -100,7 +93,7 @@ export default function NavBar({ items }: { items: NavItem[] }) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.18 }}
-              className="xl:hidden absolute left-0 right-0 top-full bg-white border-b border-line shadow-soft z-30"
+              className="xl:hidden absolute left-0 right-0 top-full bg-card border-b border-borderc shadow-soft z-30"
             >
               <ul className="max-w-6xl mx-auto px-4 py-2">
                 {items.map((item) => {
@@ -110,7 +103,7 @@ export default function NavBar({ items }: { items: NavItem[] }) {
                       <Link
                         href={item.href}
                         className={`flex items-center justify-between px-3 h-12 rounded-md text-[15px]
-                                    ${active ? 'bg-ink-900/[0.06] text-ink-900 font-semibold' : 'text-ink-700 hover:bg-ink-900/[0.04]'}`}
+                                    ${active ? 'bg-text1/[0.06] text-text1 font-semibold' : 'text-text2 hover:bg-subtle'}`}
                       >
                         <span>{item.label}</span>
                         {!!item.badge && item.badge > 0 && (

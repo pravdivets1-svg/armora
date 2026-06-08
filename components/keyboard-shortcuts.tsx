@@ -105,38 +105,38 @@ export default function KeyboardShortcuts() {
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-ink-900/40 backdrop-blur-sm
+      className="fixed inset-0 z-50 bg-text1/40 backdrop-blur-sm
                  flex items-center justify-center p-6"
       onClick={() => setOpen(false)}
       role="dialog"
       aria-label="Горячие клавиши"
     >
       <div
-        className="bg-white rounded-2xl border border-line shadow-soft-lg
+        className="bg-card rounded-2xl border border-borderc shadow-soft-lg
                    max-w-sm w-full overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-line">
-          <div className="inline-flex items-center gap-2 text-[14px] font-medium text-ink-900">
-            <Keyboard size={14} className="text-ink-500" />
+        <div className="flex items-center justify-between px-5 py-4 border-b border-borderc">
+          <div className="inline-flex items-center gap-2 text-[14px] font-medium text-text1">
+            <Keyboard size={14} className="text-text3" />
             Горячие клавиши
           </div>
           <button
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Закрыть"
-            className="text-ink-500 hover:text-ink-900 w-8 h-8 inline-flex items-center justify-center rounded-md hover:bg-ink-900/[0.06]"
+            className="text-text3 hover:text-text1 w-8 h-8 inline-flex items-center justify-center rounded-md hover:bg-subtle"
           >
             <X size={14} />
           </button>
         </div>
-        <ul className="px-5 py-3 divide-y divide-line/60">
+        <ul className="px-5 py-3 divide-y divide-borderc/60">
           {SHORTCUTS.map((s) => (
             <li key={s.keys} className="py-2.5 flex items-center justify-between gap-3 text-[13px]">
-              <span className="text-ink-700">{s.label}</span>
+              <span className="text-text2">{s.label}</span>
               <span className="inline-flex items-center gap-1">
                 {s.keys.split(' ').map((k, i) => (
-                  <kbd key={i} className="px-1.5 py-0.5 rounded border border-line bg-canvas text-[11px] text-ink-700 font-mono leading-none">
+                  <kbd key={i} className="px-1.5 py-0.5 rounded border border-borderc bg-subtle text-[11px] text-text2 font-mono leading-none">
                     {k}
                   </kbd>
                 ))}

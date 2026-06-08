@@ -103,7 +103,7 @@ export default function SavedViews({
 
   return (
     <div className="flex items-center gap-1.5 flex-wrap text-[12px]">
-      <Pin size={12} className="text-ink-400" />
+      <Pin size={12} className="text-text3" />
       {views.map((v) => {
         const active = v.query === currentQuery;
         return (
@@ -112,8 +112,8 @@ export default function SavedViews({
             className={`inline-flex items-center gap-1.5 rounded-full pl-3 pr-1 py-1
                         border transition-colors
                         ${active
-                          ? 'bg-ink-900 border-ink-900 text-white'
-                          : 'bg-white border-line text-ink-700 hover:border-ink-900/20'}`}
+                          ? 'bg-text1 border-text1 text-white'
+                          : 'bg-card border-borderc text-text2 hover:border-text2/40'}`}
           >
             <button
               type="button"
@@ -127,7 +127,7 @@ export default function SavedViews({
               onClick={() => removeView(v.id)}
               aria-label="Удалить view"
               className={`inline-flex items-center justify-center w-5 h-5 rounded-full
-                          ${active ? 'hover:bg-white/20' : 'hover:bg-ink-900/[0.06] text-ink-500'}`}
+                          ${active ? 'hover:bg-white/20' : 'hover:bg-subtle text-text3'}`}
             >
               <XIcon size={11} />
             </button>
@@ -139,7 +139,7 @@ export default function SavedViews({
           type="button"
           onClick={saveCurrent}
           className="inline-flex items-center gap-1 px-3 py-1 rounded-full
-                     border border-dashed border-ink-900/20 text-ink-700 hover:bg-ink-900/[0.04]
+                     border border-dashed border-borderc text-text2 hover:bg-subtle/60
                      text-[12px] font-medium transition-colors"
         >
           <Plus size={11} /> Сохранить вид

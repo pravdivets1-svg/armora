@@ -5,7 +5,7 @@ import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { loadSchedule, type ScheduleEvent } from '@/lib/schedule';
 import { fmtTime, mskDayKey, mskDayStart, isSameMskDay, initials } from '@/lib/format';
 import { prisma } from '@/lib/prisma';
-import { PageHeader, Empty } from '@/components/uikit';
+import { PageHeader, Empty, HintCard } from '@/components/uikit';
 import CalendarUserFilter from './user-filter';
 import TodayRouteCard from './today-route';
 import NextEventCard from './next-event-card';
@@ -87,6 +87,11 @@ export default async function CalendarPage({
       <PageHeader title="Календарь" sub={subline} />
 
       <div className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 pb-12 space-y-4">
+
+        <HintCard hintId="calendar-intro" title="Лента 21 день">
+          События идут плотным списком. Сегодня подсвечен полоской слева — серый цвет события
+          не значит «опоздал», это можно сделать сегодня. Желтеет только со следующего дня.
+        </HintCard>
 
         {/* Фильтр сотрудников */}
         {isStaff(me.role) && assignable.length > 0 && (

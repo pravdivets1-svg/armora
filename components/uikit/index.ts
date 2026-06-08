@@ -16,3 +16,4 @@ export * from './stage-ladder';
 export * from './hero-stage';
 export * from './order-card';
 export * from './interval-picker';
+export * from './hint-card';

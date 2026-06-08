@@ -96,8 +96,6 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
           onApproveClosure={approveAction}
         />
 
-        <PublicLinkBlock url={publicUrl} clientPhone={order.clientPhone} />
-
         <OrderPhotos
           orderId={order.id}
           initial={photoMetas.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() }))}
@@ -125,6 +123,8 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         />
 
         {isStaff(me.role) && <EventLog events={events} />}
+
+        <PublicLinkBlock url={publicUrl} clientPhone={order.clientPhone} />
       </div>
     </>
   );

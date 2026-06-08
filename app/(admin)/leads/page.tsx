@@ -6,7 +6,7 @@ import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { LEAD_STAGE_LABEL, LEAD_STAGE_ORDER } from '@/lib/lead-labels';
-import { PageHeader, PillTabs, Empty, LeadPill } from '@/components/uikit';
+import { PageHeader, PillTabs, Empty, LeadPill, HintCard } from '@/components/uikit';
 import LiveSearch from '@/components/live-search';
 import LeadsBulkBar from './bulk-bar';
 
@@ -127,6 +127,11 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
       <PageHeader title="Заявки" sub={`${leads.length} в текущем фильтре`} />
 
       <div className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 space-y-3 pb-12">
+
+        <HintCard hintId="leads-intro" title="Откуда заявки">
+          С сайта и калькулятора. Зелёная точка — новая. Откройте, проверьте детали и
+          превратите в заказ одной кнопкой — назначите замерщика прямо здесь.
+        </HintCard>
 
         {/* Поиск */}
         <LiveSearch

@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/uikit';
+import InitialSplash from '@/components/uikit/initial-splash';
 import PageTransition from '@/components/page-transition';
 import ToastHost from '@/components/toast-host';
 import FaviconBadge from '@/components/favicon-badge';
@@ -43,6 +44,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <Suspense fallback={null}><ToastHost /></Suspense>
       <FaviconBadge enabled={showLeadBadge} />
       <PushPrompt />
+      <InitialSplash />
     </AppShell>
   );
 }

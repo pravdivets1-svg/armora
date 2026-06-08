@@ -6,11 +6,12 @@ import { requireUser } from '@/lib/auth-helpers';
 import { listOrders, listAssignableUsers } from '@/lib/orders';
 import { STAGE_LABEL, STAGE_ORDER } from '@/lib/labels';
 import {
-  PageHeader, Button, OrderCard, Empty, PillTabs,
+  PageHeader, Button, OrderCard, Empty, PillTabs, HintCard,
 } from '@/components/uikit';
 import LiveSearch from '@/components/live-search';
 import AutoSubmitSelect from '@/components/auto-submit-select';
 import FilterSheet from './filter-sheet';
+import { StaleTasksBanner, getStaleCounts } from '@/components/stale-tasks-banner';
 
 export const metadata = { title: 'Заказы — Armora' };
 export const dynamic = 'force-dynamic';
@@ -32,14 +33,16 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
   const filter = searchParams.filter ?? 'all';
   const userIdFilter = filter === 'mine' ? me.id : searchParams.user;
 
-  const { items, total, page, pageCount } = await listOrders(me, {
-    q: searchParams.q,
-    stage,
-    userId: userIdFilter,
-    page: Number(searchParams.page) || 1,
-  });
-
-  const assignable = await listAssignableUsers();
+  const [{ items, total, page, pageCount }, assignable, staleCounts] = await Promise.all([
+    listOrders(me, {
+      q: searchParams.q,
+      stage,
+      userId: userIdFilter,
+      page: Number(searchParams.page) || 1,
+    }),
+    listAssignableUsers(),
+    getStaleCounts(me),
+  ]);
 
   const pluralize = (n: number) =>
     `${n} ${n === 1 ? 'заказ' : n < 5 ? 'заказа' : 'заказов'}`;
@@ -83,6 +86,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
       />
 
       <div className="px-4 lg:px-6 pt-4 space-y-3 max-w-6xl mx-auto">
+        <StaleTasksBanner counts={staleCounts} />
+
+        <HintCard hintId="orders-intro" title="Как работать с заказами">
+          Тап по карточке открывает заказ. Этап меняется кликом по сегменту вверху.
+          Цвет карточки — её стадия: зелёные готовы, янтарные в производстве, синие у замерщика.
+        </HintCard>
+
         <div className="flex items-center gap-2">
           <div className="flex-1">
             <LiveSearch

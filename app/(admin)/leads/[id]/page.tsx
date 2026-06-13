@@ -6,7 +6,7 @@ import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { fmtDateTime, fmtMoney } from '@/lib/format';
 import { LEAD_STAGE_LABEL } from '@/lib/lead-labels';
-import { PageHeader, SectionCard, KeyValueRow, LeadPill } from '@/components/uikit';
+import { PageHeader, SectionCard, KeyValueRow, LeadPill, InsetGroup, InsetRow } from '@/components/uikit';
 import LeadActions from './lead-actions';
 
 export const dynamic = 'force-dynamic';
@@ -116,36 +116,27 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
         )}
 
         {/* Контакты */}
-        <SectionCard title="Контакты">
-          <KeyValueRow
+        <InsetGroup label="Контакты">
+          <InsetRow
+            icon={<Phone size={15} />}
             label="Телефон"
-            value={
-              <a href={`tel:${lead.clientPhone.replace(/\s+/g, '')}`} className="text-accent tabular-nums hover:underline">
-                {lead.clientPhone}
-              </a>
-            }
-            action={<Phone size={14} className="text-text3" />}
+            value={<span className="tabular-nums">{lead.clientPhone}</span>}
+            href={`tel:${lead.clientPhone.replace(/\s+/g, '')}`}
+            external
           />
           {lead.clientAddress && (
-            <KeyValueRow
+            <InsetRow
+              icon={<MapPin size={15} />}
               label="Адрес"
-              value={
-                <a
-                  href={`https://yandex.ru/maps/?text=${encodeURIComponent(lead.clientAddress)}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-text1 hover:text-accent"
-                >
-                  {lead.clientAddress}
-                </a>
-              }
-              action={<MapPin size={14} className="text-text3" />}
+              value={lead.clientAddress}
+              href={`https://yandex.ru/maps/?text=${encodeURIComponent(lead.clientAddress)}`}
+              external
             />
           )}
           {lead.assignedTo && (
-            <KeyValueRow label="Ведёт" value={lead.assignedTo.fullName} />
+            <InsetRow label="Ведёт" value={lead.assignedTo.fullName} />
           )}
-        </SectionCard>
+        </InsetGroup>
 
         {/* Дверь из каталога — если клиент выбрал конкретную модель на сайте.
             Linear-стиль: ведёт себя как обычная SectionCard, цена нейтральная (без accent),
@@ -197,17 +188,16 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
         )}
 
         {/* Параметры двери (размеры замера + ориентир. цена) */}
-        <SectionCard title="Размер и расчёт">
-          <KeyValueRow label="Ширина" value={lead.widthMm ? `${lead.widthMm} мм` : '—'} mono />
-          <KeyValueRow label="Высота" value={lead.heightMm ? `${lead.heightMm} мм` : '—'} mono />
-          <KeyValueRow
+        <InsetGroup label="Размер и расчёт">
+          <InsetRow label="Ширина" value={<span className="tabular-nums">{lead.widthMm ? `${lead.widthMm} мм` : '—'}</span>} />
+          <InsetRow label="Высота" value={<span className="tabular-nums">{lead.heightMm ? `${lead.heightMm} мм` : '—'}</span>} />
+          <InsetRow
             label="Ориентир. цена"
-            value={lead.estimatedPrice && Number(lead.estimatedPrice) > 0
+            value={<span className="tabular-nums">{lead.estimatedPrice && Number(lead.estimatedPrice) > 0
               ? fmtMoney(Number(lead.estimatedPrice))
-              : '—'}
-            mono
+              : '—'}</span>}
           />
-        </SectionCard>
+        </InsetGroup>
 
         {/* Комментарий */}
         {lead.comment && lead.comment.trim() && (
@@ -221,20 +211,20 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
 
         {/* Доп параметры калькулятора */}
         {payloadEntries.length > 0 && (
-          <SectionCard title="Доп. параметры с калькулятора">
+          <InsetGroup label="Доп. параметры с калькулятора">
             {payloadEntries.map(([k, v]) => (
-              <KeyValueRow key={k} label={k} value={String(v)} />
+              <InsetRow key={k} label={k} value={String(v)} />
             ))}
-          </SectionCard>
+          </InsetGroup>
         )}
 
         {/* UTM */}
         {(lead.utmSource || lead.utmMedium || lead.utmCampaign) && (
-          <SectionCard title="UTM-метки">
-            <KeyValueRow label="Source" value={lead.utmSource ?? '—'} mono />
-            <KeyValueRow label="Medium" value={lead.utmMedium ?? '—'} mono />
-            <KeyValueRow label="Campaign" value={lead.utmCampaign ?? '—'} mono />
-          </SectionCard>
+          <InsetGroup label="UTM-метки">
+            <InsetRow label="Source"   value={<span className="tabular-nums">{lead.utmSource ?? '—'}</span>} />
+            <InsetRow label="Medium"   value={<span className="tabular-nums">{lead.utmMedium ?? '—'}</span>} />
+            <InsetRow label="Campaign" value={<span className="tabular-nums">{lead.utmCampaign ?? '—'}</span>} />
+          </InsetGroup>
         )}
 
         {/* Действия (статусы, назначение, удаление) */}

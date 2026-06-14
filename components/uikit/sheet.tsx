@@ -47,8 +47,8 @@ export function Sheet({
           />
           <motion.div
             className={isDesktop
-              ? 'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-card rounded-lg shadow-popover w-[min(560px,calc(100vw-32px))] max-h-[85vh] flex flex-col overflow-hidden'
-              : 'fixed inset-x-0 bottom-0 z-50 bg-card rounded-t-sheet shadow-popover max-h-[92vh] flex flex-col overflow-hidden'
+              ? 'fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 glass-surface-strong rounded-2xl w-[min(560px,calc(100vw-32px))] max-h-[85vh] flex flex-col overflow-hidden'
+              : 'fixed inset-x-0 bottom-0 z-50 glass-surface-strong rounded-t-[28px] max-h-[92vh] flex flex-col overflow-hidden'
             }
             initial={isDesktop ? { opacity: 0, scale: 0.96 } : { y: '100%' }}
             animate={isDesktop ? { opacity: 1, scale: 1 } : { y: 0 }}

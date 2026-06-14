@@ -47,12 +47,12 @@ export function HeroStage({
   const days = daysSince(enteredAt);
 
   const cardCls =
-    isPendingClosureAsDirector ? 'bg-accent/[0.06] border-accent/25'
-    : isPendingClosureOther    ? 'bg-warn2/[0.07] border-warn2/25'
-    : 'bg-card border-borderc';
+    isPendingClosureAsDirector ? 'glass-surface-strong ring-2 ring-accent/30'
+    : isPendingClosureOther    ? 'glass-surface-strong ring-2 ring-warn2/30'
+    : 'glass-surface-strong';
 
   return (
-    <section className={`rounded-md border ${cardCls} p-4 sm:p-5`}>
+    <section className={`rounded-2xl ${cardCls} p-4 sm:p-5`}>
       <div className="flex items-center justify-between gap-3 mb-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <StagePill stage={current} daysInStage={days} size="md" />

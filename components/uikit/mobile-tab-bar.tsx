@@ -35,8 +35,7 @@ export function MobileTabBar({
 
   return (
     <nav
-      className="lg:hidden fixed inset-x-0 bottom-0 z-40 bg-card/90 backdrop-blur
-                 border-t border-borderc"
+      className="lg:hidden fixed inset-x-0 bottom-0 z-40 glass-strip border-t"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       aria-label="Главная навигация"
     >

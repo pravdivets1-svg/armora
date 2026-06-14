@@ -5,15 +5,15 @@ import { forwardRef } from 'react';
 type Variant = 'primary' | 'dark' | 'accent' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
-// primary = нейтральный near-black (Linear default).
-// dark    = алиас primary, явное имя если хочется подчеркнуть.
-// accent  = синий, только для критичных stage-CTA (перевод этапа, конверсия лида).
+// primary = графит-стекло (gradient + inset highlight) — main CTA в Liquid Glass.
+// dark    = алиас primary.
+// accent  = синий glass, для критичных stage-CTA.
 const VARIANT: Record<Variant, string> = {
-  primary:   'bg-text1 text-white hover:bg-text1/90 active:bg-text1/95',
-  dark:      'bg-text1 text-white hover:bg-text1/90 active:bg-text1/95',
+  primary:   'glass-button-dark text-white',
+  dark:      'glass-button-dark text-white',
   accent:    'bg-accent text-white hover:bg-accent-deep active:bg-accent-deep',
-  secondary: 'bg-card text-text1 border border-borderc hover:bg-subtle',
-  ghost:     'text-text2 hover:bg-subtle hover:text-text1',
+  secondary: 'glass-surface text-text1',
+  ghost:     'text-text2 hover:bg-white/30 hover:text-text1',
   danger:    'text-bad2 hover:bg-bad2-soft',
 };
 

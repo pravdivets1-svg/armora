@@ -99,36 +99,56 @@ export default function OrderPhotos({
 
   return (
     <Card title="Фото" icon={<FileImage size={12} />}>
-      {/* Загрузка */}
-      <div className="flex flex-wrap items-center gap-2 mb-3">
-        <select
-          value={uploadKind}
-          onChange={(e) => setUploadKind(e.target.value as PhotoMeta['kind'])}
-          className="h-10 rounded-md border border-borderc bg-card px-3 text-[13px] text-text1
-                     focus:outline-none focus:border-text1/20 focus:ring-2 focus:ring-text1/5"
-          aria-label="Тип фото"
-        >
-          {KINDS.map((k) => (
-            <option key={k} value={k}>{KIND_LABEL[k]}</option>
-          ))}
-        </select>
-        <label
-          className={`inline-flex items-center justify-center gap-2 px-4 h-10 rounded-md text-[13px]
-                      bg-text1 hover:bg-text1/90 text-white font-medium transition-colors cursor-pointer
-                      ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
-        >
-          {uploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
-          {uploading ? 'Загрузка…' : 'Добавить фото'}
+      {/* Загрузка: 4 большие плитки, каждая → камера телефона напрямую.
+          Тап по плитке открывает заднюю камеру iPhone (capture="environment"),
+          снял — автозагрузка с правильным kind. Никаких dropdown'ов. */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2">
+        {KINDS.map((k) => (
+          <label
+            key={k}
+            className={`flex flex-col items-center justify-center gap-1.5 h-20
+                        rounded-md border border-borderc bg-subtle/40
+                        text-text1 text-[13px] font-medium
+                        cursor-pointer transition-colors
+                        hover:bg-subtle hover:border-text2/40
+                        active:scale-[0.98]
+                        ${uploading ? 'opacity-50 pointer-events-none' : ''}`}
+          >
+            <Camera size={20} className="text-text2" strokeWidth={1.75} />
+            <span>{KIND_LABEL[k]}</span>
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              capture="environment"
+              className="sr-only"
+              onChange={(e) => {
+                setUploadKind(k);
+                handleFiles(e.target.files);
+              }}
+              disabled={uploading}
+            />
+          </label>
+        ))}
+      </div>
+      <div className="flex items-center justify-between gap-3 mb-3 text-[11px] text-text3">
+        <span>JPEG/PNG/WebP · до 5 МБ</span>
+        {uploading && (
+          <span className="inline-flex items-center gap-1.5 text-text2">
+            <Loader2 size={12} className="animate-spin" /> Загрузка…
+          </span>
+        )}
+        <label className="cursor-pointer hover:text-text1 transition-colors underline-offset-2 hover:underline">
+          из галереи
           <input
             ref={inputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
             multiple
-            className="hidden"
+            className="sr-only"
             onChange={(e) => handleFiles(e.target.files)}
+            disabled={uploading}
           />
         </label>
-        <span className="text-[11px] text-text3">JPEG/PNG/WebP · до 5 МБ</span>
       </div>
 
       {/* Сетка */}

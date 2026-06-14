@@ -43,8 +43,8 @@ export function InsetGroup({
           {action}
         </header>
       )}
-      <div className="bg-card border border-borderc rounded-2xl overflow-hidden
-                      divide-y divide-borderc/60">
+      <div className="glass-surface rounded-2xl overflow-hidden
+                      divide-y divide-white/40">
         {children}
       </div>
       {footer && (

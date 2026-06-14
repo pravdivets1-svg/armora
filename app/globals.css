@@ -12,9 +12,15 @@ html {
   text-rendering: optimizeLegibility;
 }
 body {
-  background: #F4F4F6;
+  /* Liquid Glass: мягкий graphite-градиент, чтоб стеклу было что преломлять */
+  background:
+    radial-gradient(1200px 800px at 0% 0%, rgba(180, 184, 195, 0.45), transparent 60%),
+    radial-gradient(900px 700px at 100% 100%, rgba(155, 160, 170, 0.40), transparent 55%),
+    linear-gradient(180deg, #ECECEF 0%, #E3E4E8 50%, #DCDDE1 100%);
+  background-attachment: fixed;
   color: #17181B;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  min-height: 100vh;
 }
 
 /* =====================================================================
@@ -157,4 +163,48 @@ html[data-density="compact"] .table-density thead th {
 @keyframes splash-pulse {
   0%   { transform: translateX(-100%); }
   100% { transform: translateX(200%); }
+}
+
+/* =====================================================================
+   Liquid Glass utility — used across primary surfaces.
+   Refractive edge = тонкое внутреннее свечение (top) + наружный край.
+   ===================================================================== */
+.glass-surface {
+  background: rgba(255, 255, 255, 0.62);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 1px 2px rgba(15, 16, 18, 0.04),
+    0 8px 24px -8px rgba(15, 16, 18, 0.10);
+}
+.glass-surface-strong {
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(28px) saturate(180%);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 1px 2px rgba(15, 16, 18, 0.05),
+    0 12px 32px -8px rgba(15, 16, 18, 0.14);
+}
+.glass-strip {
+  background: rgba(244, 244, 246, 0.72);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border-color: rgba(214, 215, 218, 0.6);
+}
+.glass-button-dark {
+  background:
+    linear-gradient(180deg, rgba(45, 46, 50, 0.95) 0%, rgba(23, 24, 27, 1) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 1px 2px rgba(0, 0, 0, 0.10),
+    0 6px 16px -6px rgba(0, 0, 0, 0.35);
+}
+.glass-button-dark:hover {
+  background:
+    linear-gradient(180deg, rgba(58, 59, 63, 1) 0%, rgba(34, 35, 38, 1) 100%);
 }

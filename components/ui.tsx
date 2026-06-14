@@ -93,9 +93,9 @@ export function Card({
   className?: string;
 }) {
   return (
-    <section className={`bg-card border border-borderc rounded-lg p-5 ${className}`}>
+    <section className={`glass-surface rounded-2xl p-5 ${className}`}>
       {title && (
-        <div className="flex items-center gap-2 text-[12px] text-text3 font-medium mb-4 pb-3 border-b border-borderc/60">
+        <div className="flex items-center gap-2 text-[12px] text-text3 font-medium mb-4 pb-3 border-b border-white/40">
           {icon}
           {title}
         </div>

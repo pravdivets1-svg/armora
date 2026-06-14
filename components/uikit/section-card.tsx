@@ -10,7 +10,7 @@ export function SectionCard({
   className?: string;
 }) {
   return (
-    <section className={`bg-card border border-borderc rounded-lg ${className}`}>
+    <section className={`glass-surface rounded-2xl ${className}`}>
       <header className="flex items-center justify-between px-5 pt-5 pb-3">
         <h2 className="text-meta uppercase tracking-wide text-text3">{title}</h2>
         {action}

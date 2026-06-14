@@ -21,8 +21,7 @@ export function PageHeader({
 
   return (
     <header
-      className="sticky top-0 z-30 bg-card/80 backdrop-blur supports-[backdrop-filter]:bg-card/70
-                 border-b border-borderc"
+      className="sticky top-0 z-30 glass-strip border-b"
       style={{ height: isDesktop ? 64 : 56 }}
     >
       <div className="flex items-center gap-2 h-full px-3 sm:px-4">

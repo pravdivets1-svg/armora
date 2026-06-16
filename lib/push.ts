@@ -11,6 +11,7 @@ import {
   notifyInstallerMax,
   notifyClosureMax,
 } from '@/lib/max';
+import { filterUsersByEventAllowed, isEventAllowed, type EventKey } from '@/lib/notification-events';
 
 const PUBLIC_KEY  = process.env.VAPID_PUBLIC_KEY;
 const PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
@@ -77,21 +78,23 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload): 
 }
 
 // Отправить всем директорам — для уведомления «На закрытие»
-export async function sendPushToDirectors(payload: PushPayload): Promise<void> {
+export async function sendPushToDirectors(payload: PushPayload, event?: EventKey): Promise<void> {
   const directors = await prisma.user.findMany({
     where: { role: 'director', isActive: true },
-    select: { id: true },
+    select: { id: true, role: true },
   });
-  await sendPushToUsers(directors.map((u) => u.id), payload);
+  const allowed = event ? await filterUsersByEventAllowed(directors, event) : directors;
+  await sendPushToUsers(allowed.map((u) => u.id), payload);
 }
 
 // Отправить директорам и менеджерам — для входящих заявок с сайта
-export async function sendPushToStaff(payload: PushPayload): Promise<void> {
+export async function sendPushToStaff(payload: PushPayload, event?: EventKey): Promise<void> {
   const staff = await prisma.user.findMany({
     where: { role: { in: ['director', 'manager'] }, isActive: true },
-    select: { id: true },
+    select: { id: true, role: true },
   });
-  await sendPushToUsers(staff.map((u) => u.id), payload);
+  const allowed = event ? await filterUsersByEventAllowed(staff, event) : staff;
+  await sendPushToUsers(allowed.map((u) => u.id), payload);
 }
 
 // Не оборачивать триггеры в await на критическом пути — глушим ошибки тут.
@@ -150,12 +153,21 @@ export async function notifyOrderChanges(
     (surveyorChanged || surveyAtChanged || !before)
   ) {
     tasks.push(
-      sendPushToUser(after.surveyorId, {
-        title: `Замер · № ${after.number}`,
-        body: `${after.clientName} · ${after.clientAddress} · ${fmtWhen(after.surveyAt)}`,
-        url,
-        tag: `order-${after.id}-survey`,
-      }),
+      (async () => {
+        const surveyor = await prisma.user.findUnique({
+          where: { id: after.surveyorId! },
+          select: { role: true },
+        });
+        if (!surveyor) return;
+        const ok = await isEventAllowed(surveyor.role, 'surveyAssigned');
+        if (!ok) return;
+        await sendPushToUser(after.surveyorId!, {
+          title: `Замер · № ${after.number}`,
+          body: `${after.clientName} · ${after.clientAddress} · ${fmtWhen(after.surveyAt!)}`,
+          url,
+          tag: `order-${after.id}-survey`,
+        });
+      })(),
     );
     // MAX: берём maxUserId замерщика
     tasks.push(
@@ -185,12 +197,21 @@ export async function notifyOrderChanges(
     (installerChanged || installAtChanged || becameReady || !before)
   ) {
     tasks.push(
-      sendPushToUser(after.installerId, {
-        title: `Установка · № ${after.number}`,
-        body: `${after.clientName} · ${after.clientAddress} · ${fmtWhen(after.installAt)}`,
-        url,
-        tag: `order-${after.id}-install`,
-      }),
+      (async () => {
+        const installer = await prisma.user.findUnique({
+          where: { id: after.installerId! },
+          select: { role: true },
+        });
+        if (!installer) return;
+        const ok = await isEventAllowed(installer.role, 'installAssigned');
+        if (!ok) return;
+        await sendPushToUser(after.installerId!, {
+          title: `Установка · № ${after.number}`,
+          body: `${after.clientName} · ${after.clientAddress} · ${fmtWhen(after.installAt!)}`,
+          url,
+          tag: `order-${after.id}-install`,
+        });
+      })(),
     );
     // MAX: берём maxUserId установщика
     tasks.push(
@@ -219,7 +240,7 @@ export async function notifyOrderChanges(
         body: `${after.clientName} ожидает подтверждения`,
         url: '/closures',
         tag: `order-${after.id}-closure`,
-      }),
+      }, 'pendingClosure'),
     );
     // MAX: директоры у которых есть maxUserId
     tasks.push(

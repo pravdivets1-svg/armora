@@ -42,6 +42,8 @@ model User {
   assignedLeads     Lead[]         @relation("AssignedLeads")
   events            OrderEvent[]
 
+  // Обратные связи на Order для напоминаний (orderRemindersSent живёт на Order, не на User)
+
   @@map("users")
 }
 
@@ -117,7 +119,8 @@ model Order {
   comments  OrderComment[]
   photos    OrderPhoto[]
   events    OrderEvent[]
-  fromLead  Lead?          @relation("ConvertedFromLead")
+  fromLead  Lead?               @relation("ConvertedFromLead")
+  remindersSent OrderReminderSent[]
 
   // Индексы под типичные запросы
   @@index([stage])
@@ -297,6 +300,51 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
+}
+
+// =====================================================================
+// Настройки уведомлений по ролям (директор управляет)
+// =====================================================================
+// Один singleton-ряд на роль. JSON-поле prefs хранит мапу
+// «событие → bool». Это позволяет добавлять новые типы событий
+// без миграции БД. Список валидных ключей живёт в lib/notification-events.ts.
+//
+// Когда сервер собирается отправить push (lib/push.ts), он сначала
+// читает NotificationPref для роли получателя и проверяет prefs[event].
+// Если false — не отправляем. Если ключа нет — считаем дефолтом true.
+model NotificationPref {
+  role      Role     @id
+  prefs     Json     @default("{}")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_prefs")
+}
+
+// =====================================================================
+// Отметка «напоминание о замере/установке уже отправлено»
+// =====================================================================
+// Cron-движок в lib/reminder-engine.ts каждую минуту проверяет
+// ближайшие назначенные замеры/установки. Чтобы не слать одно и то же
+// напоминание повторно, фиксируем факт отправки в этой таблице.
+//
+// kind:
+//   survey_24h, survey_3h — замер
+//   install_24h, install_3h — установка
+//
+// Уникальная пара (orderId, kind) — гарантирует один пуш на каждое
+// окно напоминания.
+
+model OrderReminderSent {
+  id      String   @id @default(uuid())
+  orderId String   @map("order_id")
+  kind    String                                // 'survey_24h' | 'survey_3h' | 'install_24h' | 'install_3h'
+  sentAt  DateTime @default(now()) @map("sent_at")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, kind])
+  @@index([orderId])
+  @@map("order_reminders_sent")
 }
 
 // =====================================================================

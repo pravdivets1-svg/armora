@@ -7,6 +7,17 @@
 // auth-токенов для source-maps upload), а просто включаем error reporting.
 
 export async function register() {
+  // Reminder loop — крутится только в Node-рантайме (edge нет setInterval).
+  // Запускаем независимо от Sentry, чтоб напоминания работали даже без DSN.
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
+    try {
+      const { startReminderLoop } = await import('@/lib/reminder-engine');
+      startReminderLoop();
+    } catch (e) {
+      console.warn('[instrumentation] reminder loop init failed', e);
+    }
+  }
+
   const dsn = process.env.SENTRY_DSN;
   if (!dsn) return;
 

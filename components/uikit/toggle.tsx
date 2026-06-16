@@ -14,6 +14,7 @@ export function Toggle({
   hint,
   disabled,
   name,
+  ariaLabel,
 }: {
   checked: boolean;
   onChange: (next: boolean) => void;
@@ -21,6 +22,7 @@ export function Toggle({
   hint?: string;
   disabled?: boolean;
   name?: string;
+  ariaLabel?: string;
 }) {
   const id = useId();
 
@@ -40,6 +42,7 @@ export function Toggle({
           id={id}
           type="checkbox"
           name={name}
+          aria-label={ariaLabel}
           checked={checked}
           onChange={(e) => onChange(e.target.checked)}
           disabled={disabled}

@@ -8,14 +8,29 @@
 //   телефон — необязательно
 //   роль    — director | manager | surveyor | installer
 
+import { useRef, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
-import { Save, AlertCircle } from 'lucide-react';
+import { Save, AlertCircle, Wand2, Copy, Check } from 'lucide-react';
 import type { Role } from '@prisma/client';
 import { Input, Select, FieldLabel } from '@/components/ui';
 import { SectionCard, Button } from '@/components/uikit';
 import UndoDeleteButton from '@/components/undo-delete-button';
 import { ROLE_LABEL } from '@/lib/labels';
 import { deleteUserAction, type UserActionState } from './actions';
+
+// Генератор 5-символьного пароля. Без визуально-похожих символов (0,O,1,l,I).
+function randomPassword(): string {
+  const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  let s = '';
+  const buf = new Uint32Array(5);
+  if (typeof window !== 'undefined' && window.crypto) {
+    window.crypto.getRandomValues(buf);
+    for (let i = 0; i < 5; i++) s += alphabet[buf[i] % alphabet.length];
+  } else {
+    for (let i = 0; i < 5; i++) s += alphabet[Math.floor(Math.random() * alphabet.length)];
+  }
+  return s;
+}
 
 type UserData = {
   id: string;
@@ -83,17 +98,7 @@ export default function UserForm({
               hint={mode === 'create' ? 'Ровно 5 символов' : 'Оставьте пустым, чтобы не менять'}
               error={fe('password')}
             >
-              <Input
-                type="text"
-                name="password"
-                defaultValue=""
-                placeholder={mode === 'create' ? 'a1b2c' : '·····'}
-                maxLength={5}
-                minLength={mode === 'create' ? 5 : 0}
-                required={mode === 'create'}
-                autoComplete="new-password"
-                className="font-mono tabular-nums"
-              />
+              <PasswordInputWithGen mode={mode} />
             </Field>
           </div>
         </SectionCard>
@@ -153,6 +158,68 @@ export default function UserForm({
           <SubmitButton mode={mode} />
         </div>
       </form>
+    </div>
+  );
+}
+
+// Поле пароля + две кнопки: «Сгенерировать» и «Скопировать в буфер».
+function PasswordInputWithGen({ mode }: { mode: 'create' | 'edit' }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [value, setValue] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  function gen() {
+    const next = randomPassword();
+    setValue(next);
+    inputRef.current?.focus();
+  }
+
+  async function copy() {
+    if (!value) return;
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch { /* clipboard может быть недоступен */ }
+  }
+
+  return (
+    <div className="flex gap-2">
+      <Input
+        ref={inputRef}
+        type="text"
+        name="password"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder={mode === 'create' ? 'a1b2c' : '·····'}
+        maxLength={5}
+        minLength={mode === 'create' ? 5 : 0}
+        required={mode === 'create'}
+        autoComplete="new-password"
+        className="flex-1 font-mono tabular-nums"
+      />
+      <button
+        type="button"
+        onClick={gen}
+        title="Сгенерировать пароль"
+        className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-md
+                   border border-borderc bg-card hover:bg-subtle text-text2 hover:text-text1
+                   transition-colors active:scale-[0.98]"
+      >
+        <Wand2 size={14} />
+      </button>
+      <button
+        type="button"
+        onClick={copy}
+        disabled={!value}
+        title={copied ? 'Скопировано' : 'Скопировать'}
+        className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-md
+                   border border-borderc bg-card hover:bg-subtle text-text2 hover:text-text1
+                   transition-colors active:scale-[0.98]
+                   disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100"
+      >
+        {copied ? <Check size={14} className="text-ok2" /> : <Copy size={14} />}
+      </button>
     </div>
   );
 }

@@ -1,9 +1,12 @@
 import { LogOut } from 'lucide-react';
+import type { Role } from '@prisma/client';
 import { requireUser } from '@/lib/auth-helpers';
 import { ROLE_LABEL } from '@/lib/labels';
 import { PageHeader, SectionCard, KeyValueRow, Button } from '@/components/uikit';
 import { logoutAction } from '@/app/(auth)/actions';
+import { getRolePrefs } from '@/lib/notification-events';
 import NotificationsBlock from './notifications-block';
+import DirectorNotificationsBlock from './director-notifications-block';
 
 export const metadata = { title: 'Профиль — Armora' };
 export const dynamic = 'force-dynamic';
@@ -16,6 +19,9 @@ function loginOf(email: string | null | undefined): string {
 
 export default async function SettingsPage() {
   const me = await requireUser();
+  const isDirector = me.role === 'director';
+  const matrix: Record<Role, Record<string, boolean>> | null =
+    isDirector ? await getRolePrefs() : null;
 
   return (
     <>
@@ -29,6 +35,10 @@ export default async function SettingsPage() {
         </SectionCard>
 
         <NotificationsBlock />
+
+        {isDirector && matrix && (
+          <DirectorNotificationsBlock initialMatrix={matrix} />
+        )}
 
         <SectionCard title="Сессия">
           <form action={logoutAction}>

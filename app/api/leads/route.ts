@@ -250,7 +250,7 @@ export async function POST(req: NextRequest) {
           body: `${d.clientName} · ${d.clientPhone}`,
           url: `/leads/${lead.id}`,
           tag: `lead-${lead.id}`,
-        }),
+        }, 'newLead'),
       ),
       notifyLeadCreatedTelegram(leadCtx, baseUrl)
         .catch((e) => console.warn('[telegram] notify failed', e)),

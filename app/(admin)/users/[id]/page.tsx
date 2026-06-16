@@ -65,10 +65,9 @@ export default async function EditUserPage({ params }: { params: { id: string } 
                     <XCircle size={14} className="text-bad2 shrink-0" />
                   )}
                   <span className="text-[13px] text-text1 flex-1 min-w-0">
-                    {a.ok ? 'Успех' : (a.reason === 'bad_password' ? 'Неверный пароль'
-                                     : a.reason === 'inactive'     ? 'Аккаунт отключён'
-                                     : a.reason === 'not_found'    ? 'Логин не найден'
-                                     : a.reason === 'blocked'      ? 'Заблокирован (брутфорс)'
+                    {a.ok ? 'Успех' : (a.reason === 'bad_credentials' ? 'Неверный логин или пароль'
+                                     : a.reason === 'inactive'         ? 'Аккаунт отключён'
+                                     : a.reason === 'blocked'          ? 'Заблокирован (брутфорс)'
                                      : 'Ошибка входа')}
                   </span>
                   {a.ip && (

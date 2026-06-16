@@ -348,6 +348,29 @@ export async function updateOrderAction(
 
   const updated = await prisma.order.update({ where: { id: orderId }, data });
 
+  // Если поменялась дата замера/установки — перезаводим окно напоминаний.
+  // Иначе старый ряд OrderReminderSent блокирует новый push (unique[orderId,kind]).
+  try {
+    const surveyTimeChanged =
+      (existing.surveyAt?.getTime() ?? 0) !== (updated.surveyAt?.getTime() ?? 0);
+    const installTimeChanged =
+      (existing.installAt?.getTime() ?? 0) !== (updated.installAt?.getTime() ?? 0);
+    const kindsToWipe: string[] = [];
+    if (surveyTimeChanged)  kindsToWipe.push('survey_24h', 'survey_3h');
+    if (installTimeChanged) kindsToWipe.push('install_24h', 'install_3h');
+    // На стадии closed напоминания уже не релевантны — чистим всё.
+    if (updated.stage === 'closed' && existing.stage !== 'closed') {
+      kindsToWipe.push('survey_24h', 'survey_3h', 'install_24h', 'install_3h');
+    }
+    if (kindsToWipe.length > 0) {
+      await prisma.orderReminderSent.deleteMany({
+        where: { orderId, kind: { in: kindsToWipe } },
+      });
+    }
+  } catch (e) {
+    console.warn('[reminders] cleanup on update failed', e);
+  }
+
   // Audit log: вычисляем дельту и пишем createMany
   try {
     const before = snapshotFromOrder(existing);
@@ -641,6 +664,13 @@ export async function approveClosureAction(orderId: string) {
       tokenExpiresAt: tokenExpiresFor('closed', order.tokenExpiresAt),
     },
   });
+
+  // Закрытие заказа — напоминания больше не релевантны
+  try {
+    await prisma.orderReminderSent.deleteMany({ where: { orderId } });
+  } catch (e) {
+    console.warn('[reminders] cleanup on close failed', e);
+  }
 
   // Audit log: запись о закрытии (+ stage-переход если пришли не из pending_closure)
   try {

@@ -99,8 +99,15 @@ export function HeroStage({
         <p className="text-[14px] text-text3">Нет доступных переходов</p>
       )}
 
-      {/* Директор: возможность закрыть заказ напрямую из любой стадии. */}
-      {role === 'director' && current !== 'closed' && current !== 'pending_closure' && onApproveClosure && (
+      {/* Директор: возможность закрыть заказ напрямую — но только когда
+          основная CTA не ведёт сразу к закрытию (иначе два «закрыть»-варианта
+          сбивают с толку). Скрываем когда next ∈ {pending_closure, closed}. */}
+      {role === 'director'
+        && current !== 'closed'
+        && current !== 'pending_closure'
+        && next !== 'pending_closure'
+        && next !== 'closed'
+        && onApproveClosure && (
         <button
           type="button"
           onClick={() => {

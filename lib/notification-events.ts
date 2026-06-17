@@ -33,11 +33,13 @@ export const EVENT_META: Record<EventKey, { label: string; group: 'lead' | 'orde
   installReminder3h:  { label: 'Установка за 3 часа',               group: 'reminder' },
 };
 
-// Какие события релевантны какой роли — лишние просто скрываются в UI и в логике
+// Какие события релевантны какой роли — лишние просто скрываются в UI и в логике.
+// «newLead» добавлен в список замерщика чтобы директор мог включить ему оповещения
+// о заявках прямо из базового вида матрицы (по дефолту flag = false).
 export const ROLE_RELEVANT: Record<Role, EventKey[]> = {
   director:  ['newLead', 'pendingClosure'],
   manager:   ['newLead'],
-  surveyor:  ['surveyAssigned', 'surveyReminder24h', 'surveyReminder3h'],
+  surveyor:  ['newLead', 'surveyAssigned', 'surveyReminder24h', 'surveyReminder3h'],
   installer: ['installAssigned', 'installReminder24h', 'installReminder3h'],
 };
 

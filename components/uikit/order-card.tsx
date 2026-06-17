@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Stage } from '@prisma/client';
+import { Phone, MapPin } from 'lucide-react';
 import { StagePill } from './stage-pill';
 
 function fmtRub(v: number | null | undefined): string {
@@ -12,17 +13,17 @@ function fmtPhone(p: string | null | undefined): string {
   return p.replace(/(\+7)(\d{3})(\d{3})(\d{2})(\d{2})/, '$1 $2 $3-$4-$5');
 }
 
-// В Liquid Glass карточка — стекло, цвет стадии остаётся подсказкой:
-// тонкое кольцо вокруг края + лёгкий цветной gradient overlay поверх стекла.
-const STAGE_TINT: Record<Stage, { ring: string; overlay: string }> = {
-  new:              { ring: 'ring-white/30',     overlay: '' },
-  survey_scheduled: { ring: 'ring-info2/30',     overlay: 'bg-info2/[0.04]' },
-  survey_done:      { ring: 'ring-info2/30',     overlay: 'bg-info2/[0.04]' },
-  production:       { ring: 'ring-warn2/30',     overlay: 'bg-warn2/[0.04]' },
-  ready_to_install: { ring: 'ring-ok2/30',       overlay: 'bg-ok2/[0.04]' },
-  installed:        { ring: 'ring-ok2/30',       overlay: 'bg-ok2/[0.04]' },
-  pending_closure:  { ring: 'ring-accent/40',    overlay: 'bg-accent/[0.05]' },
-  closed:           { ring: 'ring-white/20',     overlay: '' },
+// Цветовая полоса слева + тонкое стеклянное кольцо: стадия читается мгновенно,
+// но не «кричит». Liquid Glass: основа стекло, цвет только в индикаторе.
+const STAGE_STRIPE: Record<Stage, { stripe: string; ring: string }> = {
+  new:              { stripe: 'bg-text3',    ring: 'ring-white/30' },
+  survey_scheduled: { stripe: 'bg-info2',    ring: 'ring-info2/25' },
+  survey_done:      { stripe: 'bg-info2',    ring: 'ring-info2/25' },
+  production:       { stripe: 'bg-warn2',    ring: 'ring-warn2/25' },
+  ready_to_install: { stripe: 'bg-ok2',      ring: 'ring-ok2/25' },
+  installed:        { stripe: 'bg-ok2',      ring: 'ring-ok2/25' },
+  pending_closure:  { stripe: 'bg-accent',   ring: 'ring-accent/35' },
+  closed:           { stripe: 'bg-text3/40', ring: 'ring-white/20' },
 };
 
 export function OrderCard({
@@ -44,31 +45,61 @@ export function OrderCard({
   phone: string | null;
   amount: number | null;
 }) {
-  const tint = STAGE_TINT[stage];
+  const tint = STAGE_STRIPE[stage];
   return (
     <Link
       href={href}
-      className={`block relative glass-surface rounded-2xl px-4 py-3 ring-1 ${tint.ring}
-                 transition-transform duration-fast ease-soft
-                 active:scale-[0.99]
-                 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent
-                 overflow-hidden`}
+      className={`relative block glass-surface rounded-2xl ring-1 ${tint.ring}
+                  pl-5 pr-4 py-3.5
+                  transition-transform duration-fast ease-soft
+                  active:scale-[0.99]
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-accent
+                  overflow-hidden`}
     >
-      {tint.overlay && (
-        <span aria-hidden className={`absolute inset-0 pointer-events-none ${tint.overlay}`} />
-      )}
-      <div className="relative">
-        <div className="flex items-center justify-between gap-3 mb-1.5">
-          <h3 className="text-[14px] font-semibold text-text1 truncate flex-1 min-w-0">{clientName}</h3>
-          <span className="text-[14px] text-text1 font-semibold tabular-nums shrink-0">{fmtRub(amount)}</span>
+      {/* Цветовая полоса слева — главный визуальный индикатор стадии */}
+      <span
+        aria-hidden
+        className={`absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full ${tint.stripe}`}
+      />
+
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          {/* Имя клиента + номер */}
+          <div className="flex items-baseline justify-between gap-3 mb-1">
+            <h3 className="text-[15px] font-semibold text-text1 truncate flex-1 min-w-0 leading-tight">
+              {clientName}
+            </h3>
+            <span className="text-meta text-text3 tabular-nums shrink-0">№ {number}</span>
+          </div>
+
+          {/* Stage pill */}
+          <div className="mb-2">
+            <StagePill stage={stage} daysInStage={daysInStage} />
+          </div>
+
+          {/* Адрес */}
+          {address && (
+            <p className="text-meta text-text2 truncate inline-flex items-baseline gap-1.5 w-full mb-0.5">
+              <MapPin size={11} className="shrink-0 translate-y-[1px] text-text3" />
+              <span className="truncate">{address}</span>
+            </p>
+          )}
+
+          {/* Телефон */}
+          {phone && (
+            <p className="text-meta text-text3 tabular-nums inline-flex items-baseline gap-1.5">
+              <Phone size={11} className="shrink-0 translate-y-[1px]" />
+              <span>{fmtPhone(phone)}</span>
+            </p>
+          )}
         </div>
-        <div className="flex items-center justify-between gap-3">
-          <StagePill stage={stage} daysInStage={daysInStage} />
-          <span className="text-meta text-text3 tabular-nums shrink-0">№ {number}</span>
-        </div>
-        <div className="flex items-center justify-between gap-3 mt-1.5 text-[12.5px] text-text3">
-          <span className="truncate flex-1 min-w-0">{address || '—'}</span>
-          <span className="tabular-nums shrink-0">{fmtPhone(phone)}</span>
+
+        {/* Сумма — крупно, справа, как сумма счёта в банковском приложении */}
+        <div className="shrink-0 text-right">
+          <div className="text-[16px] font-semibold tabular-nums text-text1 leading-tight">
+            {fmtRub(amount)}
+          </div>
+          <div className="text-meta text-text3 mt-0.5">по договору</div>
         </div>
       </div>
     </Link>

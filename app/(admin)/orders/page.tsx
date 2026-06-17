@@ -12,6 +12,7 @@ import LiveSearch from '@/components/live-search';
 import AutoSubmitSelect from '@/components/auto-submit-select';
 import FilterSheet from './filter-sheet';
 import { StaleTasksBanner, getStaleCounts } from '@/components/stale-tasks-banner';
+import { MyUpcomingHero } from '@/components/my-upcoming-hero';
 
 export const metadata = { title: 'Заказы — Armora' };
 export const dynamic = 'force-dynamic';
@@ -86,11 +87,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
       />
 
       <div className="px-4 lg:px-6 pt-4 space-y-3 max-w-6xl mx-auto">
+        <MyUpcomingHero me={me} />
+
         <StaleTasksBanner counts={staleCounts} />
 
         <HintCard hintId="orders-intro" title="Как работать с заказами">
-          Тап по карточке открывает заказ. Этап меняется кликом по сегменту вверху.
-          Цвет карточки — её стадия: зелёные готовы, янтарные в производстве, синие у замерщика.
+          Полоска слева на карточке — цвет стадии. Сумма справа крупно — это цена по договору.
+          Тап открывает карточку, этап меняется кликом по нему вверху.
         </HintCard>
 
         <div className="flex items-center gap-2">
@@ -189,6 +192,22 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
           </nav>
         )}
       </div>
+
+      {/* FAB на мобильном — быстрый доступ к созданию заказа.
+          Скрыт на десктопе (там кнопка в шапке). */}
+      {(me.role === 'director' || me.role === 'manager') && (
+        <Link
+          href="/orders/new"
+          aria-label="Новый заказ"
+          className="lg:hidden fixed right-4 z-30
+                     w-14 h-14 inline-flex items-center justify-center rounded-full
+                     glass-button-dark text-white shadow-soft-lg
+                     active:scale-[0.96] transition-transform duration-fast"
+          style={{ bottom: 'calc(64px + env(safe-area-inset-bottom) + 16px)' }}
+        >
+          <Plus size={24} strokeWidth={2.25} />
+        </Link>
+      )}
     </>
   );
 }

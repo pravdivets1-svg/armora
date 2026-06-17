@@ -10,6 +10,7 @@ import PublicLinkBlock from './public-link-block';
 import CommentsBlock from './comments-block';
 import EventLog from './event-log';
 import HeroStageBlock from './hero-stage-block';
+import { QuickActionsRow } from './quick-actions-row';
 import {
   updateOrderAction,
   updateOrderStageAction,
@@ -96,6 +97,11 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
           enteredAt={order.updatedAt.toISOString()}
           onStageChange={stageAction}
           onApproveClosure={approveAction}
+        />
+
+        <QuickActionsRow
+          clientPhone={order.clientPhone}
+          clientAddress={order.clientAddress}
         />
 
         <OrderPhotos

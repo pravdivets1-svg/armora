@@ -77,24 +77,38 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload): 
   await Promise.all(userIds.map((id) => sendPushToUser(id, payload)));
 }
 
-// Отправить всем директорам — для уведомления «На закрытие»
-export async function sendPushToDirectors(payload: PushPayload, event?: EventKey): Promise<void> {
-  const directors = await prisma.user.findMany({
-    where: { role: 'director', isActive: true },
+// Отправить всем у кого включена видимость события (broadcast по матрице).
+// Раньше было «sendPushToDirectors» / «sendPushToStaff» с жёстким списком ролей —
+// директор не мог расширить рассылку. Теперь любой сотрудник любой роли получит
+// push если у него в NotificationPref[role][event] = true.
+export async function broadcastPushForEvent(payload: PushPayload, event: EventKey): Promise<void> {
+  const users = await prisma.user.findMany({
+    where: { isActive: true },
     select: { id: true, role: true },
   });
-  const allowed = event ? await filterUsersByEventAllowed(directors, event) : directors;
+  const allowed = await filterUsersByEventAllowed(users, event);
   await sendPushToUsers(allowed.map((u) => u.id), payload);
 }
 
-// Отправить директорам и менеджерам — для входящих заявок с сайта
+// Алиасы для совместимости с существующими вызовами.
+// Семантика теперь определяется в матрице, а не в жёстком списке ролей.
+export async function sendPushToDirectors(payload: PushPayload, event?: EventKey): Promise<void> {
+  if (event) return broadcastPushForEvent(payload, event);
+  // Без указания event — старое поведение (только директора). Не используется в новом коде.
+  const directors = await prisma.user.findMany({
+    where: { role: 'director', isActive: true },
+    select: { id: true },
+  });
+  await sendPushToUsers(directors.map((u) => u.id), payload);
+}
+
 export async function sendPushToStaff(payload: PushPayload, event?: EventKey): Promise<void> {
+  if (event) return broadcastPushForEvent(payload, event);
   const staff = await prisma.user.findMany({
     where: { role: { in: ['director', 'manager'] }, isActive: true },
-    select: { id: true, role: true },
+    select: { id: true },
   });
-  const allowed = event ? await filterUsersByEventAllowed(staff, event) : staff;
-  await sendPushToUsers(allowed.map((u) => u.id), payload);
+  await sendPushToUsers(staff.map((u) => u.id), payload);
 }
 
 // Не оборачивать триггеры в await на критическом пути — глушим ошибки тут.

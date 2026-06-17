@@ -103,6 +103,8 @@ const leadSchema = z.object({
   doorImage:     z.string().url().max(500).optional().nullable()
                   .or(z.literal('').transform(() => undefined)),
   doorTags:      z.array(z.string().max(200)).max(50).optional().nullable(),
+  // Предпочтительный канал связи (выбран клиентом на форме сайта)
+  preferredChannel: z.enum(['call', 'phone', 'whatsapp', 'telegram', 'max']).optional(),
 }).passthrough(); // не падаем на лишние поля — сложим их в payload
 
 function phoneDigits(s: string): string {

@@ -49,6 +49,8 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
       // Door fields рендерятся отдельной секцией ниже
       'doorId', 'doorName', 'doorSeries', 'doorBasePrice',
       'doorPurpose', 'doorFinish', 'doorImage', 'doorTags',
+      // preferredChannel — рендерится отдельным бейджем
+      'preferredChannel',
     ]);
     for (const [k, v] of Object.entries(lead.payload as Record<string, unknown>)) {
       if (known.has(k)) continue;
@@ -56,6 +58,22 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
       payloadEntries.push([k, v]);
     }
   }
+
+  // Канал связи, выбранный клиентом на форме сайта
+  const preferredChannelRaw = (lead.payload && typeof lead.payload === 'object' && !Array.isArray(lead.payload))
+    ? (lead.payload as Record<string, unknown>).preferredChannel
+    : null;
+  const PREFERRED_CHANNEL_LABELS: Record<string, { label: string; icon: string }> = {
+    call:     { label: 'Позвонить',  icon: 'phone' },
+    phone:    { label: 'Позвонить',  icon: 'phone' },
+    whatsapp: { label: 'WhatsApp',   icon: 'whatsapp' },
+    telegram: { label: 'Telegram',   icon: 'telegram' },
+    max:      { label: 'MAX',        icon: 'max' },
+  };
+  const preferredChannel = typeof preferredChannelRaw === 'string'
+    && PREFERRED_CHANNEL_LABELS[preferredChannelRaw]
+    ? { key: preferredChannelRaw, ...PREFERRED_CHANNEL_LABELS[preferredChannelRaw] }
+    : null;
 
   // Door info из payload (приходит с сайта-каталога)
   const payload = (lead.payload && typeof lead.payload === 'object' && !Array.isArray(lead.payload))
@@ -90,6 +108,16 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
             {fmtDateTime(lead.createdAt)} <span className="text-text3/60">•</span> источник: <span className="font-mono">{lead.source}</span>
           </span>
         </div>
+
+        {/* Бейдж выбранного клиентом канала связи (если есть) */}
+        {preferredChannel && (
+          <div className="rounded-2xl glass-surface px-4 py-2.5 flex items-center gap-2 ring-1 ring-accent/25">
+            <span className="text-meta uppercase tracking-wide text-text3 font-semibold">
+              Клиент выбрал
+            </span>
+            <span className="text-[14px] font-semibold text-text1">{preferredChannel.label}</span>
+          </div>
+        )}
 
         {/* Быстрые действия: позвонить / WhatsApp / на карте */}
         <LeadQuickActions

@@ -8,6 +8,7 @@ import { fmtDateTime, fmtMoney } from '@/lib/format';
 import { LEAD_STAGE_LABEL } from '@/lib/lead-labels';
 import { PageHeader, SectionCard, KeyValueRow, LeadPill, InsetGroup, InsetRow } from '@/components/uikit';
 import LeadActions from './lead-actions';
+import { LeadQuickActions } from './lead-quick-actions';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Заявка — Armora' };
@@ -89,6 +90,12 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
             {fmtDateTime(lead.createdAt)} <span className="text-text3/60">•</span> источник: <span className="font-mono">{lead.source}</span>
           </span>
         </div>
+
+        {/* Быстрые действия: позвонить / WhatsApp / на карте */}
+        <LeadQuickActions
+          clientPhone={lead.clientPhone}
+          clientAddress={lead.clientAddress}
+        />
 
         {/* Уже создан заказ */}
         {lead.convertedOrder && (

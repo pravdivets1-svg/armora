@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Inbox, Phone, ChevronRight } from 'lucide-react';
+import { Inbox, ChevronRight } from 'lucide-react';
 import type { LeadStage } from '@prisma/client';
 
 import { requireUser, isStaff } from '@/lib/auth-helpers';
@@ -9,6 +9,7 @@ import { LEAD_STAGE_LABEL, LEAD_STAGE_ORDER } from '@/lib/lead-labels';
 import { PageHeader, PillTabs, Empty, LeadPill, HintCard } from '@/components/uikit';
 import LiveSearch from '@/components/live-search';
 import LeadsBulkBar from './bulk-bar';
+import { FreshLeadsHero } from '@/components/fresh-leads-hero';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Заявки — Armora' };
@@ -108,19 +109,15 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
   const countByStage: Partial<Record<LeadStage, number>> = {};
   for (const c of counts) countByStage[c.stage] = c._count._all;
 
-  // Hero — самая свежая «новая» заявка (только когда фильтра нет)
-  const heroLead = !stage && !q ? leads.find((l) => l.stage === 'new') : undefined;
-  const heroId = heroLead?.id;
-
-  // Группируем по времени, исключая heroLead
+  // Группируем по времени.
   const groups = new Map<'today' | 'yesterday' | 'week' | 'older', typeof leads>();
   for (const l of leads) {
-    if (l.id === heroId) continue;
     const b = timeBucket(l.createdAt);
     if (!groups.has(b)) groups.set(b, []);
     groups.get(b)!.push(l);
   }
   const orderedBuckets: Array<'today' | 'yesterday' | 'week' | 'older'> = ['today', 'yesterday', 'week', 'older'];
+  const showFreshHero = !stage && !q;
 
   return (
     <>
@@ -128,9 +125,11 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
 
       <div className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 space-y-3 pb-12">
 
+        {showFreshHero && <FreshLeadsHero />}
+
         <HintCard hintId="leads-intro" title="Откуда заявки">
-          С сайта и калькулятора. Зелёная точка — новая. Откройте, проверьте детали и
-          превратите в заказ одной кнопкой — назначите замерщика прямо здесь.
+          С сайта и калькулятора. Свежие сверху с цветом срочности: зелёный — ещё не горит,
+          янтарный — пора звонить, красный — клиент остыл. Тап по трубке = звонок в один клик.
         </HintCard>
 
         {/* Поиск */}
@@ -154,44 +153,6 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
           ]}
         />
 
-        {/* Hero — последняя новая заявка.
-            Linear-стиль: тонкая hairline-карточка, без яркого фона, dot-индикатор статуса. */}
-        {heroLead && (
-          <div className="rounded-md border border-borderc bg-card px-4 py-3">
-            <div className="flex items-center gap-2 text-meta text-text3 mb-1.5">
-              <span className="relative flex h-1.5 w-1.5 shrink-0">
-                <span className="absolute inline-flex h-full w-full rounded-full bg-accent opacity-60 animate-ping" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
-              </span>
-              <span className="font-medium text-accent">Новая заявка</span>
-              <span className="text-text3/60">•</span>
-              <span className="tabular-nums">№ {heroLead.number}</span>
-              <span className="text-text3/60">•</span>
-              <span className="tabular-nums">{fmtRelative(heroLead.createdAt)}</span>
-            </div>
-            <h2 className="text-[15px] font-semibold text-text1 mb-1 truncate">{heroLead.clientName}</h2>
-            <div className="text-[13px] text-text2 flex items-center gap-3 flex-wrap mb-3 tabular-nums">
-              <a href={`tel:${heroLead.clientPhone}`} className="inline-flex items-center gap-1.5 hover:text-text1">
-                <Phone size={12} className="text-text3" /> {fmtPhone(heroLead.clientPhone)}
-              </a>
-              {heroLead.clientAddress && <span className="text-text3 truncate max-w-[200px]">{heroLead.clientAddress}</span>}
-              {(heroLead.widthMm || heroLead.heightMm) && (
-                <span className="text-text3">{heroLead.widthMm ?? '?'} × {heroLead.heightMm ?? '?'} мм</span>
-              )}
-            </div>
-            <Link
-              href={`/leads/${heroLead.id}`}
-              className="inline-flex items-center justify-center gap-2 h-8 px-3 rounded-md
-                         bg-text1 hover:bg-text1/90 text-white font-medium text-[13px]
-                         transition-colors duration-fast
-                         focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-            >
-              Открыть заявку
-              <ChevronRight size={14} />
-            </Link>
-          </div>
-        )}
-
         {leads.length === 0 ? (
           <Empty
             icon={Inbox}
@@ -213,14 +174,14 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                       </div>
                     </div>
 
-                    {/* Одна карточка с divide-y вместо набора отдельных строк */}
-                    <div className="mt-1.5 bg-card border border-borderc rounded-md divide-y divide-borderc/60 overflow-hidden">
+                    {/* Одна стеклянная карточка с divide-y вместо набора отдельных строк */}
+                    <div className="mt-1.5 glass-surface rounded-2xl divide-y divide-white/30 overflow-hidden">
                       {items.map((lead) => (
                         <div
                           key={lead.id}
                           className="relative transition-colors duration-fast
-                                     hover:bg-subtle/60
-                                     has-[input:checked]:bg-accent-soft/40"
+                                     hover:bg-white/30
+                                     has-[input:checked]:bg-accent/[0.08]"
                         >
                           <label
                             className="absolute left-2 top-1/2 -translate-y-1/2 z-10 cursor-pointer p-2 text-text3 hover:text-text1"

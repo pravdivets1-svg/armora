@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { LogOut, Users as UsersIcon, ChevronRight } from 'lucide-react';
+import { LogOut, Users as UsersIcon, Archive, ChevronRight } from 'lucide-react';
 import type { Role } from '@prisma/client';
 import { requireUser } from '@/lib/auth-helpers';
 import { ROLE_LABEL } from '@/lib/labels';
@@ -54,20 +54,35 @@ export default async function SettingsPage() {
 
         <NotificationsBlock />
 
-        {isDirector && (
+        {me.role !== 'installer' && (
           <SectionCard title="Управление">
+            {isDirector && (
+              <Link
+                href="/users"
+                className="flex items-center gap-3 px-1 py-2 min-h-[44px] -mx-1
+                           rounded-md hover:bg-subtle/60 active:bg-subtle
+                           transition-colors group"
+              >
+                <UsersIcon size={16} className="text-text3 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-text1 text-[14px]">Сотрудники</div>
+                  <div className="text-meta text-text3">
+                    {usersCount} {ruCount(usersCount)} · логины, пароли, роли
+                  </div>
+                </div>
+                <ChevronRight size={14} className="text-text3 shrink-0" />
+              </Link>
+            )}
             <Link
-              href="/users"
+              href="/archive"
               className="flex items-center gap-3 px-1 py-2 min-h-[44px] -mx-1
                          rounded-md hover:bg-subtle/60 active:bg-subtle
                          transition-colors group"
             >
-              <UsersIcon size={16} className="text-text3 shrink-0" />
+              <Archive size={16} className="text-text3 shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="text-text1 text-[14px]">Сотрудники</div>
-                <div className="text-meta text-text3">
-                  {usersCount} {ruCount(usersCount)} · логины, пароли, роли
-                </div>
+                <div className="text-text1 text-[14px]">Архив</div>
+                <div className="text-meta text-text3">Закрытые заказы</div>
               </div>
               <ChevronRight size={14} className="text-text3 shrink-0" />
             </Link>

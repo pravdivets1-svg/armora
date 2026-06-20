@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Plus, Inbox } from 'lucide-react';
+import { Plus, Inbox, Archive } from 'lucide-react';
 import type { Stage } from '@prisma/client';
 
 import { requireUser } from '@/lib/auth-helpers';
@@ -77,6 +77,13 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 ))}
               </AutoSubmitSelect>
             </FilterSheet>
+            {me.role !== 'installer' && (
+              <Link href="/archive" aria-label="Архив закрытых заказов">
+                <Button size="sm" variant="secondary">
+                  <Archive size={16} /> Архив
+                </Button>
+              </Link>
+            )}
             {(me.role === 'director' || me.role === 'manager') && (
               <Link href="/orders/new">
                 <Button size="sm"><Plus size={16} /> Новый</Button>

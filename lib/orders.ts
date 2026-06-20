@@ -27,7 +27,13 @@ export function buildOrderWhere(
     where.OR = [{ surveyorId: me.id }, { installerId: me.id }];
   }
 
-  if (f.stage) where.stage = f.stage;
+  // По дефолту скрываем закрытые: они доступны на отдельной странице /archive.
+  // Явный фильтр по stage перебивает это поведение.
+  if (f.stage) {
+    where.stage = f.stage;
+  } else {
+    where.stage = { not: 'closed' };
+  }
 
   if (f.userId) {
     // Если уже стоит OR (полевой работник + фильтр) — игнорируем фильтр.
@@ -100,4 +106,57 @@ export async function listAssignableUsers() {
     select: { id: true, fullName: true, role: true },
     orderBy: [{ role: 'asc' }, { fullName: 'asc' }],
   });
+}
+
+// =====================================================================
+// Архив — закрытые заказы. Доступен всем кроме установщика.
+// =====================================================================
+export async function listClosedOrders(
+  me: { id: string; role: Role },
+  f: Omit<OrderListFilters, 'stage'>,
+) {
+  const where: Prisma.OrderWhereInput = { stage: 'closed' };
+
+  // Полевые работники видят только свои назначения
+  if (!isStaff(me.role)) {
+    where.OR = [{ surveyorId: me.id }, { installerId: me.id }];
+  }
+
+  if (f.userId && isStaff(me.role)) {
+    where.AND = [{ OR: [{ surveyorId: f.userId }, { installerId: f.userId }] }];
+  }
+
+  if (f.q) {
+    const q = f.q.trim();
+    const ors: Prisma.OrderWhereInput[] = [
+      { clientName:    { contains: q, mode: 'insensitive' } },
+      { clientAddress: { contains: q, mode: 'insensitive' } },
+    ];
+    const qDigits = q.replace(/\D/g, '');
+    if (qDigits.length >= 3) ors.push({ clientPhoneDigits: { contains: qDigits } });
+    const asNumber = Number(q.replace(/^#/, ''));
+    if (Number.isInteger(asNumber) && asNumber > 0) ors.push({ number: asNumber });
+    where.AND = ([] as Prisma.OrderWhereInput[]).concat(where.AND ?? [], [{ OR: ors }]);
+  }
+
+  const page = Math.max(1, f.page ?? 1);
+  const [items, total] = await Promise.all([
+    prisma.order.findMany({
+      where,
+      orderBy: { updatedAt: 'desc' },  // самые недавно закрытые сверху
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: {
+        surveyor:  { select: { id: true, fullName: true } },
+        installer: { select: { id: true, fullName: true } },
+      },
+    }),
+    prisma.order.count({ where }),
+  ]);
+
+  return {
+    items, total, page,
+    pageSize: PAGE_SIZE,
+    pageCount: Math.max(1, Math.ceil(total / PAGE_SIZE)),
+  };
 }

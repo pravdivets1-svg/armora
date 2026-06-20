@@ -18,11 +18,15 @@ export const EVENT_KEYS = [
   'installAssigned',
   'installReminder24h',
   'installReminder3h',
+  // Контрольные напоминания (cron по «застрявшим» заказам)
+  'productionStale',
+  'installedNoClose',
+  'pendingClosureStale',
 ] as const;
 
 export type EventKey = typeof EVENT_KEYS[number];
 
-export const EVENT_META: Record<EventKey, { label: string; group: 'lead' | 'order' | 'reminder' }> = {
+export const EVENT_META: Record<EventKey, { label: string; group: 'lead' | 'order' | 'reminder' | 'control' }> = {
   newLead:            { label: 'Новая заявка с сайта',              group: 'lead' },
   pendingClosure:     { label: 'Заказ ждёт подтверждения закрытия', group: 'order' },
   surveyAssigned:     { label: 'Назначен замер',                    group: 'order' },
@@ -31,16 +35,19 @@ export const EVENT_META: Record<EventKey, { label: string; group: 'lead' | 'orde
   surveyReminder3h:   { label: 'Замер за 3 часа',                   group: 'reminder' },
   installReminder24h: { label: 'Установка за 24 часа',              group: 'reminder' },
   installReminder3h:  { label: 'Установка за 3 часа',               group: 'reminder' },
+  productionStale:     { label: 'Заказ долго в производстве',        group: 'control' },
+  installedNoClose:    { label: 'Установлена, но не закрыта',        group: 'control' },
+  pendingClosureStale: { label: 'Ждёт закрытия слишком долго',       group: 'control' },
 };
 
 // Какие события релевантны какой роли — лишние просто скрываются в UI и в логике.
 // «newLead» добавлен в список замерщика чтобы директор мог включить ему оповещения
 // о заявках прямо из базового вида матрицы (по дефолту flag = false).
 export const ROLE_RELEVANT: Record<Role, EventKey[]> = {
-  director:  ['newLead', 'pendingClosure'],
-  manager:   ['newLead'],
+  director:  ['newLead', 'pendingClosure', 'productionStale', 'installedNoClose', 'pendingClosureStale'],
+  manager:   ['newLead', 'productionStale', 'installedNoClose'],
   surveyor:  ['newLead', 'surveyAssigned', 'surveyReminder24h', 'surveyReminder3h'],
-  installer: ['installAssigned', 'installReminder24h', 'installReminder3h'],
+  installer: ['installAssigned', 'installReminder24h', 'installReminder3h', 'installedNoClose'],
 };
 
 // Defaults используем если в БД ещё нет записи для роли (например после первой
@@ -50,21 +57,25 @@ const ROLE_DEFAULTS: Record<Role, Record<EventKey, boolean>> = {
     newLead: true, pendingClosure: true,
     surveyAssigned: false, surveyReminder24h: false, surveyReminder3h: false,
     installAssigned: false, installReminder24h: false, installReminder3h: false,
+    productionStale: true, installedNoClose: true, pendingClosureStale: true,
   },
   manager: {
     newLead: true, pendingClosure: false,
     surveyAssigned: false, surveyReminder24h: false, surveyReminder3h: false,
     installAssigned: false, installReminder24h: false, installReminder3h: false,
+    productionStale: true, installedNoClose: true, pendingClosureStale: false,
   },
   surveyor: {
     newLead: false, pendingClosure: false,
     surveyAssigned: true, surveyReminder24h: true, surveyReminder3h: true,
     installAssigned: false, installReminder24h: false, installReminder3h: false,
+    productionStale: false, installedNoClose: false, pendingClosureStale: false,
   },
   installer: {
     newLead: false, pendingClosure: false,
     surveyAssigned: false, surveyReminder24h: false, surveyReminder3h: false,
     installAssigned: true, installReminder24h: true, installReminder3h: true,
+    productionStale: false, installedNoClose: true, pendingClosureStale: false,
   },
 };
 

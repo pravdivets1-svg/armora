@@ -20,10 +20,13 @@
 // напоминаний было бы заблокировано unique-индексом старых записей.
 
 import { prisma } from '@/lib/prisma';
-import { sendPushToUser } from '@/lib/push';
-import { isEventAllowed } from '@/lib/notification-events';
+import { sendPushToUser, broadcastPushForEvent } from '@/lib/push';
+import { isEventAllowed, type EventKey } from '@/lib/notification-events';
 
-type ReminderKind = 'survey_24h' | 'survey_3h' | 'install_24h' | 'install_3h';
+type ReminderKind =
+  | 'survey_24h' | 'survey_3h'
+  | 'install_24h' | 'install_3h'
+  | 'control_production' | 'control_installed' | 'control_pending_closure';
 
 const WINDOW_MIN = 5; // ± от точного интервала, в минутах
 
@@ -114,6 +117,92 @@ async function processInstallWindow(hours: 24 | 3) {
   }
 }
 
+// =====================================================================
+// Контрольные напоминания: «заказ застрял на стадии N дней»
+// =====================================================================
+// Cron-аналог: каждую минуту смотрим заказы на «опасных» стадиях с
+// updatedAt старше порога — отправляем broadcast push по матрице
+// (тем у кого event включён) и помечаем kind='control_*' чтоб не слать
+// повторно. Конфиг (вкл/выкл + порог) читается из ControlReminderConfig
+// (singleton id='default').
+
+type ControlSpec = {
+  stage: 'production' | 'installed' | 'pending_closure';
+  kind:  Extract<ReminderKind, 'control_production' | 'control_installed' | 'control_pending_closure'>;
+  event: EventKey;
+  title: string;
+  body:  (clientName: string, days: number) => string;
+};
+
+const CONTROL_SPECS: ControlSpec[] = [
+  {
+    stage: 'production',
+    kind:  'control_production',
+    event: 'productionStale',
+    title: 'Заказ долго в производстве',
+    body: (name, days) => `${name} · ${days} дней без движения`,
+  },
+  {
+    stage: 'installed',
+    kind:  'control_installed',
+    event: 'installedNoClose',
+    title: 'Установлен, но не закрыт',
+    body: (name, days) => `${name} · ${days} дней после установки`,
+  },
+  {
+    stage: 'pending_closure',
+    kind:  'control_pending_closure',
+    event: 'pendingClosureStale',
+    title: 'Заказ ждёт подтверждения',
+    body: (name, days) => `${name} · ${days} дней в очереди на закрытие`,
+  },
+];
+
+async function processControlReminders(): Promise<void> {
+  const cfg = await prisma.controlReminderConfig.findUnique({ where: { id: 'default' } });
+  if (!cfg) return;
+
+  const now = Date.now();
+
+  const enabled: Record<typeof CONTROL_SPECS[number]['kind'], { on: boolean; days: number }> = {
+    control_production:      { on: cfg.productionStaleEnabled,     days: cfg.productionStaleDays },
+    control_installed:       { on: cfg.installedNoCloseEnabled,    days: cfg.installedNoCloseDays },
+    control_pending_closure: { on: cfg.pendingClosureStaleEnabled, days: cfg.pendingClosureStaleDays },
+  };
+
+  for (const spec of CONTROL_SPECS) {
+    const c = enabled[spec.kind];
+    if (!c.on || c.days <= 0) continue;
+    const cutoff = new Date(now - c.days * 24 * 60 * 60 * 1000);
+    const orders = await prisma.order.findMany({
+      where: {
+        stage: spec.stage,
+        updatedAt: { lt: cutoff },
+        remindersSent: { none: { kind: spec.kind } },
+      },
+      select: { id: true, number: true, clientName: true, updatedAt: true },
+    });
+
+    for (const o of orders) {
+      const ageDays = Math.floor((now - o.updatedAt.getTime()) / (24 * 60 * 60 * 1000));
+      try {
+        await broadcastPushForEvent({
+          title: `${spec.title} · № ${o.number}`,
+          body: spec.body(o.clientName, ageDays),
+          url: `/orders/${o.id}`,
+          tag: `order-${o.id}-${spec.kind}`,
+        }, spec.event);
+        await prisma.orderReminderSent.create({
+          data: { orderId: o.id, kind: spec.kind },
+        });
+      } catch (e) {
+        // unique-индекс отбил дубль — норм
+        console.warn('[reminder] control', spec.kind, o.id, e);
+      }
+    }
+  }
+}
+
 export async function runRemindersOnce(): Promise<void> {
   try {
     await Promise.all([
@@ -121,6 +210,7 @@ export async function runRemindersOnce(): Promise<void> {
       processSurveyWindow(3),
       processInstallWindow(24),
       processInstallWindow(3),
+      processControlReminders(),
     ]);
   } catch (e) {
     console.warn('[reminder] tick failed', e);

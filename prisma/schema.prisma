@@ -321,6 +321,29 @@ model NotificationPref {
 }
 
 // =====================================================================
+// Настройки «контрольных» напоминаний (директор управляет)
+// =====================================================================
+// Singleton-ряд. Когда заказ застревает на стадии без прогресса
+// (production > 12 дней, installed > 2 дня, pending_closure > 3 дня),
+// cron-движок (lib/reminder-engine.ts) отправляет push исполнителям
+// и/или директору. Это отдельный механизм от «событийных» напоминаний
+// о замерах/установках, у которых конкретное время начала.
+//
+// Каждый триггер можно отдельно включить/выключить и задать порог дней.
+model ControlReminderConfig {
+  id                          String   @id @default("default")
+  productionStaleEnabled      Boolean  @default(true)  @map("production_stale_enabled")
+  productionStaleDays         Int      @default(12)    @map("production_stale_days")
+  installedNoCloseEnabled     Boolean  @default(true)  @map("installed_no_close_enabled")
+  installedNoCloseDays        Int      @default(2)     @map("installed_no_close_days")
+  pendingClosureStaleEnabled  Boolean  @default(true)  @map("pending_closure_stale_enabled")
+  pendingClosureStaleDays     Int      @default(3)     @map("pending_closure_stale_days")
+  updatedAt                   DateTime @updatedAt      @map("updated_at")
+
+  @@map("control_reminder_config")
+}
+
+// =====================================================================
 // Отметка «напоминание о замере/установке уже отправлено»
 // =====================================================================
 // Cron-движок в lib/reminder-engine.ts каждую минуту проверяет
@@ -337,7 +360,10 @@ model NotificationPref {
 model OrderReminderSent {
   id      String   @id @default(uuid())
   orderId String   @map("order_id")
-  kind    String                                // 'survey_24h' | 'survey_3h' | 'install_24h' | 'install_3h'
+  // Возможные значения:
+  //   - 'survey_24h' | 'survey_3h' | 'install_24h' | 'install_3h' (событийные)
+  //   - 'control_production' | 'control_installed' | 'control_pending_closure' (контрольные)
+  kind    String
   sentAt  DateTime @default(now()) @map("sent_at")
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)

@@ -9,6 +9,7 @@ import { getRolePrefs } from '@/lib/notification-events';
 import { prisma } from '@/lib/prisma';
 import NotificationsBlock from './notifications-block';
 import DirectorNotificationsBlock from './director-notifications-block';
+import ControlRemindersBlock from './control-reminders-block';
 
 export const metadata = { title: 'Профиль — Armora' };
 export const dynamic = 'force-dynamic';
@@ -28,9 +29,16 @@ function ruCount(n: number): string {
 export default async function SettingsPage() {
   const me = await requireUser();
   const isDirector = me.role === 'director';
-  const [matrix, usersCount] = await Promise.all([
+  const [matrix, usersCount, controlCfg] = await Promise.all([
     isDirector ? getRolePrefs() : Promise.resolve(null as Record<Role, Record<string, boolean>> | null),
     isDirector ? prisma.user.count() : Promise.resolve(0),
+    isDirector
+      ? prisma.controlReminderConfig.upsert({
+          where:  { id: 'default' },
+          update: {},
+          create: { id: 'default' },
+        })
+      : Promise.resolve(null),
   ]);
 
   return (
@@ -64,6 +72,19 @@ export default async function SettingsPage() {
               <ChevronRight size={14} className="text-text3 shrink-0" />
             </Link>
           </SectionCard>
+        )}
+
+        {isDirector && controlCfg && (
+          <ControlRemindersBlock
+            initial={{
+              productionStaleEnabled:     controlCfg.productionStaleEnabled,
+              productionStaleDays:        controlCfg.productionStaleDays,
+              installedNoCloseEnabled:    controlCfg.installedNoCloseEnabled,
+              installedNoCloseDays:       controlCfg.installedNoCloseDays,
+              pendingClosureStaleEnabled: controlCfg.pendingClosureStaleEnabled,
+              pendingClosureStaleDays:    controlCfg.pendingClosureStaleDays,
+            }}
+          />
         )}
 
         {isDirector && matrix && (

@@ -87,7 +87,7 @@ export default async function PublicOrderPage({
             aria-valuemax={STAGE_ORDER.length}
             aria-label={`Этап ${stepNumber} из ${STAGE_ORDER.length}: ${STAGE_LABEL[order.stage]}`}
           >
-            <div className="h-full bg-text1 rounded-full" style={{ width: `${percent}%` }} />
+            <div className="h-full bg-accent rounded-full" style={{ width: `${percent}%` }} />
           </div>
 
           <ol className="mt-6 space-y-3 text-[14px]">
@@ -104,11 +104,11 @@ export default async function PublicOrderPage({
                   }`}
                 >
                   {done ? (
-                    <span className="w-5 h-5 rounded-full bg-text1 text-white flex items-center justify-center shrink-0">
+                    <span className="w-5 h-5 rounded-full bg-accent text-white flex items-center justify-center shrink-0">
                       <Check size={11} />
                     </span>
                   ) : current ? (
-                    <span className="w-5 h-5 rounded-full bg-text1 text-white flex items-center justify-center text-[11px] font-semibold shrink-0 tabular-nums">
+                    <span className="w-5 h-5 rounded-full bg-accent text-white flex items-center justify-center text-[11px] font-semibold shrink-0 tabular-nums">
                       {i + 1}
                     </span>
                   ) : (
@@ -158,7 +158,7 @@ export default async function PublicOrderPage({
           <a
             href={`tel:+${companyPhoneDigits}`}
             className="inline-flex items-center gap-2 mt-3 px-5 py-2.5 rounded-md
-                       bg-text1 hover:bg-text1/90 text-white font-medium text-[14px]
+                       bg-accent hover:bg-accent/90 text-white font-medium text-[14px]
                        transition-colors"
           >
             <Phone size={14} /> Позвонить в компанию
@@ -247,7 +247,7 @@ function ExpiredView() {
         <a
           href={`tel:+${companyPhoneDigits}`}
           className="inline-flex items-center gap-2 mt-5 px-4 py-2 rounded-md
-                     bg-text1 hover:bg-text1/90 text-white font-medium text-[14px] tabular-nums
+                     bg-accent hover:bg-accent/90 text-white font-medium text-[14px] tabular-nums
                      transition-colors"
         >
           <Phone size={14} /> {companyPhone}

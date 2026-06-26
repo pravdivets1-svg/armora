@@ -50,7 +50,7 @@ type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'success' | 'danger' | 
 
 const BTN_VARIANT: Record<ButtonVariant, string> = {
   // primary = нейтральный near-black, по дефолту
-  primary:   'bg-text1 hover:bg-text1/90 text-white font-medium',
+  primary:   'bg-accent hover:bg-accent/90 text-white font-medium',
   // accent = синий, только для критичных CTA
   accent:    'bg-accent hover:bg-accent-hover text-white font-medium',
   secondary: 'bg-card hover:bg-subtle text-text1 border border-borderc',

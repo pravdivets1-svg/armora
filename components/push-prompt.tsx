@@ -115,7 +115,7 @@ export default function PushPrompt() {
                  bg-card border border-borderc rounded-xl shadow-soft
                  p-4 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-4"
     >
-      <div className="w-9 h-9 rounded-full bg-text1 text-white inline-flex items-center justify-center shrink-0">
+      <div className="w-9 h-9 rounded-full bg-accent text-white inline-flex items-center justify-center shrink-0">
         <Bell size={16} />
       </div>
       <div className="min-w-0 flex-1">
@@ -130,8 +130,8 @@ export default function PushPrompt() {
             type="button"
             onClick={enable}
             disabled={state === 'busy'}
-            className="px-3 py-1.5 rounded-md bg-text1 text-white text-[13px] font-medium
-                       hover:bg-text1/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="px-3 py-1.5 rounded-md bg-accent text-white text-[13px] font-medium
+                       hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {state === 'busy' ? 'Включаем…' : 'Включить'}
           </button>

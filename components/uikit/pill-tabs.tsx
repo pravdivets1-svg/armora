@@ -51,7 +51,7 @@ export function PillTabs({
             className={`shrink-0 inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md text-[13px] font-medium
                         transition-colors duration-fast ease-soft
                         ${active
-                          ? 'bg-text1 text-card'
+                          ? 'bg-accent text-card'
                           : 'bg-card border border-borderc text-text2 hover:text-text1'}`}
           >
             {it.label}

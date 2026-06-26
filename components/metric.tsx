@@ -88,13 +88,13 @@ export function MetricCard({
 }) {
   const base =
     variant === 'accent'
-      ? 'rounded-2xl bg-text1 text-white p-6 md:p-7'
+      ? 'rounded-2xl bg-accent text-white p-6 md:p-7'
       : variant === 'ghost'
         ? 'rounded-2xl p-5'
         : 'rounded-2xl border border-borderc bg-card p-5 md:p-6';
   const interactive = href
     ? variant === 'accent'
-      ? 'hover:bg-text1/90 cursor-pointer block transition-colors'
+      ? 'hover:bg-accent/90 cursor-pointer block transition-colors'
       : 'hover:border-text2/40 cursor-pointer block transition-colors'
     : '';
   const colSpan = span === 3 ? 'md:col-span-3' : span === 2 ? 'md:col-span-2' : '';

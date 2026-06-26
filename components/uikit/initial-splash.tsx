@@ -41,8 +41,8 @@ export default function InitialSplash() {
         <div className="text-display text-text1 tracking-tight font-semibold">
           Armora
         </div>
-        <div className="h-[2px] w-12 bg-text1/20 overflow-hidden rounded-full">
-          <div className="h-full w-1/2 bg-text1 animate-[splash-pulse_700ms_ease-out]" />
+        <div className="h-[2px] w-12 bg-accent/20 overflow-hidden rounded-full">
+          <div className="h-full w-1/2 bg-accent animate-[splash-pulse_700ms_ease-out]" />
         </div>
       </div>
     </div>

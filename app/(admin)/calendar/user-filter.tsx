@@ -73,7 +73,7 @@ function Pill({
                   transition-colors duration-fast ease-soft whitespace-nowrap
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-accent
                   ${active
-                    ? 'bg-text1 text-card'
+                    ? 'bg-accent text-card'
                     : 'bg-card border border-borderc text-text2 hover:text-text1'}`}
     >
       {children}

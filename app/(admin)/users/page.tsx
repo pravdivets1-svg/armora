@@ -64,7 +64,7 @@ export default async function UsersPage() {
               <Link
                 href="/users/new"
                 className="inline-flex items-center gap-2 h-9 px-3 rounded-md
-                           bg-text1 text-white hover:bg-text1/90 text-[13px] font-medium"
+                           bg-accent text-white hover:bg-accent/90 text-[13px] font-medium"
               >
                 <Plus size={14} /> Новый сотрудник
               </Link>

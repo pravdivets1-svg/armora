@@ -59,8 +59,8 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md
-                     bg-text1 text-card text-[13px] font-medium shrink-0
-                     transition-colors duration-fast hover:bg-text2
+                     bg-accent text-card text-[13px] font-medium shrink-0
+                     transition-colors duration-fast hover:bg-accent/90
                      focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           В Яндекс.Картах <ArrowUpRight size={14} />

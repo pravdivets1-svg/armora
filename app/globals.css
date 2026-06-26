@@ -12,13 +12,13 @@ html {
   text-rendering: optimizeLegibility;
 }
 body {
-  /* Liquid Glass: мягкий graphite-градиент, чтоб стеклу было что преломлять */
+  /* Liquid Glass: мягкий индиго/фиолет-градиент, чтоб стеклу было что преломлять */
   background:
-    radial-gradient(1200px 800px at 0% 0%, rgba(180, 184, 195, 0.45), transparent 60%),
-    radial-gradient(900px 700px at 100% 100%, rgba(155, 160, 170, 0.40), transparent 55%),
-    linear-gradient(180deg, #ECECEF 0%, #E3E4E8 50%, #DCDDE1 100%);
+    radial-gradient(1200px 800px at 0% 0%, rgba(99, 102, 241, 0.14), transparent 60%),
+    radial-gradient(900px 700px at 100% 100%, rgba(139, 92, 246, 0.13), transparent 55%),
+    linear-gradient(180deg, #F6F7FB 0%, #EEF1F8 55%, #E8ECF7 100%);
   background-attachment: fixed;
-  color: #17181B;
+  color: #1A1B2E;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   min-height: 100vh;
 }
@@ -80,7 +80,7 @@ textarea,
    ===================================================================== */
 :focus { outline: none; }
 :focus-visible {
-  outline: 2px solid rgba(23, 24, 27, 0.55);
+  outline: 2px solid rgba(79, 70, 229, 0.65);
   outline-offset: 2px;
   border-radius: 4px;
 }
@@ -196,17 +196,18 @@ html[data-density="compact"] .table-density thead th {
   border-color: rgba(214, 215, 218, 0.6);
 }
 .glass-button-dark {
+  /* Первичный CTA — индиго-градиент со свечением (имя класса историческое) */
   background:
-    linear-gradient(180deg, rgba(45, 46, 50, 0.95) 0%, rgba(23, 24, 27, 1) 100%);
+    linear-gradient(180deg, #6366F1 0%, #4F46E5 100%);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
-    0 1px 2px rgba(0, 0, 0, 0.10),
-    0 6px 16px -6px rgba(0, 0, 0, 0.35);
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(49, 46, 129, 0.35),
+    0 1px 2px rgba(79, 70, 229, 0.20),
+    0 8px 20px -6px rgba(79, 70, 229, 0.45);
 }
 .glass-button-dark:hover {
   background:
-    linear-gradient(180deg, rgba(58, 59, 63, 1) 0%, rgba(34, 35, 38, 1) 100%);
+    linear-gradient(180deg, #5B5EF0 0%, #4338CA 100%);
 }
 
 /* =====================================================================

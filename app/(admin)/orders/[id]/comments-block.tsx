@@ -24,8 +24,8 @@ function SubmitBtn() {
       disabled={pending}
       aria-label="Отправить комментарий"
       className="inline-flex items-center justify-center gap-1.5 w-10 h-10 rounded-md
-                 text-[14px] bg-text1 text-white
-                 hover:bg-text1/90 disabled:opacity-50 transition-colors shrink-0"
+                 text-[14px] bg-accent text-white
+                 hover:bg-accent/90 disabled:opacity-50 transition-colors shrink-0"
     >
       <Send size={14} />
     </button>

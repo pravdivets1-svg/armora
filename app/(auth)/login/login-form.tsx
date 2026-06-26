@@ -10,7 +10,7 @@ function SubmitBtn() {
     <button
       disabled={pending}
       className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md
-                 bg-text1 hover:bg-text1/90 text-white font-medium text-[15px] disabled:opacity-60
+                 bg-accent hover:bg-accent/90 text-white font-medium text-[15px] disabled:opacity-60
                  transition-colors"
     >
       {pending ? 'Входим…' : <>Войти <ArrowRight size={15} /></>}

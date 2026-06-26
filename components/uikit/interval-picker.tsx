@@ -248,7 +248,7 @@ export function IntervalPicker({
                           border transition-colors tabular-nums
                           disabled:opacity-50 disabled:cursor-not-allowed
                           ${isActive
-                            ? 'bg-text1 border-text1 text-white'
+                            ? 'bg-accent border-accent text-white'
                             : 'bg-card border-borderc text-text2 hover:border-text2/40 hover:bg-subtle/60'}`}
             >
               {p.label}

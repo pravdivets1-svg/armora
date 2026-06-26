@@ -112,7 +112,7 @@ export default function SavedViews({
             className={`inline-flex items-center gap-1.5 rounded-full pl-3 pr-1 py-1
                         border transition-colors
                         ${active
-                          ? 'bg-text1 border-text1 text-white'
+                          ? 'bg-accent border-accent text-white'
                           : 'bg-card border-borderc text-text2 hover:border-text2/40'}`}
           >
             <button

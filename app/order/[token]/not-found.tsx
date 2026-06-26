@@ -17,7 +17,7 @@ export default function NotFound() {
         <a
           href={`tel:+${companyPhoneDigits}`}
           className="inline-flex items-center gap-2 mt-5 px-4 py-2 rounded-md
-                     bg-text1 hover:bg-text1/90 text-white font-medium text-sm tabular-nums
+                     bg-accent hover:bg-accent/90 text-white font-medium text-sm tabular-nums
                      transition-colors"
         >
           <Phone size={14} /> {companyPhone}

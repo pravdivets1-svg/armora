@@ -8,53 +8,54 @@ const config: Config = {
         sans: ['var(--font-inter)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
-        // === Armora graphite palette ===
-        // Базис — холодный графит, премиум-нейтрал. Акцент — сам графит,
-        // т.е. главные кнопки/линии сливаются с текстом. Цветные акценты
-        // только на статусах (ok/warn/bad/info).
-        app:        '#F4F4F6',
+        // === Armora indigo/violet palette (modern colorful 2026) ===
+        // Brand — индиго (accent), акцент-пара — фиолет. Прохладные slate-нейтралы
+        // с лёгким индиго-подтоном. Статусы — живые, современные.
+        app:        '#F6F7FB',
         card:       '#FFFFFF',
-        subtle:     '#E9EAEC',
-        borderc:    '#D6D7DA',
-        borders:    '#BCBDC0',
-        text1:      '#17181B',
-        text2:      '#52535A',
-        text3:      '#6E6F76',
-        // Status (приглушённые, в тон графиту)
-        ok2:        { DEFAULT: '#2E8F62', soft: '#EBF4EE' },
-        warn2:      { DEFAULT: '#B27420', soft: '#F8EFE0' },
-        bad2:       { DEFAULT: '#C53848', soft: '#FAEAEC' },
-        info2:      { DEFAULT: '#345AB3', soft: '#E5EAF5' },
-        // === Legacy aliases (старые компоненты могут ещё тянуть) ===
-        canvas:    '#E9EAEC',
+        subtle:     '#EEF1F8',
+        borderc:    '#E2E5EF',
+        borders:    '#C7CCDC',
+        text1:      '#1A1B2E',
+        text2:      '#4A4D68',
+        text3:      '#6B6F8A',
+        // Status (живые, AA-контраст)
+        ok2:        { DEFAULT: '#0E9F6E', soft: '#E7F8F1' },
+        warn2:      { DEFAULT: '#D97706', soft: '#FCF1DF' },
+        bad2:       { DEFAULT: '#E5484D', soft: '#FCEBEC' },
+        info2:      { DEFAULT: '#3B82F6', soft: '#E8F0FE' },
+        // Фиолетовый акцент-партнёр (градиенты, второстепенные акценты)
+        violet:     { DEFAULT: '#8B5CF6', soft: '#F1ECFE' },
+        // === Legacy aliases ===
+        canvas:    '#EEF1F8',
         page:      '#ffffff',
-        line:      '#D6D7DA',
-        lineHover: '#BCBDC0',
+        line:      '#E2E5EF',
+        lineHover: '#C7CCDC',
         sidebar: {
-          bg:      '#17181B',
-          hover:   '#2D2E32',
-          active:  '#2D2E32',
-          text:    '#8A8B92',
+          bg:      '#1A1B2E',
+          hover:   '#2A2C44',
+          active:  '#4F46E5',
+          text:    '#A9ADC4',
           textAct: '#ffffff',
         },
         ink: {
-          900: '#17181B',
-          700: '#3A3B40',
-          500: '#52535A',
-          400: '#8A8B92',
-          300: '#BCBDC0',
+          900: '#1A1B2E',
+          700: '#34374F',
+          500: '#4A4D68',
+          400: '#6B6F8A',
+          300: '#C7CCDC',
         },
-        // accent = сам графит. Никакого синего brand-цвета — нейтрал-премиум.
+        // accent = ИНДИГО brand. Работает и как яркий фон кнопки, и как читаемый текст.
         accent: {
-          DEFAULT:  '#2D2E32',
-          hover:    '#17181B',
-          soft:     '#E9EAEC',
-          deep:     '#17181B',
-          softText: '#17181B',
+          DEFAULT:  '#4F46E5',
+          hover:    '#4338CA',
+          soft:     '#EEF0FF',
+          deep:     '#3730A3',
+          softText: '#4338CA',
         },
-        ok:   { DEFAULT: '#2E8F62', soft: '#EBF4EE' },
-        warn: { DEFAULT: '#B27420', soft: '#F8EFE0', softText: '#7E5118' },
-        bad:  { DEFAULT: '#C53848', soft: '#FAEAEC' },
+        ok:   { DEFAULT: '#0E9F6E', soft: '#E7F8F1' },
+        warn: { DEFAULT: '#D97706', soft: '#FCF1DF', softText: '#8A5200' },
+        bad:  { DEFAULT: '#E5484D', soft: '#FCEBEC' },
         whatsapp: { DEFAULT: '#25D366', hover: '#128C7E' },
       },
       borderRadius: {

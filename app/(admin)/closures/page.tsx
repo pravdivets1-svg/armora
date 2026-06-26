@@ -52,7 +52,7 @@ export default async function ClosuresPage() {
         ) : (
           <>
             {/* Сводка — плоский ряд, без цветных tinted-фонов */}
-            <div className="bg-card border border-borderc rounded-lg grid grid-cols-3 divide-x divide-borderc/60">
+            <div className="bg-card border border-borderc rounded-lg grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-borderc/60">
               <SummaryCell label="В очереди" value={String(orders.length)} />
               <SummaryCell label="Сумма договоров" value={fmtMoney(totalSum)} />
               <SummaryCell
@@ -206,7 +206,7 @@ function SummaryCell({
   return (
     <div className="px-4 py-3 min-w-0">
       <div className="text-meta text-text3">{label}</div>
-      <div className={`mt-0.5 text-h2 tabular-nums truncate ${cls}`}>{value}</div>
+      <div className={`mt-0.5 text-h2 tabular-nums ${cls}`}>{value}</div>
     </div>
   );
 }

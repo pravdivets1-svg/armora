@@ -167,7 +167,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                 if (!items || items.length === 0) return null;
                 return (
                   <section key={b}>
-                    <div className="sticky top-[56px] lg:top-[64px] z-10 -mx-4 lg:-mx-6 px-4 lg:px-6 py-1.5 bg-app/85 backdrop-blur">
+                    <div className="sticky top-[56px] lg:top-[64px] z-10 -mx-4 lg:-mx-6 px-4 lg:px-6 py-1.5 bg-app/95 backdrop-blur">
                       <div className="flex items-baseline justify-between gap-2">
                         <h3 className="text-meta uppercase tracking-wide text-text3">{BUCKET_LABEL[b]}</h3>
                         <span className="text-meta text-text3 tabular-nums">{items.length}</span>

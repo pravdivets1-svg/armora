@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Plus, Inbox, Archive } from 'lucide-react';
 import type { Stage } from '@prisma/client';
 
-import { requireUser } from '@/lib/auth-helpers';
+import { requireUser, isFieldWorker } from '@/lib/auth-helpers';
 import { listOrders, listAssignableUsers } from '@/lib/orders';
 import { STAGE_LABEL, STAGE_ORDER } from '@/lib/labels';
 import {
@@ -26,6 +26,9 @@ function daysSinceUpdate(updatedAt: Date | string): number {
 
 export default async function OrdersPage({ searchParams }: { searchParams: Search }) {
   const me = await requireUser();
+  // Полевой видит только свои заказы (buildOrderWhere форсит OR по surveyorId/installerId,
+  // а f.userId для не-staff игнорирует). Значит фильтр «исполнитель» и вкладка «Мои» — лишние.
+  const isField = isFieldWorker(me.role);
 
   const stage = (STAGE_ORDER as string[]).includes(searchParams.stage ?? '')
     ? (searchParams.stage as Stage)
@@ -68,16 +71,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                   <option key={s} value={s}>{STAGE_LABEL[s]}</option>
                 ))}
               </AutoSubmitSelect>
-              <AutoSubmitSelect
-                name="user"
-                defaultValue={searchParams.user ?? ''}
-                preserve={['q', 'stage', 'filter']}
-              >
-                <option value="">Все исполнители</option>
-                {assignable.map((u) => (
-                  <option key={u.id} value={u.id}>{u.fullName}</option>
-                ))}
-              </AutoSubmitSelect>
+              {!isField && (
+                <AutoSubmitSelect
+                  name="user"
+                  defaultValue={searchParams.user ?? ''}
+                  preserve={['q', 'stage', 'filter']}
+                >
+                  <option value="">Все исполнители</option>
+                  {assignable.map((u) => (
+                    <option key={u.id} value={u.id}>{u.fullName}</option>
+                  ))}
+                </AutoSubmitSelect>
+              )}
             </FilterSheet>
             {me.role !== 'installer' && (
               <Link href="/archive" aria-label="Архив закрытых заказов">
@@ -124,16 +129,18 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 <option key={s} value={s}>{STAGE_LABEL[s]}</option>
               ))}
             </AutoSubmitSelect>
-            <AutoSubmitSelect
-              name="user"
-              defaultValue={searchParams.user ?? ''}
-              preserve={['q', 'stage', 'filter']}
-            >
-              <option value="">Все исполнители</option>
-              {assignable.map((u) => (
-                <option key={u.id} value={u.id}>{u.fullName}</option>
-              ))}
-            </AutoSubmitSelect>
+            {!isField && (
+              <AutoSubmitSelect
+                name="user"
+                defaultValue={searchParams.user ?? ''}
+                preserve={['q', 'stage', 'filter']}
+              >
+                <option value="">Все исполнители</option>
+                {assignable.map((u) => (
+                  <option key={u.id} value={u.id}>{u.fullName}</option>
+                ))}
+              </AutoSubmitSelect>
+            )}
           </div>
         </div>
 
@@ -142,7 +149,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
           preserve={['q', 'stage', 'user']}
           items={[
             { key: '',        label: 'Все',     count: total },
-            { key: 'mine',    label: 'Мои' },
+            // «Мои» бессмысленна для полевого — у него и так только свои заказы.
+            ...(isField ? [] : [{ key: 'mine', label: 'Мои' }]),
             { key: 'today',   label: 'Сегодня' },
             { key: 'waiting', label: 'Ждут' },
           ]}

@@ -72,6 +72,7 @@ export default async function CalendarPage({
         .filter((e) => e.at >= today && e.at < tomorrow)
         .filter((e) => e.clientAddress.trim().length > 0)
         .map((e) => ({
+          orderId: e.orderId,
           at: e.at,
           clientAddress: e.clientAddress,
           clientName: e.clientName,
@@ -145,11 +146,15 @@ export default async function CalendarPage({
           <Empty
             icon={CalendarClock}
             title="На горизонте пусто"
-            hint="Назначьте замер или установку из карточки заказа"
+            hint={isStaff(me.role)
+              ? 'Назначьте замер или установку из карточки заказа'
+              : 'Пока нет назначенных замеров и установок'}
           />
         )}
 
-        {/* 21-дневная лента: hairline-список дней */}
+        {/* 21-дневная лента: hairline-список дней.
+            Скрываем целиком, если событий нет — иначе под Empty висят 21 «Свободно». */}
+        {events.length > 0 && (
         <section
           aria-label="Лента 21 день"
           className="rounded-md border border-borderc bg-card overflow-hidden"
@@ -186,7 +191,7 @@ export default async function CalendarPage({
                 {/* Заголовок дня — sticky на мобильном */}
                 <div className={[
                   'sticky top-[56px] lg:top-[64px] z-10',
-                  'px-4 py-2 bg-card/90 backdrop-blur',
+                  'px-4 py-2 bg-card border-b border-borderc/60',
                   hasEvents ? '' : '',
                 ].join(' ')}>
                   <div className="flex items-baseline gap-2">
@@ -231,6 +236,7 @@ export default async function CalendarPage({
             );
           })}
         </section>
+        )}
       </div>
     </>
   );
@@ -280,7 +286,7 @@ function EventRow({
         </span>
 
         {/* Бейдж типа — 16px */}
-        <span className={`shrink-0 inline-flex items-center h-4 px-1.5 rounded text-[10.5px]
+        <span className={`shrink-0 inline-flex items-center h-[18px] px-1.5 rounded text-[11px]
                           font-semibold uppercase tracking-wide ${kindBadge}`}>
           {kindLabel}
         </span>

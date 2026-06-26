@@ -96,7 +96,7 @@ export default function ControlRemindersBlock({ initial }: { initial: State }) {
                       const v = Math.max(1, Math.min(365, Number(e.target.value) || 0));
                       patch({ [r.daysName]: v } as Partial<State>);
                     }}
-                    className="w-14 h-8 px-2 rounded-md border border-borderc bg-card text-text1 tabular-nums text-center
+                    className="w-16 h-10 px-2 rounded-md border border-borderc bg-card text-[16px] lg:text-[14px] text-text1 tabular-nums text-center
                                focus:outline-none focus:border-text2/40 focus:ring-1 focus:ring-text2/20
                                disabled:opacity-40"
                   />

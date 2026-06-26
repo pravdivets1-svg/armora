@@ -9,6 +9,7 @@ import { Navigation, ArrowUpRight, MapPin } from 'lucide-react';
 import { fmtTime } from '@/lib/format';
 
 type Point = {
+  orderId: string;
   at: Date;
   clientAddress: string;
   clientName: string;
@@ -74,7 +75,13 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
             ? 'bg-info2/[0.08] text-info2'
             : 'bg-ok2/[0.08] text-ok2';
           return (
-            <li key={`${p.number}-${i}`} className="px-4 py-2.5 min-h-[44px] flex items-center gap-3">
+            <li key={`${p.number}-${i}`}>
+              <Link
+                href={`/orders/${p.orderId}`}
+                className="px-4 py-2.5 min-h-[44px] flex items-center gap-3
+                           transition-colors hover:bg-subtle/60 active:scale-[0.99]
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+              >
               <span className="shrink-0 w-5 h-5 rounded-full bg-subtle text-text2
                                text-[11px] font-semibold tabular-nums
                                flex items-center justify-center">
@@ -97,6 +104,7 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
                   {p.clientAddress}
                 </span>
               </span>
+              </Link>
             </li>
           );
         })}

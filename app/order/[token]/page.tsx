@@ -79,7 +79,14 @@ export default async function PublicOrderPage({
             {STAGE_LABEL[order.stage]}
           </div>
 
-          <div className="mt-4 h-1.5 w-full bg-subtle rounded-full overflow-hidden">
+          <div
+            className="mt-4 h-1.5 w-full bg-subtle rounded-full overflow-hidden"
+            role="progressbar"
+            aria-valuenow={stepNumber}
+            aria-valuemin={1}
+            aria-valuemax={STAGE_ORDER.length}
+            aria-label={`Этап ${stepNumber} из ${STAGE_ORDER.length}: ${STAGE_LABEL[order.stage]}`}
+          >
             <div className="h-full bg-text1 rounded-full" style={{ width: `${percent}%` }} />
           </div>
 
@@ -188,15 +195,15 @@ function PersonBlock({
       </div>
       {at && <div className="mt-2 text-[16px] font-semibold text-text1 tabular-nums">{fmtFullDateTime(at)}</div>}
       {person && (
-        <div className="mt-4 flex items-center justify-between">
-          <div>
+        <div className="mt-4 flex items-center justify-between gap-3 flex-wrap">
+          <div className="min-w-0">
             <div className="text-[12px] text-text3">{role}</div>
-            <div className="font-medium mt-0.5 text-text1">{person.fullName}</div>
+            <div className="font-medium mt-0.5 text-text1 truncate">{person.fullName}</div>
           </div>
           {person.phone && (
             <a
               href={`tel:+${phoneDigits(person.phone)}`}
-              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md
+              className="inline-flex items-center gap-2 px-3.5 min-h-[44px] rounded-md shrink-0
                          bg-card hover:bg-subtle text-text1 border border-borderc text-[14px] font-medium
                          transition-colors"
             >

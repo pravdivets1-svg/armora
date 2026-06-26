@@ -99,12 +99,12 @@ export default function NextEventCard({
                  hover:bg-subtle/60 active:scale-[0.99]
                  focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
     >
-      <span aria-hidden className={`absolute left-0 top-3 bottom-3 w-[2px] rounded-r ${stripe}`} />
+      <span aria-hidden className={`absolute left-0 inset-y-0 w-1 ${stripe}`} />
 
       <div className="px-4 py-3.5 pl-5">
         {/* Мета-строка: тип · время · № */}
         <div className="flex items-center gap-2 mb-1.5">
-          <span className={`inline-flex items-center h-4 px-1.5 rounded text-[10.5px]
+          <span className={`inline-flex items-center h-[18px] px-1.5 rounded text-[11px]
                             font-semibold uppercase tracking-wide ${kindBadge}`}>
             {kindLabel}
           </span>

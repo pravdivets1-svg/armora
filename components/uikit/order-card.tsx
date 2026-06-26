@@ -59,7 +59,7 @@ export function OrderCard({
       {/* Цветовая полоса слева — главный визуальный индикатор стадии */}
       <span
         aria-hidden
-        className={`absolute left-0 top-3 bottom-3 w-[3px] rounded-r-full ${tint.stripe}`}
+        className={`absolute left-0 inset-y-0 w-1 ${tint.stripe}`}
       />
 
       <div className="flex items-start justify-between gap-3">

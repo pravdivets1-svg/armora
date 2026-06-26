@@ -96,8 +96,8 @@ export default async function UsersPage() {
                         <span className="truncate">{ROLE_LABEL[u.role]}</span>
                         {u.phone && (
                           <>
-                            <span className="text-borders hidden sm:inline">·</span>
-                            <span className="hidden sm:inline tabular-nums truncate">
+                            <span className="text-borders">·</span>
+                            <span className="tabular-nums truncate">
                               {u.phone}
                             </span>
                           </>
@@ -114,14 +114,14 @@ export default async function UsersPage() {
                           u.isActive ? 'bg-ok2' : 'bg-text3'
                         }`}
                       />
-                      <span className="hidden sm:inline">
+                      <span className={u.isActive ? 'hidden sm:inline' : ''}>
                         {u.isActive ? 'Активен' : 'Отключён'}
                       </span>
                     </span>
 
                     <ChevronRight
                       size={14}
-                      className="shrink-0 text-text3 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="shrink-0 text-text3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                     />
                   </Link>
                 </li>

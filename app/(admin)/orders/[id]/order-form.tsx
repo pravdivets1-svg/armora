@@ -404,10 +404,24 @@ export default function OrderForm({
 
         </aside>
       </div>
-      {/* Sticky bottom bar: всегда виден на скролле длинной формы.
-          В режиме edit — кнопка Сохранить заменена на индикатор autosave;
-          в режиме create — оставлена явная кнопка Создать. */}
-      <div className="sticky bottom-0 -mx-4 lg:-mx-6 px-4 lg:px-6 py-2.5 pb-[calc(10px+env(safe-area-inset-bottom))] bg-app/90 backdrop-blur-md border-t border-borderc/70 z-10">
+      {/* Мобильный футер действий в потоке: на мобиле sticky-бар уходит под таб-бар
+          и невидим, поэтому autosave / удаление / создание показываем здесь.
+          «К доплате» уже есть в сводке формы выше; первичный CTA этапа — в плавающем
+          доке HeroStage над таб-баром. */}
+      <div className="lg:hidden pt-1">
+        {mode === 'create' ? (
+          <SaveButton label="Создать" />
+        ) : (
+          <div className="flex items-center justify-between gap-3">
+            {mode === 'edit' && <AutosaveStatus state={state} />}
+            {p.canDelete && order && <DeleteButton orderId={order.id} />}
+          </div>
+        )}
+      </div>
+
+      {/* Sticky bottom bar (десктоп): на мобиле действия живут в футере выше и в
+          плавающем доке HeroStage, поэтому здесь — только для lg+. */}
+      <div className="hidden lg:block sticky bottom-0 -mx-6 px-6 py-2.5 bg-app/90 backdrop-blur-md border-t border-borderc/70 z-10">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-6">
             <Metric

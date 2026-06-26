@@ -47,7 +47,7 @@ export default async function UsersPage() {
         sub={`${users.length} ${ruCount(users.length)}`}
         actions={
           <Link href="/users/new" aria-label="Новый сотрудник">
-            <IconButton size={36} variant="secondary" aria-label="Новый сотрудник">
+            <IconButton size={40} variant="secondary" aria-label="Новый сотрудник">
               <Plus size={16} />
             </IconButton>
           </Link>

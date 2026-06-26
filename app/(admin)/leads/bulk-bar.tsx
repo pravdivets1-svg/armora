@@ -133,7 +133,7 @@ export default function LeadsBulkBar({ isDirector, children }: Props) {
               <input type="hidden" name="ids" value={idsCsv} />
               <button
                 type="submit"
-                className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-md
+                className="inline-flex items-center gap-1.5 px-2.5 h-11 rounded-md
                            text-[13px] text-bad2/90 hover:bg-bad2/15 transition-colors"
               >
                 <Trash2 size={13} /> Удалить
@@ -160,7 +160,7 @@ function BulkBtn({
       <input type="hidden" name="ids" value={idsCsv} />
       <button
         type="submit"
-        className="inline-flex items-center gap-1.5 px-2.5 h-8 rounded-md
+        className="inline-flex items-center gap-1.5 px-2.5 h-11 rounded-md
                    text-[13px] text-white/85 hover:bg-white/10 hover:text-white transition-colors"
       >
         {icon} {label}

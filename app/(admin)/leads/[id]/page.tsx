@@ -180,13 +180,17 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
           <SectionCard title="Выбранная модель">
             <div className="flex flex-col sm:flex-row gap-4">
               {door.image && (
-                <a href={door.image} target="_blank" rel="noreferrer" className="shrink-0">
-                  {/* Используем <img> а не next/image — это внешний URL без явного allow-host */}
-                  <img
-                    src={door.image}
-                    alt={door.name ?? 'Дверь'}
-                    className="w-full sm:w-32 max-h-48 rounded-md border border-borderc bg-subtle object-contain"
-                  />
+                <a href={door.image} target="_blank" rel="noreferrer" className="shrink-0 block w-full sm:w-32">
+                  {/* Используем <img> а не next/image — внешний URL без allow-host.
+                      Обёртка с aspect резервирует место — нет сдвига при загрузке (CLS). */}
+                  <div className="w-full aspect-[3/4] rounded-md border border-borderc bg-subtle overflow-hidden">
+                    <img
+                      src={door.image}
+                      alt={door.name ?? 'Дверь'}
+                      loading="lazy"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
                 </a>
               )}
               <div className="flex-1 min-w-0">
@@ -201,7 +205,7 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
                 {door.basePrice != null && (
                   <p className="text-[14px] text-text1 tabular-nums mb-2.5">
                     <span className="text-text3">Базовая цена:</span>{' '}
-                    <span className="font-semibold">{Number(door.basePrice).toLocaleString('ru-RU')} ₽</span>
+                    <span className="text-[16px] font-semibold">{Number(door.basePrice).toLocaleString('ru-RU')} ₽</span>
                   </p>
                 )}
                 {door.tags && door.tags.length > 0 && (

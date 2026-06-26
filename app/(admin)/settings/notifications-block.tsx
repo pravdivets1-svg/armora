@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Bell, BellRing, BellOff, Share, Plus, Smartphone } from 'lucide-react';
+import { toast } from 'sonner';
 import { SectionCard, Button } from '@/components/uikit';
 import { VAPID_PUBLIC_KEY } from '@/lib/push-public';
 
@@ -146,6 +147,7 @@ export default function NotificationsBlock() {
     try {
       const res = await fetch('/api/push/test', { method: 'POST' });
       if (!res.ok) throw new Error('test http ' + res.status);
+      toast.success('Тестовое уведомление отправлено');
     } catch (e) {
       console.warn('[settings/push] test failed', e);
       setError('Не удалось отправить тестовое уведомление.');

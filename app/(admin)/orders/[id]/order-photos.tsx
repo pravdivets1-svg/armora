@@ -185,7 +185,7 @@ export default function OrderPhotos({
                   <button
                     type="button"
                     onClick={() => remove(p.id)}
-                    className="shrink-0 w-7 h-7 inline-flex items-center justify-center rounded
+                    className="shrink-0 w-9 h-9 inline-flex items-center justify-center rounded
                                text-text3 hover:text-bad2 hover:bg-bad2-soft transition-colors"
                     aria-label="Удалить фото"
                     title="Удалить"

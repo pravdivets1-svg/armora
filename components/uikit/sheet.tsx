@@ -67,7 +67,7 @@ export function Sheet({
             {title && (
               <header className="flex items-center justify-between px-5 py-3 border-b border-borderc shrink-0">
                 <h3 id={titleId} className="text-h2 text-text1">{title}</h3>
-                <IconButton size={36} onClick={onClose} aria-label="Закрыть">
+                <IconButton size={40} onClick={onClose} aria-label="Закрыть">
                   <X size={18} />
                 </IconButton>
               </header>

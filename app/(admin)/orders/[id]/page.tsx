@@ -128,6 +128,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
           until={order.awaitingClientUntil}
           disabled={order.stage === 'closed'}
           canSeeDecisions={true}
+          canCloseAsRejection={isStaff(me.role)}
         />
 
         {isStaff(me.role) && <EventLog events={events} />}

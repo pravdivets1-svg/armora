@@ -48,7 +48,8 @@ export async function assignLeadAction(leadId: string, userId: string | null) {
 
   if (userId) {
     const u = await prisma.user.findUnique({ where: { id: userId }, select: { role: true, isActive: true } });
-    if (!u || !u.isActive) throw new Error('User not found');
+    // Ответственным по заявке может быть только staff (как и предлагает UI-дропдаун).
+    if (!u || !u.isActive || !isStaff(u.role)) throw new Error('User not found');
   }
 
   await prisma.lead.update({

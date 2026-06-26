@@ -145,7 +145,13 @@ export default function UserForm({
                 ))}
               </Select>
               {user?.isSelf && (
-                <div className="text-meta text-text3 mt-1">Свою роль изменить нельзя</div>
+                <>
+                  {/* disabled-select не попадает в FormData; шлём текущую роль скрытым полем,
+                      иначе серверная схема (role required) валит сохранение своего профиля.
+                      Серверная защита от смены своей роли остаётся (actions.ts). */}
+                  <input type="hidden" name="role" value={user.role} />
+                  <div className="text-meta text-text3 mt-1">Свою роль изменить нельзя</div>
+                </>
               )}
             </Field>
           </div>

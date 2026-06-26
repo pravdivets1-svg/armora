@@ -24,6 +24,7 @@ export default function AwaitingClientCard({
   until,
   disabled,
   canSeeDecisions,
+  canCloseAsRejection,
 }: {
   orderId: string;
   initial: boolean;
@@ -32,6 +33,7 @@ export default function AwaitingClientCard({
   until: Date | null;
   disabled: boolean;
   canSeeDecisions: boolean;
+  canCloseAsRejection: boolean;
 }) {
   const [on, setOn] = useState(initial);
   const [note, setNote] = useState(initialNote);
@@ -122,7 +124,11 @@ export default function AwaitingClientCard({
         <div className="mt-3 flex flex-wrap gap-2">
           <DecisionButton onClick={() => extendAwaitingAction(orderId)} label="Продлить +3 дня" />
           <DecisionButton onClick={() => resumeFromAwaitingAction(orderId)} label="Вернуть в работу" />
-          <DecisionButton onClick={() => closeFromAwaitingAction(orderId)} label="Закрыть как отказ" tone="bad" />
+          {/* «Закрыть как отказ» переводит в pending_closure — серверный экшен gateит isStaff.
+              Полевому (даже назначенному) кнопку не показываем: иначе клик → Forbidden. */}
+          {canCloseAsRejection && (
+            <DecisionButton onClick={() => closeFromAwaitingAction(orderId)} label="Закрыть как отказ" tone="bad" />
+          )}
         </div>
       )}
     </Card>
@@ -149,7 +155,9 @@ function DecisionButton({
       disabled={pending}
       onClick={async () => {
         setPending(true);
-        try { await onClick(); } finally { setPending(false); }
+        try { await onClick(); }
+        catch { toast.error('Не удалось выполнить'); }
+        finally { setPending(false); }
       }}
       className={`inline-flex items-center justify-center gap-1.5 px-3 h-9 rounded-md text-[12.5px] font-medium border bg-card transition-colors disabled:opacity-50 ${cls}`}
     >

@@ -33,12 +33,14 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
 
   const filter = searchParams.filter ?? 'all';
   const userIdFilter = filter === 'mine' ? me.id : searchParams.user;
+  const scope = filter === 'today' || filter === 'waiting' ? filter : undefined;
 
   const [{ items, total, page, pageCount }, assignable, staleCounts] = await Promise.all([
     listOrders(me, {
       q: searchParams.q,
       stage,
       userId: userIdFilter,
+      scope,
       page: Number(searchParams.page) || 1,
     }),
     listAssignableUsers(),
@@ -85,7 +87,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
               </Link>
             )}
             {(me.role === 'director' || me.role === 'manager') && (
-              <Link href="/orders/new">
+              <Link href="/orders/new" className="hidden lg:block">
                 <Button size="sm"><Plus size={16} /> Новый</Button>
               </Link>
             )}

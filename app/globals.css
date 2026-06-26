@@ -208,3 +208,19 @@ html[data-density="compact"] .table-density thead th {
   background:
     linear-gradient(180deg, rgba(58, 59, 63, 1) 0%, rgba(34, 35, 38, 1) 100%);
 }
+
+/* =====================================================================
+   Reduced motion — уважаем системную настройку (WCAG 2.3.3).
+   Глушит skeleton-shimmer / splash-pulse / animate-pulse / framer-motion
+   и все CSS-переходы разом, оставляя мгновенную смену состояний.
+   ===================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

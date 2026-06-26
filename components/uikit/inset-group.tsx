@@ -37,7 +37,7 @@ export function InsetGroup({
     <section className={`${className}`}>
       {(label || action) && (
         <header className="flex items-center justify-between px-4 mb-1.5">
-          <h2 className="text-[11px] uppercase tracking-[0.06em] text-text3 font-semibold">
+          <h2 className="text-[11px] uppercase tracking-[0.06em] text-text2 font-semibold">
             {label}
           </h2>
           {action}

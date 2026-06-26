@@ -9,12 +9,12 @@ type Size = 'sm' | 'md' | 'lg';
 // dark    = алиас primary.
 // accent  = синий glass, для критичных stage-CTA.
 const VARIANT: Record<Variant, string> = {
-  primary:   'glass-button-dark text-white',
-  dark:      'glass-button-dark text-white',
-  accent:    'bg-accent text-white hover:bg-accent-deep active:bg-accent-deep',
-  secondary: 'glass-surface text-text1',
-  ghost:     'text-text2 hover:bg-white/30 hover:text-text1',
-  danger:    'text-bad2 hover:bg-bad2-soft',
+  primary:   'glass-button-dark text-white focus-visible:ring-white/90',
+  dark:      'glass-button-dark text-white focus-visible:ring-white/90',
+  accent:    'bg-accent text-white hover:bg-accent-deep active:bg-accent-deep focus-visible:ring-white/90',
+  secondary: 'glass-surface text-text1 focus-visible:ring-accent',
+  ghost:     'text-text2 hover:bg-white/30 hover:text-text1 focus-visible:ring-accent',
+  danger:    'text-bad2 hover:bg-bad2-soft focus-visible:ring-accent',
 };
 
 const SIZE: Record<Size, string> = {
@@ -40,7 +40,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
                   transition-[transform,background-color,color,border-color] duration-fast ease-soft
                   active:scale-[0.98]
                   disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
                   ${VARIANT[variant]} ${SIZE[size]} ${block ? 'w-full' : ''} ${className}`}
       {...rest}
     >

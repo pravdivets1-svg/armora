@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Inbox, ChevronRight } from 'lucide-react';
+import { Inbox, Phone } from 'lucide-react';
 import type { LeadStage } from '@prisma/client';
 
 import { requireUser, isStaff } from '@/lib/auth-helpers';
@@ -184,13 +184,14 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                                      has-[input:checked]:bg-accent/[0.08]"
                         >
                           <label
-                            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 cursor-pointer p-2 text-text3 hover:text-text1"
+                            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer
+                                       w-11 h-11 flex items-center justify-center text-text3 hover:text-text1"
                             aria-label={`Выбрать заявку №${lead.number}`}
                           >
                             <input
                               type="checkbox"
                               data-lead-id={lead.id}
-                              className="w-3.5 h-3.5 accent-accent cursor-pointer"
+                              className="w-[18px] h-[18px] accent-accent cursor-pointer"
                             />
                           </label>
 
@@ -200,7 +201,7 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                             aria-label={`Открыть заявку №${lead.number} от ${lead.clientName}`}
                           />
 
-                          <div className="relative z-[1] pointer-events-none flex items-center gap-3 pl-10 pr-3 py-2.5">
+                          <div className="relative z-[1] pointer-events-none flex items-center gap-3 pl-11 pr-2 py-2.5">
                             <div
                               className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-semibold
                                 ${lead.stage === 'new'
@@ -215,17 +216,26 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
                                 <p className="text-[13.5px] font-medium text-text1 truncate flex-1 min-w-0">
                                   {lead.clientName}
                                 </p>
-                                <span className="text-meta text-text3 tabular-nums shrink-0">{fmtRelative(lead.createdAt)}</span>
+                                <span className="text-meta text-text2 tabular-nums shrink-0">{fmtRelative(lead.createdAt)}</span>
                               </div>
                               <div className="flex items-center gap-2 mt-0.5">
                                 <LeadPill stage={lead.stage} />
-                                <span className="text-meta text-text3 tabular-nums truncate min-w-0">
+                                <span className="text-meta text-text2 tabular-nums truncate min-w-0">
                                   {fmtPhone(lead.clientPhone)}
                                 </span>
                               </div>
                             </div>
 
-                            <ChevronRight size={14} className="text-text3 shrink-0" />
+                            {/* Тап-звонок — поверх Link-оверлея, кликабелен (pointer-events-auto) */}
+                            <a
+                              href={`tel:+${lead.clientPhone.replace(/\D/g, '')}`}
+                              aria-label={`Позвонить ${lead.clientName}`}
+                              className="pointer-events-auto shrink-0 inline-flex items-center justify-center w-11 h-11 rounded-full
+                                         text-text2 hover:text-text1 hover:bg-white/40 transition-colors
+                                         focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                            >
+                              <Phone size={16} />
+                            </a>
                           </div>
                         </div>
                       ))}

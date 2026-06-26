@@ -49,7 +49,7 @@ export function MobileTabBar({
                 href={it.href}
                 className={`relative flex flex-col items-center justify-center gap-1 h-full px-1
                             text-[11px] font-medium transition-colors duration-fast
-                            ${active ? 'text-accent' : 'text-text3 hover:text-text1'}`}
+                            ${active ? 'text-accent' : 'text-text2 hover:text-text1'}`}
               >
                 {active && (
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-accent rounded-b-md" />

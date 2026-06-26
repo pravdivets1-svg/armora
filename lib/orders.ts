@@ -6,11 +6,13 @@
 import { prisma } from '@/lib/prisma';
 import type { Prisma, Role, Stage } from '@prisma/client';
 import { isStaff } from '@/lib/auth-helpers';
+import { mskDayStart } from '@/lib/format';
 
 export type OrderListFilters = {
   q?: string;        // поиск по ФИО или телефону
   stage?: Stage;
   userId?: string;   // фильтр по назначенному сотруднику
+  scope?: 'today' | 'waiting'; // быстрый фильтр: события сегодня / ждём клиента
   page?: number;
 };
 
@@ -43,6 +45,22 @@ export function buildOrderWhere(
         { OR: [{ surveyorId: f.userId }, { installerId: f.userId }] },
       ];
     }
+  }
+
+  // Быстрые scope-фильтры из PillTabs (вкладки «Сегодня» / «Ждут»).
+  if (f.scope === 'today') {
+    // События (замер/установка), назначенные на сегодня по МСК.
+    const dayStart = mskDayStart(new Date());
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+    where.AND = ([] as Prisma.OrderWhereInput[]).concat(where.AND ?? [], [{
+      OR: [
+        { stage: 'survey_scheduled', surveyAt:  { gte: dayStart, lt: dayEnd } },
+        { stage: 'ready_to_install', installAt: { gte: dayStart, lt: dayEnd } },
+      ],
+    }]);
+  } else if (f.scope === 'waiting') {
+    // «Ждём клиента» — заказы с активным флагом ожидания (см. lib/awaiting.ts).
+    where.awaitingClient = true;
   }
 
   if (f.q) {

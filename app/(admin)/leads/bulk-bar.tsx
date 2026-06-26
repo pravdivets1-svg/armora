@@ -111,7 +111,7 @@ export default function LeadsBulkBar({ isDirector, children }: Props) {
 
       {/* Action bar — Linear-стиль: тёмная плашка text1, плотные кнопки */}
       {count > 0 && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40
+        <div className="fixed bottom-[calc(64px+env(safe-area-inset-bottom)+0.75rem)] lg:bottom-4 left-1/2 -translate-x-1/2 z-40
                         bg-text1 text-white rounded-lg shadow-popover
                         px-2 py-1.5 flex items-center gap-0.5 flex-wrap max-w-[calc(100vw-2rem)]
                         animate-[bar-in_0.18s_ease-out]">

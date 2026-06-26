@@ -407,7 +407,7 @@ export default function OrderForm({
       {/* Sticky bottom bar: всегда виден на скролле длинной формы.
           В режиме edit — кнопка Сохранить заменена на индикатор autosave;
           в режиме create — оставлена явная кнопка Создать. */}
-      <div className="sticky bottom-0 -mx-6 px-6 py-2.5 bg-app/90 backdrop-blur-md border-t border-borderc/70 z-10">
+      <div className="sticky bottom-0 -mx-4 lg:-mx-6 px-4 lg:px-6 py-2.5 pb-[calc(10px+env(safe-area-inset-bottom))] bg-app/90 backdrop-blur-md border-t border-borderc/70 z-10">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-6">
             <Metric

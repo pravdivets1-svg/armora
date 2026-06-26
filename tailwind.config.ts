@@ -19,7 +19,7 @@ const config: Config = {
         borders:    '#BCBDC0',
         text1:      '#17181B',
         text2:      '#52535A',
-        text3:      '#8A8B92',
+        text3:      '#6E6F76',
         // Status (приглушённые, в тон графиту)
         ok2:        { DEFAULT: '#2E8F62', soft: '#EBF4EE' },
         warn2:      { DEFAULT: '#B27420', soft: '#F8EFE0' },

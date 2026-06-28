@@ -188,9 +188,11 @@ export async function convertLeadToOrderAction(
     ? d.clientAddress
     : (lead.clientAddress ?? '');
 
-  // Транзакция: создаём заказ и помечаем lead как converted
+  // Транзакция: создаём заказ и помечаем lead как converted (атомарно).
+  // Любой сбой БД заворачиваем в graceful-ошибку (а не uncaught-throw, который
+  // показывает пользователю «вылетела ошибка»), и логируем реальную причину.
   const order = await prisma.$transaction(async (tx) => {
-    const order = await tx.order.create({
+    const created = await tx.order.create({
       data: {
         publicToken:       randomBytes(16).toString('hex'),
         clientName:        lead.clientName,
@@ -201,21 +203,32 @@ export async function convertLeadToOrderAction(
         widthMm:           lead.widthMm,
         heightMm:          lead.heightMm,
         totalAmount,
+        // Дату замера сохраняем ТОЛЬКО вместе с замерщиком — иначе «дата без
+        // исполнителя» на стадии «новый» это неконсистентное состояние.
         stage:             willScheduleSurvey ? 'survey_scheduled' : 'new',
         surveyorId:        surveyorUser ? surveyorUser.id : null,
-        surveyAt:          surveyAt,
+        surveyAt:          willScheduleSurvey ? surveyAt : null,
         createdById:       me.id,
       },
     });
     await tx.lead.update({
       where: { id: leadId },
-      data: { stage: 'converted', convertedOrderId: order.id },
+      data: { stage: 'converted', convertedOrderId: created.id },
     });
-    return order;
+    return created;
+  }).catch((e) => {
+    console.error('[convertLeadToOrder] create failed', { leadId, error: e });
+    return null;
   });
 
-  // Уведомления — замерщику в TG (общий чат) и push если подписан
+  if (!order) {
+    return { ok: false, error: 'Не удалось создать заказ. Проверьте данные заявки и попробуйте ещё раз.' };
+  }
+
+  // Уведомления — замерщику в TG (общий чат) и push если подписан.
+  // try/catch: сбой уведомления не должен валить уже созданный заказ.
   if (willScheduleSurvey && surveyorUser && surveyAt) {
+   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
     const surveyAtIso = surveyAt.toISOString();
     void notifyOrderAssignedSurveyTelegram({
@@ -236,6 +249,9 @@ export async function convertLeadToOrderAction(
         tag:   `order-${order.id}-survey`,
       }),
     );
+   } catch (e) {
+    console.warn('[convertLeadToOrder] notify failed', e);
+   }
   }
 
   revalidatePath('/leads');

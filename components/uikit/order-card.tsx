@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Stage } from '@prisma/client';
-import { Phone, MapPin } from 'lucide-react';
+import { Phone, MapPin, Navigation } from 'lucide-react';
 import { StagePill } from './stage-pill';
 
 function fmtRub(v: number | null | undefined): string {
@@ -46,23 +46,39 @@ export function OrderCard({
   amount: number | null;
 }) {
   const tint = STAGE_STRIPE[stage];
+  const telHref = phone ? `tel:${phone.replace(/[^\d+]/g, '')}` : null;
+  const mapHref = address
+    ? `https://yandex.ru/maps/?text=${encodeURIComponent(address)}`
+    : null;
+
   return (
-    <Link
-      href={href}
-      className={`relative block glass-surface rounded-2xl ring-1 ${tint.ring}
+    // Паттерн «растянутая ссылка»: сама карточка — article, на весь блок лёг
+    // невидимый оверлей-Link (тап по пустому месту → открыть заказ), а кнопки
+    // звонка/маршрута перехватывают свой тап поверх него.
+    <article
+      className={`relative glass-surface rounded-2xl ring-1 ${tint.ring}
                   pl-5 pr-4 py-3.5
                   transition-transform duration-fast ease-soft
                   active:scale-[0.99]
-                  focus:outline-none focus-visible:ring-2 focus-visible:ring-accent
                   overflow-hidden`}
     >
       {/* Цветовая полоса слева — главный визуальный индикатор стадии */}
       <span
         aria-hidden
-        className={`absolute left-0 inset-y-0 w-1 ${tint.stripe}`}
+        className={`absolute left-0 inset-y-0 w-1 ${tint.stripe} pointer-events-none`}
       />
 
-      <div className="flex items-start justify-between gap-3">
+      {/* Оверлей-ссылка: занимает всю карточку, ловит тап «открыть заказ» */}
+      <Link
+        href={href}
+        aria-label={`Открыть заказ № ${number}, ${clientName}`}
+        className="card-link absolute inset-0 z-0 rounded-2xl
+                   focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      />
+
+      {/* Контент поверх оверлея, но прозрачен для тапов (pointer-events-none),
+          чтобы тап по тексту проваливался на оверлей. Кнопки возвращают себе тап. */}
+      <div className="relative z-10 pointer-events-none flex items-stretch justify-between gap-3">
         <div className="min-w-0 flex-1">
           {/* Имя клиента + номер */}
           <div className="flex items-baseline justify-between gap-3 mb-1">
@@ -94,14 +110,52 @@ export function OrderCard({
           )}
         </div>
 
-        {/* Сумма — крупно, справа, как сумма счёта в банковском приложении */}
-        <div className="shrink-0 text-right">
-          <div className="text-[16px] font-semibold tabular-nums text-text1 leading-tight">
-            {fmtRub(amount)}
+        {/* Правая колонка: сумма сверху, быстрые действия снизу — вписаны в
+            высоту левой колонки, карточка не растёт. */}
+        <div className="shrink-0 flex flex-col items-end justify-between gap-2">
+          {/* Сумма — крупно, как сумма счёта в банковском приложении */}
+          <div className="text-right">
+            <div className="text-[16px] font-semibold tabular-nums text-text1 leading-tight">
+              {fmtRub(amount)}
+            </div>
+            <div className="text-meta text-text3 mt-0.5">по договору</div>
           </div>
-          <div className="text-meta text-text3 mt-0.5">по договору</div>
+
+          {/* Звонок / маршрут прямо из списка — без захода в заказ */}
+          {(telHref || mapHref) && (
+            <div className="pointer-events-auto flex items-center gap-2">
+              {telHref && (
+                <a
+                  href={telHref}
+                  aria-label="Позвонить клиенту"
+                  title="Позвонить"
+                  className="inline-flex items-center justify-center w-10 h-10 rounded-full
+                             bg-ok2/10 text-ok2 active:scale-95
+                             transition-transform duration-fast
+                             focus:outline-none focus-visible:ring-2 focus-visible:ring-ok2"
+                >
+                  <Phone size={17} strokeWidth={2} />
+                </a>
+              )}
+              {mapHref && (
+                <a
+                  href={mapHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Маршрут до адреса"
+                  title="Маршрут"
+                  className="inline-flex items-center justify-center w-10 h-10 rounded-full
+                             bg-accent/10 text-accent active:scale-95
+                             transition-transform duration-fast
+                             focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                >
+                  <Navigation size={17} strokeWidth={2} />
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

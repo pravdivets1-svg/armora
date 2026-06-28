@@ -11,6 +11,9 @@ import CommentsBlock from './comments-block';
 import EventLog from './event-log';
 import HeroStageBlock from './hero-stage-block';
 import { QuickActionsRow } from './quick-actions-row';
+import { ChevronDown } from 'lucide-react';
+import { awaitingStateOf } from '@/lib/awaiting';
+import { fmtDateTime } from '@/lib/format';
 import {
   updateOrderAction,
   updateOrderStageAction,
@@ -82,6 +85,52 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
     ? (approveClosureAction.bind(null, order.id) as () => Promise<void>)
     : undefined;
 
+  const isField = !isStaff(me.role);
+
+  // Ближайшее событие по этапу — строкой в Hero, без захода в форму.
+  let nextEvent: string | null = null;
+  if (order.stage === 'survey_scheduled' && order.surveyAt) {
+    nextEvent = `Замер: ${fmtDateTime(order.surveyAt)}${order.surveyor ? ` · ${order.surveyor.fullName}` : ''}`;
+  } else if ((order.stage === 'ready_to_install' || order.stage === 'installed') && order.installAt) {
+    nextEvent = `Установка: ${fmtDateTime(order.installAt)}${order.installer ? ` · ${order.installer.fullName}` : ''}`;
+  }
+
+  // «Ждём клиента»: при просрочке — поднимаем блок решений наверх (срочное действие).
+  const awaiting = awaitingStateOf({
+    awaitingClient:      order.awaitingClient,
+    awaitingClientSince: order.awaitingClientSince,
+    awaitingClientUntil: order.awaitingClientUntil,
+  });
+  const awaitingOverdue = awaiting.kind === 'overdue';
+  // Карточку показываем staff и замерщику; установщику — только если просрочено.
+  const showAwaiting = isStaff(me.role) || me.role === 'surveyor' || awaitingOverdue;
+
+  const awaitingCard = showAwaiting ? (
+    <AwaitingClientCard
+      orderId={order.id}
+      initial={order.awaitingClient}
+      initialNote={order.awaitingClientNote ?? ''}
+      since={order.awaitingClientSince}
+      until={order.awaitingClientUntil}
+      disabled={order.stage === 'closed'}
+      canSeeDecisions={true}
+      canCloseAsRejection={isStaff(me.role)}
+    />
+  ) : null;
+
+  const orderForm = (
+    <OrderForm
+      order={order}
+      action={updateOrderAction.bind(null, order.id)}
+      surveyors={surveyors}
+      installers={installers}
+      role={me.role}
+      mode="edit"
+      hideStageStepper
+      comments={<CommentsBlock orderId={order.id} comments={order.comments} />}
+    />
+  );
+
   return (
     <>
       <PageHeader
@@ -95,9 +144,13 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
           current={order.stage}
           role={me.role}
           enteredAt={order.updatedAt.toISOString()}
+          nextEvent={nextEvent}
           onStageChange={stageAction}
           onApproveClosure={approveAction}
         />
+
+        {/* Срочное: при просрочке «ждём клиента» решение поднимаем сразу под этап */}
+        {awaitingOverdue && awaitingCard}
 
         <QuickActionsRow
           clientPhone={order.clientPhone}
@@ -109,31 +162,32 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
           initial={photoMetas.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() }))}
         />
 
-        <OrderForm
-          order={order}
-          action={updateOrderAction.bind(null, order.id)}
-          surveyors={surveyors}
-          installers={installers}
-          role={me.role}
-          mode="edit"
-          hideStageStepper
-          comments={<CommentsBlock orderId={order.id} comments={order.comments} />}
-        />
+        {/* Тяжёлая форма: staff видит развёрнуто, полевой — свёрнуто в «Все детали»,
+            чтобы сразу видеть «куда ехать / кому звонить», а не бухгалтерию. */}
+        {isField ? (
+          <details className="group">
+            <summary
+              className="glass-surface rounded-2xl flex items-center justify-between gap-3
+                         px-4 py-3.5 min-h-[52px] cursor-pointer list-none select-none
+                         [&::-webkit-details-marker]:hidden
+                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              <span className="text-[15px] font-medium text-text1">Все детали заказа</span>
+              <ChevronDown size={18} className="text-text3 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className="mt-2.5">{orderForm}</div>
+          </details>
+        ) : (
+          orderForm
+        )}
 
-        <AwaitingClientCard
-          orderId={order.id}
-          initial={order.awaitingClient}
-          initialNote={order.awaitingClientNote ?? ''}
-          since={order.awaitingClientSince}
-          until={order.awaitingClientUntil}
-          disabled={order.stage === 'closed'}
-          canSeeDecisions={true}
-          canCloseAsRejection={isStaff(me.role)}
-        />
+        {/* «Ждём клиента» в обычной позиции (не просрочено) */}
+        {!awaitingOverdue && awaitingCard}
 
         {isStaff(me.role) && <EventLog events={events} />}
 
-        <PublicLinkBlock url={publicUrl} clientPhone={order.clientPhone} />
+        {/* Ссылка для клиента — диспетчерская функция, только staff */}
+        {isStaff(me.role) && <PublicLinkBlock url={publicUrl} clientPhone={order.clientPhone} />}
       </div>
     </>
   );

@@ -124,6 +124,11 @@ export function IntervalPicker({
     return toMskDateInput(now);
   }, []);
 
+  const tomorrowMsk = useMemo(() => {
+    const now = new Date();
+    return toMskDateInput(new Date(now.getTime() + 24 * 60 * 60 * 1000));
+  }, []);
+
   const activePreset = useMemo(() => {
     if (!start || !end) return null;
     return list.find((p) => p.start === start && p.end === end)?.label ?? null;
@@ -198,6 +203,28 @@ export function IntervalPicker({
           )}
         </div>
       </label>
+
+      {/* Быстрый выбор частых дат — один тап вместо нативного календаря */}
+      {!disabled && (
+        <div className="flex gap-1.5">
+          {[
+            { l: 'Сегодня', v: todayMsk },
+            { l: 'Завтра',  v: tomorrowMsk },
+          ].map((c) => (
+            <button
+              key={c.v}
+              type="button"
+              onClick={() => { setDate(c.v); onChange?.(); }}
+              className={`inline-flex items-center h-7 px-3 rounded-md text-[12px] font-medium border transition-colors
+                ${date === c.v
+                  ? 'bg-accent border-accent text-white'
+                  : 'bg-card border-borderc text-text2 hover:bg-subtle/60'}`}
+            >
+              {c.l}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Время начала и конца */}
       <div className="grid grid-cols-[1fr_auto_1fr] items-end gap-2">

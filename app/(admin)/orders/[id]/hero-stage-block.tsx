@@ -20,6 +20,7 @@ export default function HeroStageBlock({
   role,
   enteredAt,
   enteredBy,
+  nextEvent,
   onStageChange,
   onApproveClosure,
 }: {
@@ -27,6 +28,7 @@ export default function HeroStageBlock({
   role: Role;
   enteredAt: string;
   enteredBy?: string;
+  nextEvent?: string | null;
   onStageChange: (next: Stage) => Promise<void>;
   onApproveClosure?: () => Promise<void>;
 }) {
@@ -60,6 +62,7 @@ export default function HeroStageBlock({
         role={role}
         enteredAt={enteredAt}
         enteredBy={enteredBy}
+        nextEvent={nextEvent}
         onStageChange={doStageChange}
         onApproveClosure={doApprove}
       />

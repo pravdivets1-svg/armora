@@ -26,6 +26,7 @@ export function HeroStage({
   current,
   role,
   enteredAt,
+  nextEvent,
   onStageChange,
   onApproveClosure,
 }: {
@@ -33,6 +34,7 @@ export function HeroStage({
   role: Role;
   enteredAt: Date | string;
   enteredBy?: string;
+  nextEvent?: string | null;
   onStageChange: (next: Stage) => Promise<void> | void;
   onApproveClosure?: () => Promise<void> | void;
 }) {
@@ -69,30 +71,40 @@ export function HeroStage({
         </button>
       </div>
 
+      {/* Ближайшее событие по этапу — сразу видно «когда/кто», без захода в форму */}
+      {nextEvent && (
+        <p className="text-[13.5px] text-text2 -mt-1 mb-3 tabular-nums">{nextEvent}</p>
+      )}
+
       {isPendingClosureAsDirector && onApproveClosure ? (
-        <Button
-          variant="accent"
-          size="lg"
-          block
-          disabled={pending}
-          onClick={() => start(() => { void onApproveClosure(); })}
-        >
-          Закрыть заказ <ChevronRight size={18} />
-        </Button>
+        // На мобиле первичный CTA живёт в нижнем доке (hero-stage-block) — здесь только на десктопе
+        <div className="hidden lg:block">
+          <Button
+            variant="accent"
+            size="lg"
+            block
+            disabled={pending}
+            onClick={() => start(() => { void onApproveClosure(); })}
+          >
+            Закрыть заказ <ChevronRight size={18} />
+          </Button>
+        </div>
       ) : isPendingClosureOther ? (
         <p className="text-[14px] text-warn2 font-medium">
           Ждёт подтверждения директора
         </p>
       ) : next ? (
-        <Button
-          variant="accent"
-          size="lg"
-          block
-          disabled={pending}
-          onClick={() => start(() => { void onStageChange(next); })}
-        >
-          Передать в «{STAGE_LABEL[next]}» <ChevronRight size={18} />
-        </Button>
+        <div className="hidden lg:block">
+          <Button
+            variant="accent"
+            size="lg"
+            block
+            disabled={pending}
+            onClick={() => start(() => { void onStageChange(next); })}
+          >
+            Передать в «{STAGE_LABEL[next]}» <ChevronRight size={18} />
+          </Button>
+        </div>
       ) : current === 'closed' ? (
         <p className="text-[14px] text-text3">Заказ закрыт</p>
       ) : (

@@ -198,6 +198,13 @@ export default function OrderForm({
           <span>{state.error}</span>
         </div>
       )}
+
+      {/* Статус autosave у верха формы — виден без скролла (важно на мобиле) */}
+      {mode === 'edit' && (
+        <div className="flex justify-end">
+          <AutosaveStatus state={state} />
+        </div>
+      )}
       {/* "Сохранено" не показываем большой плашкой — статус autosave виден
           в sticky-баре снизу. Большая плашка нужна только для ошибок. */}
 
@@ -422,27 +429,11 @@ export default function OrderForm({
       {/* Sticky bottom bar (десктоп): на мобиле действия живут в футере выше и в
           плавающем доке HeroStage, поэтому здесь — только для lg+. */}
       <div className="hidden lg:block sticky bottom-0 -mx-6 px-6 py-2.5 bg-app/90 backdrop-blur-md border-t border-borderc/70 z-10">
-        <div className="flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-6">
-            <Metric
-              label="К доплате клиентом"
-              value={fmtMoney(remaining)}
-              size="sm"
-            />
-            {p.canSeeCost && (
-              <Metric
-                label="Маржа"
-                value={(margin >= 0 ? '+' : '') + fmtMoney(margin)}
-                tone={margin >= 0 ? 'ok' : 'bad'}
-                size="sm"
-              />
-            )}
-          </div>
-          <div className="flex items-center gap-3">
-            {mode === 'edit' && <AutosaveStatus state={state} />}
-            {p.canDelete && order && <DeleteButton orderId={order.id} />}
-            {mode === 'create' && <SaveButton label="Создать" />}
-          </div>
+        {/* Деньги не дублируем — они в сводке формы выше (единственный источник). Здесь только действия. */}
+        <div className="flex items-center justify-end gap-3 flex-wrap">
+          {mode === 'edit' && <AutosaveStatus state={state} />}
+          {p.canDelete && order && <DeleteButton orderId={order.id} />}
+          {mode === 'create' && <SaveButton label="Создать" />}
         </div>
       </div>
     </form>

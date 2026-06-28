@@ -11,7 +11,6 @@ import CommentsBlock from './comments-block';
 import EventLog from './event-log';
 import HeroStageBlock from './hero-stage-block';
 import { QuickActionsRow } from './quick-actions-row';
-import { ChevronDown } from 'lucide-react';
 import { awaitingStateOf } from '@/lib/awaiting';
 import { fmtDateTime } from '@/lib/format';
 import {
@@ -85,8 +84,6 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
     ? (approveClosureAction.bind(null, order.id) as () => Promise<void>)
     : undefined;
 
-  const isField = !isStaff(me.role);
-
   // Ближайшее событие по этапу — строкой в Hero, без захода в форму.
   let nextEvent: string | null = null;
   if (order.stage === 'survey_scheduled' && order.surveyAt) {
@@ -139,7 +136,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         backHref="/orders"
       />
 
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-4 space-y-2.5 pb-[88px] lg:pb-12">
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-3 space-y-2 pb-[88px] lg:pb-12">
         <HeroStageBlock
           current={order.stage}
           role={me.role}
@@ -162,24 +159,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
           initial={photoMetas.map((p) => ({ ...p, createdAt: p.createdAt.toISOString() }))}
         />
 
-        {/* Тяжёлая форма: staff видит развёрнуто, полевой — свёрнуто в «Все детали»,
-            чтобы сразу видеть «куда ехать / кому звонить», а не бухгалтерию. */}
-        {isField ? (
-          <details className="group">
-            <summary
-              className="glass-surface rounded-2xl flex items-center justify-between gap-3
-                         px-4 py-3.5 min-h-[52px] cursor-pointer list-none select-none
-                         [&::-webkit-details-marker]:hidden
-                         focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
-            >
-              <span className="text-[15px] font-medium text-text1">Все детали заказа</span>
-              <ChevronDown size={18} className="text-text3 transition-transform group-open:rotate-180" />
-            </summary>
-            <div className="mt-2.5">{orderForm}</div>
-          </details>
-        ) : (
-          orderForm
-        )}
+        {orderForm}
 
         {/* «Ждём клиента» в обычной позиции (не просрочено) */}
         {!awaitingOverdue && awaitingCard}

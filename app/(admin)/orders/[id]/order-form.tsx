@@ -172,7 +172,7 @@ export default function OrderForm({
     <form
       ref={formRef}
       action={formAction}
-      className="space-y-3"
+      className="space-y-2.5"
       // Любое изменение в любом поле формы — взводим таймер autosave.
       // Используем onInput, потому что onChange на checkbox/select работает,
       // но для текстовых полей onInput даёт мгновенный отклик при печати.

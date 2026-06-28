@@ -54,85 +54,93 @@ export function HeroStage({
     : 'glass-surface-strong';
 
   return (
-    <section className={`rounded-2xl ${cardCls} p-4 sm:p-5`}>
-      <div className="flex items-center justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
+    <section className={`rounded-2xl overflow-hidden ${cardCls}`}>
+      {/* Шапка этапа — цветной индиго/фиолет градиент + сегментный прогресс по этапам */}
+      <div className="bg-gradient-to-br from-accent/[0.12] via-violet/[0.05] to-transparent px-4 sm:px-5 pt-4 pb-3.5">
+        <div className="flex items-center justify-between gap-3 mb-3">
           <StagePill stage={current} daysInStage={days} size="md" />
-          <span className="text-meta text-text3 tabular-nums shrink-0">
-            · {idx + 1}/{total}
-          </span>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="text-meta text-text2 hover:text-text1 transition-colors inline-flex items-center gap-0.5 shrink-0"
+          >
+            Все этапы <ChevronRight size={13} />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="text-meta text-text2 hover:text-text1 transition-colors inline-flex items-center gap-1 shrink-0"
-        >
-          Все этапы
-        </button>
+
+        {/* Сегментный прогресс — визуально показывает позицию в цепочке этапов */}
+        <div className="flex items-center gap-1" aria-hidden>
+          {STAGE_ORDER.map((s, i) => (
+            <span
+              key={s}
+              className={`h-1.5 flex-1 rounded-full ${i <= idx ? 'bg-accent' : 'bg-borderc/70'}`}
+            />
+          ))}
+        </div>
+
+        <div className="mt-2 flex items-center justify-between gap-3 text-meta">
+          <span className="text-text3 tabular-nums shrink-0">Этап {idx + 1} из {total}</span>
+          {nextEvent && (
+            <span className="text-text2 tabular-nums truncate text-right">{nextEvent}</span>
+          )}
+        </div>
       </div>
 
-      {/* Ближайшее событие по этапу — сразу видно «когда/кто», без захода в форму */}
-      {nextEvent && (
-        <p className="text-[13.5px] text-text2 -mt-1 mb-3 tabular-nums">{nextEvent}</p>
-      )}
-
+      {/* Действие по этапу. На мобиле кнопка-переход живёт в нижнем доке, поэтому её
+          блок скрыт и НЕ оставляет пустого места; текстовые статусы видны всегда. */}
       {isPendingClosureAsDirector && onApproveClosure ? (
-        // На мобиле первичный CTA живёт в нижнем доке (hero-stage-block) — здесь только на десктопе
-        <div className="hidden lg:block">
+        <div className="hidden lg:block px-5 pb-4">
           <Button
-            variant="accent"
-            size="lg"
-            block
-            disabled={pending}
+            variant="accent" size="lg" block disabled={pending}
             onClick={() => start(() => { void onApproveClosure(); })}
           >
             Закрыть заказ <ChevronRight size={18} />
           </Button>
         </div>
       ) : isPendingClosureOther ? (
-        <p className="text-[14px] text-warn2 font-medium">
-          Ждёт подтверждения директора
-        </p>
+        <div className="px-4 sm:px-5 pb-4">
+          <p className="text-[14px] text-warn2 font-medium">Ждёт подтверждения директора</p>
+        </div>
       ) : next ? (
-        <div className="hidden lg:block">
+        <div className="hidden lg:block px-5 pb-4">
           <Button
-            variant="accent"
-            size="lg"
-            block
-            disabled={pending}
+            variant="accent" size="lg" block disabled={pending}
             onClick={() => start(() => { void onStageChange(next); })}
           >
             Передать в «{STAGE_LABEL[next]}» <ChevronRight size={18} />
           </Button>
         </div>
       ) : current === 'closed' ? (
-        <p className="text-[14px] text-text3">Заказ закрыт</p>
+        <div className="px-4 sm:px-5 pb-4">
+          <p className="text-[14px] text-text3">Заказ закрыт</p>
+        </div>
       ) : (
-        <p className="text-[14px] text-text3">Нет доступных переходов</p>
+        <div className="px-4 sm:px-5 pb-4">
+          <p className="text-[14px] text-text3">Нет доступных переходов</p>
+        </div>
       )}
 
-      {/* Директор: возможность закрыть заказ напрямую из любой не-closed стадии.
-          На pending_closure главная кнопка ВЕДЁТ к закрытию, поэтому секондари там
-          лишний. На остальных стадиях — секондари: один тап до закрытия минуя
-          цепочку. */}
+      {/* Директор: закрыть заказ напрямую из любой не-closed стадии (секондари-линк). */}
       {role === 'director'
         && current !== 'closed'
         && current !== 'pending_closure'
         && onApproveClosure && (
-        <button
-          type="button"
-          onClick={() => {
-            if (confirm('Закрыть заказ напрямую без подтверждения этапов?')) {
-              start(() => { void onApproveClosure(); });
-            }
-          }}
-          disabled={pending}
-          className="block w-full mt-2 text-meta text-text3 hover:text-text1
-                     transition-colors text-center underline-offset-2 hover:underline
-                     disabled:opacity-50"
-        >
-          или закрыть напрямую
-        </button>
+        <div className="px-4 sm:px-5 pb-3.5 -mt-1">
+          <button
+            type="button"
+            onClick={() => {
+              if (confirm('Закрыть заказ напрямую без подтверждения этапов?')) {
+                start(() => { void onApproveClosure(); });
+              }
+            }}
+            disabled={pending}
+            className="block w-full text-meta text-text3 hover:text-text1
+                       transition-colors text-center underline-offset-2 hover:underline
+                       disabled:opacity-50"
+          >
+            или закрыть напрямую
+          </button>
+        </div>
       )}
 
       <Sheet open={open} onClose={() => setOpen(false)} title="Этапы заказа">

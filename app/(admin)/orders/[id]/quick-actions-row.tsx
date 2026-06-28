@@ -65,10 +65,12 @@ export function QuickActionsRow({
               key={it.key}
               aria-disabled
               className="glass-surface rounded-2xl flex flex-col items-center justify-center
-                         h-[72px] gap-1 text-text3 opacity-50 cursor-not-allowed"
+                         h-[76px] gap-1.5 text-text3 opacity-50 cursor-not-allowed"
             >
-              <Icon size={20} strokeWidth={1.75} />
-              <span className="text-meta">{it.label}</span>
+              <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-subtle">
+                <Icon size={18} strokeWidth={2} />
+              </span>
+              <span className="text-meta font-medium">{it.label}</span>
             </span>
           );
         }
@@ -79,13 +81,15 @@ export function QuickActionsRow({
             target={it.target}
             rel={it.target === '_blank' ? 'noreferrer' : undefined}
             className="glass-surface rounded-2xl flex flex-col items-center justify-center
-                       h-[72px] gap-1 text-text1
+                       h-[76px] gap-1.5 text-text1
                        transition-transform duration-fast ease-soft
                        active:scale-[0.97] hover:bg-white/40
                        focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
-            <Icon size={20} strokeWidth={1.75} className="text-text2" />
-            <span className="text-meta">{it.label}</span>
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 text-accent">
+              <Icon size={18} strokeWidth={2} />
+            </span>
+            <span className="text-meta font-medium">{it.label}</span>
           </a>
         );
       })}

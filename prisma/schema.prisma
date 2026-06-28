@@ -338,6 +338,8 @@ model ControlReminderConfig {
   installedNoCloseDays        Int      @default(2)     @map("installed_no_close_days")
   pendingClosureStaleEnabled  Boolean  @default(true)  @map("pending_closure_stale_enabled")
   pendingClosureStaleDays     Int      @default(3)     @map("pending_closure_stale_days")
+  // Напоминание замерщику на экране календаря: внести результаты замера вовремя.
+  surveyorDataReminderEnabled Boolean  @default(true)  @map("surveyor_data_reminder_enabled")
   updatedAt                   DateTime @updatedAt      @map("updated_at")
 
   @@map("control_reminder_config")

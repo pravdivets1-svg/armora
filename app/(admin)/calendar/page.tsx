@@ -9,6 +9,7 @@ import { PageHeader, Empty, HintCard } from '@/components/uikit';
 import CalendarUserFilter from './user-filter';
 import TodayRouteCard from './today-route';
 import NextEventCard from './next-event-card';
+import { SurveyorDataReminder } from '@/components/surveyor-data-reminder';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Расписание — Armora' };
@@ -88,6 +89,10 @@ export default async function CalendarPage({
       <PageHeader title="Календарь" sub={subline} />
 
       <div className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 pb-12 space-y-4">
+
+        {/* Напоминание замерщику: внести результаты замера вовремя.
+            Сам решает, показываться ли (роль / тумблер директора / есть ли хвосты). */}
+        <SurveyorDataReminder me={me} />
 
         <HintCard hintId="calendar-intro" title="Лента 21 день">
           События идут плотным списком. Сегодня подсвечен полоской слева — серый цвет события

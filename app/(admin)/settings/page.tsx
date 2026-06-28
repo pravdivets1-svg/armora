@@ -10,6 +10,7 @@ import { prisma } from '@/lib/prisma';
 import NotificationsBlock from './notifications-block';
 import DirectorNotificationsBlock from './director-notifications-block';
 import ControlRemindersBlock from './control-reminders-block';
+import SurveyorReminderBlock from './surveyor-reminder-block';
 
 export const metadata = { title: 'Профиль — Armora' };
 export const dynamic = 'force-dynamic';
@@ -100,6 +101,10 @@ export default async function SettingsPage() {
               pendingClosureStaleDays:    controlCfg.pendingClosureStaleDays,
             }}
           />
+        )}
+
+        {isDirector && controlCfg && (
+          <SurveyorReminderBlock initial={controlCfg.surveyorDataReminderEnabled} />
         )}
 
         {isDirector && matrix && (

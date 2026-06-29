@@ -12,6 +12,7 @@ import type { LeadStage } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { normalizePhone } from '@/lib/format';
+import { snapshotFromOrder } from '@/lib/order-events';
 import { notifyOrderAssignedSurveyTelegram } from '@/lib/telegram';
 import { notifySafe, sendPushToUser } from '@/lib/push';
 
@@ -173,14 +174,14 @@ export async function convertLeadToOrderAction(
     if (!isNaN(t.getTime())) surveyAt = t;
   }
   const surveyorId = d.surveyorId || null;
-  let surveyorUser: { id: string; fullName: string; role: string } | null = null;
+  let surveyorUser: { id: string; fullName: string; role: string; isActive: boolean } | null = null;
   if (surveyorId) {
     surveyorUser = await prisma.user.findUnique({
       where: { id: surveyorId },
-      select: { id: true, fullName: true, role: true },
+      select: { id: true, fullName: true, role: true, isActive: true },
     });
-    if (!surveyorUser || surveyorUser.role !== 'surveyor') {
-      return { ok: false, error: 'Замерщик не найден' };
+    if (!surveyorUser || !surveyorUser.isActive || surveyorUser.role !== 'surveyor') {
+      return { ok: false, error: 'Замерщик не найден или отключён' };
     }
   }
   const willScheduleSurvey = !!(surveyorUser && surveyAt);
@@ -191,7 +192,16 @@ export async function convertLeadToOrderAction(
   // Транзакция: создаём заказ и помечаем lead как converted (атомарно).
   // Любой сбой БД заворачиваем в graceful-ошибку (а не uncaught-throw, который
   // показывает пользователю «вылетела ошибка»), и логируем реальную причину.
-  const order = await prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
+    // Атомарный «захват» заявки: переводим в converted ТОЛЬКО если она ещё не
+    // converted. Защита от гонки (двойной клик / два менеджера / ретрай):
+    // конкурентный вызов получит count===0 и не создаст второй заказ.
+    const claim = await tx.lead.updateMany({
+      where: { id: leadId, stage: { not: 'converted' } },
+      data: { stage: 'converted' },
+    });
+    if (claim.count === 0) return { already: true as const };
+
     const created = await tx.order.create({
       data: {
         publicToken:       randomBytes(16).toString('hex'),
@@ -213,17 +223,37 @@ export async function convertLeadToOrderAction(
     });
     await tx.lead.update({
       where: { id: leadId },
-      data: { stage: 'converted', convertedOrderId: created.id },
+      data: { convertedOrderId: created.id },
     });
-    return created;
+    // Событие создания в аудит-лог — как в обычном createOrderAction.
+    await tx.orderEvent.create({
+      data: {
+        orderId:  created.id,
+        authorId: me.id,
+        kind:     'created',
+        summary:  `Заказ создан из заявки · ${created.clientName}`,
+        after:    snapshotFromOrder(created) as any,
+      },
+    });
+    return { created };
   }).catch((e) => {
     console.error('[convertLeadToOrder] create failed', { leadId, error: e });
     return null;
   });
 
-  if (!order) {
+  if (!result) {
     return { ok: false, error: 'Не удалось создать заказ. Проверьте данные заявки и попробуйте ещё раз.' };
   }
+  if ('already' in result) {
+    // Заявку уже сконвертировали параллельно — ведём на существующий заказ.
+    const fresh = await prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { convertedOrderId: true },
+    });
+    if (fresh?.convertedOrderId) redirect(`/orders/${fresh.convertedOrderId}`);
+    return { ok: false, error: 'Заявка уже преобразована в заказ' };
+  }
+  const order = result.created;
 
   // Уведомления — замерщику в TG (общий чат) и push если подписан.
   // try/catch: сбой уведомления не должен валить уже созданный заказ.

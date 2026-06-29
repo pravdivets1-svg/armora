@@ -160,15 +160,48 @@ function validateClosureFinances(
   costAmount: number,
 ): { error: string; fieldErrors: Record<string, string> } | null {
   const fieldErrors: Record<string, string> = {};
-  if (totalAmount <= 0)   fieldErrors.totalAmount  = 'Укажите цену по договору';
-  if (prepayment <= 0)    fieldErrors.prepayment   = 'Укажите аванс';
-  if (finalPayment <= 0)  fieldErrors.finalPayment = 'Укажите фактический остаток';
-  if (costAmount <= 0)    fieldErrors.costAmount   = 'Укажите себестоимость';
+  if (totalAmount <= 0)  fieldErrors.totalAmount = 'Укажите цену по договору';
+  if (prepayment <= 0)   fieldErrors.prepayment  = 'Укажите аванс';
+  if (costAmount <= 0)   fieldErrors.costAmount  = 'Укажите себестоимость';
+  // Остаток отдельно НЕ требуем > 0: при 100% авансе он законно = 0.
+  // Требуем, чтобы оплата покрывала цену договора (аванс + остаток ≥ цена).
+  if (totalAmount > 0 && prepayment + finalPayment < totalAmount) {
+    fieldErrors.finalPayment = 'Оплата (аванс + остаток) меньше цены по договору';
+  }
   if (Object.keys(fieldErrors).length > 0) {
     return {
-      error: 'Перед закрытием заполните все 4 финансовых поля: цена, аванс, остаток, себестоимость',
+      error: 'Перед закрытием: цена, аванс и себестоимость заполнены, а оплата покрывает цену договора',
       fieldErrors,
     };
+  }
+  return null;
+}
+
+// Проверка, что назначенные исполнители реально активны и имеют нужную роль.
+// Списки на клиенте отфильтрованы, но server action не должен доверять вводу
+// (подделанный/устаревший запрос мог назначить кого угодно или неактивного).
+async function validateAssignees(
+  surveyorId: string | null,
+  installerId: string | null,
+): Promise<{ error: string; fieldErrors: Record<string, string> } | null> {
+  const ids = [surveyorId, installerId].filter(Boolean) as string[];
+  if (ids.length === 0) return null;
+  const users = await prisma.user.findMany({
+    where: { id: { in: ids } },
+    select: { id: true, role: true, isActive: true },
+  });
+  const byId = new Map(users.map((u) => [u.id, u]));
+  const fieldErrors: Record<string, string> = {};
+  if (surveyorId) {
+    const u = byId.get(surveyorId);
+    if (!u || !u.isActive || u.role !== 'surveyor') fieldErrors.surveyorId = 'Выберите активного замерщика';
+  }
+  if (installerId) {
+    const u = byId.get(installerId);
+    if (!u || !u.isActive || u.role !== 'installer') fieldErrors.installerId = 'Выберите активного установщика';
+  }
+  if (Object.keys(fieldErrors).length > 0) {
+    return { error: 'Проверьте назначенных исполнителей', fieldErrors };
   }
   return null;
 }
@@ -207,6 +240,11 @@ export async function createOrderAction(
   const intervalError = validateIntervals(d.surveyAt, d.surveyEndAt, d.installAt, d.installEndAt);
   if (intervalError) {
     return { ok: false, error: intervalError.error, fieldErrors: intervalError.fieldErrors };
+  }
+
+  const assigneeError = await validateAssignees(d.surveyorId, d.installerId);
+  if (assigneeError) {
+    return { ok: false, error: assigneeError.error, fieldErrors: assigneeError.fieldErrors };
   }
 
   if (d.stage === 'pending_closure') {
@@ -328,6 +366,10 @@ export async function updateOrderAction(
     const intervalError = validateIntervals(d.surveyAt, d.surveyEndAt, d.installAt, d.installEndAt);
     if (intervalError) {
       return { ok: false, error: intervalError.error, fieldErrors: intervalError.fieldErrors };
+    }
+    const assigneeError = await validateAssignees(d.surveyorId, d.installerId);
+    if (assigneeError) {
+      return { ok: false, error: assigneeError.error, fieldErrors: assigneeError.fieldErrors };
     }
   }
 
@@ -567,11 +609,12 @@ export async function extendAwaitingAction(orderId: string) {
   const me = await requireUser();
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { id: true, surveyorId: true, installerId: true, awaitingClient: true },
+    select: { id: true, surveyorId: true, installerId: true, awaitingClient: true, stage: true },
   });
   if (!order) throw new Error('Not found');
   const isMine = order.surveyorId === me.id || order.installerId === me.id;
   if (!isStaff(me.role) && !isMine) throw new Error('Forbidden');
+  if (order.stage === 'closed') throw new Error('Order closed');
   if (!order.awaitingClient) throw new Error('Awaiting flag is off');
 
   const now = new Date();
@@ -588,11 +631,12 @@ export async function resumeFromAwaitingAction(orderId: string) {
   const me = await requireUser();
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { id: true, surveyorId: true, installerId: true },
+    select: { id: true, surveyorId: true, installerId: true, stage: true },
   });
   if (!order) throw new Error('Not found');
   const isMine = order.surveyorId === me.id || order.installerId === me.id;
   if (!isStaff(me.role) && !isMine) throw new Error('Forbidden');
+  if (order.stage === 'closed') throw new Error('Order closed');
 
   await prisma.order.update({
     where: { id: orderId },
@@ -614,6 +658,7 @@ export async function closeFromAwaitingAction(orderId: string) {
   if (!isStaff(me.role)) throw new Error('Forbidden');
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) throw new Error('Not found');
+  if (order.stage === 'closed') throw new Error('Order closed');
 
   await prisma.order.update({
     where: { id: orderId },
@@ -662,6 +707,13 @@ export async function approveClosureAction(orderId: string) {
     data: {
       stage: 'closed',
       tokenExpiresAt: tokenExpiresFor('closed', order.tokenExpiresAt),
+      // Снимаем «ждём клиента» при закрытии — иначе закрытый заказ оставался бы
+      // с активным/просроченным ожиданием, и его можно было «переоткрыть»
+      // кнопками карточки ожидания.
+      awaitingClient: false,
+      awaitingClientNote: '',
+      awaitingClientSince: null,
+      awaitingClientUntil: null,
     },
   });
 
@@ -812,6 +864,16 @@ export async function updateOrderStageAction(orderId: string, next: Stage): Prom
   if (!isStageTransitionAllowed(me.role, existing.stage, next)) {
     throw new Error(transitionErrorMessage(me.role, existing.stage, next));
   }
+
+  // Тот же гейт обязательных дат, что и в форме (updateOrderAction): без него
+  // быстрый перевод кнопкой HeroStage уводил заказ в «Замер назначен»/«Готова
+  // к установке» без даты → ломались напоминания и календарь.
+  const stageDateError = validateStageDates(
+    next,
+    existing.surveyAt?.toISOString() ?? null,
+    existing.installAt?.toISOString() ?? null,
+  );
+  if (stageDateError) throw new Error(stageDateError.error);
 
   // Гейт финансов при переводе в pending_closure
   if (next === 'pending_closure') {

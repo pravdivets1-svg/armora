@@ -79,6 +79,11 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
   // на остальных стадиях — секондари-линк «Закрыть напрямую».
   const canApproveClosure = me.role === 'director' && order.stage !== 'closed';
 
+  // Себестоимость/маржа — только директор и замерщик. Менеджеру/установщику
+  // НЕ отдаём costAmount в клиентский payload (иначе виден в исходнике/сети)
+  // и прячем события money_cost в истории.
+  const canSeeCost = me.role === 'director' || me.role === 'surveyor';
+
   const stageAction = updateOrderStageAction.bind(null, order.id) as (next: Stage) => Promise<void>;
   const approveAction = canApproveClosure
     ? (approveClosureAction.bind(null, order.id) as () => Promise<void>)
@@ -117,7 +122,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
 
   const orderForm = (
     <OrderForm
-      order={order}
+      order={canSeeCost ? order : { ...order, costAmount: 0 }}
       action={updateOrderAction.bind(null, order.id)}
       surveyors={surveyors}
       installers={installers}
@@ -164,7 +169,9 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         {/* «Ждём клиента» в обычной позиции (не просрочено) */}
         {!awaitingOverdue && awaitingCard}
 
-        {isStaff(me.role) && <EventLog events={events} />}
+        {isStaff(me.role) && (
+          <EventLog events={canSeeCost ? events : events.filter((e) => e.kind !== 'money_cost')} />
+        )}
 
         {/* Ссылка для клиента — диспетчерская функция, только staff */}
         {isStaff(me.role) && <PublicLinkBlock url={publicUrl} clientPhone={order.clientPhone} />}

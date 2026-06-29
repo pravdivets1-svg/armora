@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
 import { notifySafe, sendPushToStaff } from '@/lib/push';
+import { filterUsersByEventAllowed } from '@/lib/notification-events';
 import { notifyLeadCreatedTelegram } from '@/lib/telegram';
 import { notifyLeadCreatedMax } from '@/lib/max';
 import { notifyLeadCreatedEmail } from '@/lib/email';
@@ -237,12 +238,15 @@ export async function POST(req: NextRequest) {
     // прибить незавершённые fetch к Resend/Telegram сразу после return,
     // и заявки с сайта оставались без email/TG. Now: даём всем шанс
     // до 6 секунд (Promise.race с таймером), потом отвечаем клиенту.
+    // MAX о новой заявке — под той же матрицей prefs, что и web push ('newLead'):
+    // иначе сотрудник, которому событие выключили, всё равно получал бы MAX.
     const maxUserIds = await prisma.user
       .findMany({
         where: { role: { in: ['director', 'manager'] }, isActive: true, maxUserId: { not: null } },
-        select: { maxUserId: true },
+        select: { role: true, maxUserId: true },
       })
-      .then((users) => users.map((u) => u.maxUserId!).filter(Boolean))
+      .then((users) => filterUsersByEventAllowed(users, 'newLead'))
+      .then((allowed) => allowed.map((u) => u.maxUserId!).filter(Boolean))
       .catch(() => [] as string[]);
 
     const notifications: Promise<unknown>[] = [

@@ -40,7 +40,10 @@ const credentialsSchema = z.object({
 const DUMMY_HASH = '$2a$10$uZhq6FwW2N/sBe34yKbLdeyK5c4flCzNO5JMWoKUf3CFQCRQSckyy';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-  session: { strategy: 'jwt' },
+  // maxAge сокращён с дефолтных 30 дней до 7: даже без сверки с БД на edge
+  // окно «вмороженной» роли/доступа ограничено неделей (см. requireUser —
+  // там идёт реальная сверка с БД на каждом защищённом запросе).
+  session: { strategy: 'jwt', maxAge: 60 * 60 * 24 * 7 },
   pages: { signIn: '/login' },
 
   providers: [

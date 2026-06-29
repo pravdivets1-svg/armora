@@ -170,9 +170,10 @@ export async function notifyOrderChanges(
       (async () => {
         const surveyor = await prisma.user.findUnique({
           where: { id: after.surveyorId! },
-          select: { role: true },
+          select: { role: true, maxUserId: true },
         });
         if (!surveyor) return;
+        // Единый гейт по матрице prefs — и для web push, И для MAX.
         const ok = await isEventAllowed(surveyor.role, 'surveyAssigned');
         if (!ok) return;
         await sendPushToUser(after.surveyorId!, {
@@ -181,22 +182,15 @@ export async function notifyOrderChanges(
           url,
           tag: `order-${after.id}-survey`,
         });
+        if (surveyor.maxUserId) {
+          await notifySurveyorMax(surveyor.maxUserId, {
+            number: after.number,
+            clientName: after.clientName,
+            clientAddress: after.clientAddress,
+            surveyAt: after.surveyAt,
+          }, baseUrl).catch((e) => console.warn('[max] surveyor notify error', e));
+        }
       })(),
-    );
-    // MAX: берём maxUserId замерщика
-    tasks.push(
-      prisma.user.findUnique({ where: { id: after.surveyorId }, select: { maxUserId: true } })
-        .then((u) => {
-          if (u?.maxUserId) {
-            return notifySurveyorMax(u.maxUserId, {
-              number: after.number,
-              clientName: after.clientName,
-              clientAddress: after.clientAddress,
-              surveyAt: after.surveyAt,
-            }, baseUrl);
-          }
-        })
-        .catch((e) => console.warn('[max] surveyor notify error', e)),
     );
   }
 
@@ -214,7 +208,7 @@ export async function notifyOrderChanges(
       (async () => {
         const installer = await prisma.user.findUnique({
           where: { id: after.installerId! },
-          select: { role: true },
+          select: { role: true, maxUserId: true },
         });
         if (!installer) return;
         const ok = await isEventAllowed(installer.role, 'installAssigned');
@@ -225,22 +219,15 @@ export async function notifyOrderChanges(
           url,
           tag: `order-${after.id}-install`,
         });
+        if (installer.maxUserId) {
+          await notifyInstallerMax(installer.maxUserId, {
+            number: after.number,
+            clientName: after.clientName,
+            clientAddress: after.clientAddress,
+            installAt: after.installAt,
+          }, baseUrl).catch((e) => console.warn('[max] installer notify error', e));
+        }
       })(),
-    );
-    // MAX: берём maxUserId установщика
-    tasks.push(
-      prisma.user.findUnique({ where: { id: after.installerId }, select: { maxUserId: true } })
-        .then((u) => {
-          if (u?.maxUserId) {
-            return notifyInstallerMax(u.maxUserId, {
-              number: after.number,
-              clientName: after.clientName,
-              clientAddress: after.clientAddress,
-              installAt: after.installAt,
-            }, baseUrl);
-          }
-        })
-        .catch((e) => console.warn('[max] installer notify error', e)),
     );
   }
 
@@ -256,20 +243,23 @@ export async function notifyOrderChanges(
         tag: `order-${after.id}-closure`,
       }, 'pendingClosure'),
     );
-    // MAX: директоры у которых есть maxUserId
+    // MAX директорам — под тем же гейтом матрицы, что и web push.
     tasks.push(
-      prisma.user.findMany({
-        where: { role: 'director', isActive: true, maxUserId: { not: null } },
-        select: { maxUserId: true },
-      }).then((users) => {
+      (async () => {
+        const ok = await isEventAllowed('director', 'pendingClosure');
+        if (!ok) return;
+        const users = await prisma.user.findMany({
+          where: { role: 'director', isActive: true, maxUserId: { not: null } },
+          select: { maxUserId: true },
+        });
         const ids = users.map((u) => u.maxUserId!);
         if (ids.length > 0) {
-          return notifyClosureMax(ids, {
+          await notifyClosureMax(ids, {
             number: after.number,
             clientName: after.clientName,
           }, baseUrl);
         }
-      }).catch((e) => console.warn('[max] closure notify error', e)),
+      })().catch((e) => console.warn('[max] closure notify error', e)),
     );
   }
 

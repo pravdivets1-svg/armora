@@ -5,12 +5,23 @@
 
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
+import { prisma } from '@/lib/prisma';
 import type { Role } from '@prisma/client';
 
 export async function requireUser() {
   const session = await auth();
   if (!session?.user) redirect('/login');
-  return session.user;
+  // Сверяем роль/активность с БД на каждом защищённом запросе. JWT «вмораживает»
+  // их на момент логина (cookie живёт днями), поэтому без этой сверки отключённый
+  // или разжалованный сотрудник сохранял бы старый доступ до истечения cookie.
+  // Это Node-контекст (server components / actions) — Prisma здесь доступна
+  // (в отличие от middleware на edge, куда эту проверку класть нельзя).
+  const fresh = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { role: true, isActive: true, fullName: true },
+  });
+  if (!fresh || !fresh.isActive) redirect('/login');
+  return { ...session.user, role: fresh.role, name: fresh.fullName };
 }
 
 export async function requireRole(roles: Role[]) {

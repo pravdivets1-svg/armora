@@ -6,6 +6,7 @@ import { requireUser, isStaff } from '@/lib/auth-helpers';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
 import { LEAD_STAGE_LABEL, LEAD_STAGE_ORDER } from '@/lib/lead-labels';
+import { mskDayStart, isSameMskDay } from '@/lib/format';
 import { PageHeader, PillTabs, Empty, LeadPill, HintCard } from '@/components/uikit';
 import LiveSearch from '@/components/live-search';
 import LeadsBulkBar from './bulk-bar';
@@ -35,13 +36,13 @@ function fmtPhone(p: string): string {
 }
 
 function timeBucket(d: Date): 'today' | 'yesterday' | 'week' | 'older' {
+  // Группируем по МСК-дню, а не по локальному дню процесса: прод-сервер в UTC,
+  // иначе ночью 00:00–03:00 МСК свежие заявки сваливались бы во «Вчера».
   const now = new Date();
-  const sameDay = (a: Date, b: Date) =>
-    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-  if (sameDay(d, now)) return 'today';
+  if (isSameMskDay(d, now)) return 'today';
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  if (sameDay(d, yesterday)) return 'yesterday';
-  const diffDays = (now.getTime() - d.getTime()) / 86_400_000;
+  if (isSameMskDay(d, yesterday)) return 'yesterday';
+  const diffDays = Math.floor((mskDayStart(now).getTime() - mskDayStart(d).getTime()) / 86_400_000);
   if (diffDays < 7) return 'week';
   return 'older';
 }

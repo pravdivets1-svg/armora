@@ -63,8 +63,19 @@ export async function MyUpcomingHero({ me }: { me: { id: string; role: Role } })
 
   if (events.length === 0) return null;
 
+  // Окно 48ч охватывает до трёх МСК-суток (сегодня / завтра / послезавтра+),
+  // поэтому метку считаем по реальному дню, а не «сегодня иначе завтра».
   const today = mskDayStart(now);
-  const isToday = (d: Date) => isSameMskDay(d, today);
+  const tomorrow = new Date(today.getTime() + 24 * 60 * 60 * 1000);
+  const shortDateMsk = new Intl.DateTimeFormat('ru-RU', {
+    timeZone: 'Europe/Moscow',
+    day: 'numeric',
+    month: 'short',
+  });
+  const dayLabelFor = (d: Date) =>
+    isSameMskDay(d, today) ? 'Сегодня'
+    : isSameMskDay(d, tomorrow) ? 'Завтра'
+    : shortDateMsk.format(d);
 
   return (
     <section
@@ -81,7 +92,7 @@ export async function MyUpcomingHero({ me }: { me: { id: string; role: Role } })
         {events.map((e) => {
           const kindLabel = e.kind === 'survey' ? 'Замер' : 'Установка';
           const kindBg = e.kind === 'survey' ? 'bg-info2/[0.08] text-info2' : 'bg-ok2/[0.08] text-ok2';
-          const dayLabel = isToday(e.at) ? 'Сегодня' : 'Завтра';
+          const dayLabel = dayLabelFor(e.at);
           return (
             <li key={`${e.orderId}-${e.kind}`}>
               <Link

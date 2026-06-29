@@ -120,7 +120,7 @@ export default function AwaitingClientCard({
         onChange={handleNoteChange}
       />
 
-      {canSeeDecisions && state.kind === 'overdue' && (
+      {canSeeDecisions && !disabled && state.kind === 'overdue' && (
         <div className="mt-3 flex flex-wrap gap-2">
           <DecisionButton onClick={() => extendAwaitingAction(orderId)} label="Продлить +3 дня" />
           <DecisionButton onClick={() => resumeFromAwaitingAction(orderId)} label="Вернуть в работу" />

@@ -28,10 +28,14 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
 
   const access = await prisma.order.findUnique({
     where: { id: params.id },
-    select: { id: true, surveyorId: true, installerId: true, stage: true },
+    select: { id: true, surveyorId: true, installerId: true, createdById: true, stage: true },
   });
   if (!access) notFound();
-  const isMine = access.surveyorId === me.id || access.installerId === me.id;
+  // Свой = назначен замерщиком/установщиком ИЛИ сам создал заказ (замерщик-автор).
+  const isMine =
+    access.surveyorId === me.id ||
+    access.installerId === me.id ||
+    access.createdById === me.id;
   // Установщик видит заказы от «В производстве» и далее, помимо своих назначений.
   const installerCanView =
     me.role === 'installer' && INSTALLER_VISIBLE_STAGES.includes(access.stage);

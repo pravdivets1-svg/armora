@@ -16,7 +16,7 @@ const ROLE_GUARDED: Array<{ prefix: string; roles: ReadonlyArray<string> }> = [
   { prefix: '/closures', roles: ['director'] },
   { prefix: '/users',    roles: ['director'] },
   { prefix: '/leads',    roles: ['director', 'manager'] },
-  { prefix: '/orders/new', roles: ['director', 'manager'] },
+  { prefix: '/orders/new', roles: ['director', 'manager', 'surveyor'] },
 ];
 
 export default auth((req) => {

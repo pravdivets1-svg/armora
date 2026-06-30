@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Stage } from '@prisma/client';
 import { Phone, MapPin, Navigation } from 'lucide-react';
 import { StagePill } from './stage-pill';
+import { CopyButton } from './copy-button';
 
 function fmtRub(v: number | null | undefined): string {
   if (v == null) return '—';
@@ -93,11 +94,16 @@ export function OrderCard({
             <StagePill stage={stage} daysInStage={daysInStage} />
           </div>
 
-          {/* Адрес */}
+          {/* Адрес + копирование прямо из списка (без захода в заказ) */}
           {address && (
-            <p className="text-meta text-text2 truncate inline-flex items-baseline gap-1.5 w-full mb-0.5">
+            <p className="text-meta text-text2 flex items-center gap-1.5 w-full mb-0.5">
               <MapPin size={11} className="shrink-0 translate-y-[1px] text-text3" />
-              <span className="truncate">{address}</span>
+              <span className="truncate flex-1 min-w-0">{address}</span>
+              <CopyButton
+                text={address}
+                label="Скопировать адрес"
+                className="w-6 h-6 -my-1 rounded-md text-text3 hover:text-text1 hover:bg-subtle/70"
+              />
             </p>
           )}
 

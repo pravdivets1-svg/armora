@@ -29,6 +29,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
   // Полевой видит только свои заказы (buildOrderWhere форсит OR по surveyorId/installerId,
   // а f.userId для не-staff игнорирует). Значит фильтр «исполнитель» и вкладка «Мои» — лишние.
   const isField = isFieldWorker(me.role);
+  // Создавать заказы могут все, кроме установщика (директор / менеджер / замерщик).
+  const canCreate = me.role !== 'installer';
 
   const stage = (STAGE_ORDER as string[]).includes(searchParams.stage ?? '')
     ? (searchParams.stage as Stage)
@@ -91,7 +93,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 </Button>
               </Link>
             )}
-            {(me.role === 'director' || me.role === 'manager') && (
+            {canCreate && (
               <Link href="/orders/new" className="hidden lg:block">
                 <Button size="sm"><Plus size={16} /> Новый</Button>
               </Link>
@@ -162,7 +164,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             title="Заказов нет"
             hint="Создайте новый заказ или измените фильтры."
             action={
-              (me.role === 'director' || me.role === 'manager') ? (
+              canCreate ? (
                 <Link href="/orders/new">
                   <Button><Plus size={16} /> Новый заказ</Button>
                 </Link>
@@ -212,7 +214,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
 
       {/* FAB на мобильном — быстрый доступ к созданию заказа.
           Скрыт на десктопе (там кнопка в шапке). */}
-      {(me.role === 'director' || me.role === 'manager') && (
+      {canCreate && (
         <Link
           href="/orders/new"
           aria-label="Новый заказ"

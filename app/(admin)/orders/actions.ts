@@ -215,7 +215,9 @@ export async function createOrderAction(
   formData: FormData,
 ): Promise<OrderActionState> {
   const me = await requireUser();
-  if (!isStaff(me.role)) return { ok: false, error: 'Недостаточно прав' };
+  // Создавать заказы могут директор, менеджер и замерщик. Установщик — нет.
+  const canCreate = me.role === 'director' || me.role === 'manager' || me.role === 'surveyor';
+  if (!canCreate) return { ok: false, error: 'Недостаточно прав' };
 
   const parsed = parseFormData(formData);
   if (!parsed.success) {
@@ -226,6 +228,12 @@ export async function createOrderAction(
     return { ok: false, error: 'Проверьте поля формы', fieldErrors };
   }
   const d = parsed.data;
+
+  // Замерщик, заводящий заказ без явного выбора замерщика — назначаем его самого
+  // (типовой кейс: замерщик создаёт заказ «на себя» прямо у клиента). Так заказ
+  // сразу виден ему в списке и открывается после создания.
+  const resolvedSurveyorId =
+    me.role === 'surveyor' && !d.surveyorId ? me.id : d.surveyorId;
 
   // Запрещаем создавать сразу в pending_closure / closed — только через approveClosure
   if (d.stage === 'closed') {
@@ -245,7 +253,7 @@ export async function createOrderAction(
     return { ok: false, error: intervalError.error, fieldErrors: intervalError.fieldErrors };
   }
 
-  const assigneeError = await validateAssignees(d.surveyorId, d.installerId);
+  const assigneeError = await validateAssignees(resolvedSurveyorId, d.installerId);
   if (assigneeError) {
     return { ok: false, error: assigneeError.error, fieldErrors: assigneeError.fieldErrors };
   }
@@ -270,7 +278,7 @@ export async function createOrderAction(
       finalPayment:   d.finalPayment,
       costAmount:     d.costAmount,
       stage:          d.stage,
-      surveyorId:     d.surveyorId,
+      surveyorId:     resolvedSurveyorId,
       installerId:    d.installerId,
       surveyAt:       applyDateOrNull(d.surveyAt),
       surveyEndAt:    applyDateOrNull(d.surveyEndAt),

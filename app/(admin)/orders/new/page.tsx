@@ -9,7 +9,7 @@ import { PageBack, PageHeader } from '@/components/page-shell';
 export const metadata = { title: 'Новый заказ — Armora' };
 
 export default async function NewOrderPage() {
-  const me = await requireRole(['director', 'manager']);
+  const me = await requireRole(['director', 'manager', 'surveyor']);
 
   // Один запрос вместо двух — фильтруем по двум ролям сразу.
   const assignable = await prisma.user.findMany({

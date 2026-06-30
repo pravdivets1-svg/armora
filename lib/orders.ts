@@ -34,7 +34,11 @@ export function buildOrderWhere(
   // Полевые работники видят только свои заказы. Исключение: установщик
   // дополнительно видит заказы от стадии «В производстве» и далее.
   if (!isStaff(me.role)) {
-    const ownOr: Prisma.OrderWhereInput[] = [{ surveyorId: me.id }, { installerId: me.id }];
+    const ownOr: Prisma.OrderWhereInput[] = [
+      { surveyorId: me.id },
+      { installerId: me.id },
+      { createdById: me.id }, // замерщик-автор видит созданные им заказы
+    ];
     if (me.role === 'installer') {
       ownOr.push({ stage: { in: INSTALLER_VISIBLE_STAGES } });
     }

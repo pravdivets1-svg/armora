@@ -18,15 +18,27 @@ export type OrderListFilters = {
 
 const PAGE_SIZE = 25;
 
+// Установщик видит заказы от «В производстве» и далее (помимо своих назначений),
+// чтобы видеть приближающуюся работу. closed сюда не входит — он в архиве
+// (отдельная страница, установщику недоступна).
+export const INSTALLER_VISIBLE_STAGES: Stage[] = [
+  'production', 'ready_to_install', 'installed', 'pending_closure',
+];
+
 export function buildOrderWhere(
   me: { id: string; role: Role },
   f: OrderListFilters,
 ): Prisma.OrderWhereInput {
   const where: Prisma.OrderWhereInput = {};
 
-  // Полевые работники видят только свои заказы
+  // Полевые работники видят только свои заказы. Исключение: установщик
+  // дополнительно видит заказы от стадии «В производстве» и далее.
   if (!isStaff(me.role)) {
-    where.OR = [{ surveyorId: me.id }, { installerId: me.id }];
+    const ownOr: Prisma.OrderWhereInput[] = [{ surveyorId: me.id }, { installerId: me.id }];
+    if (me.role === 'installer') {
+      ownOr.push({ stage: { in: INSTALLER_VISIBLE_STAGES } });
+    }
+    where.OR = ownOr;
   }
 
   // По дефолту скрываем закрытые: они доступны на отдельной странице /archive.

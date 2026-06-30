@@ -43,15 +43,15 @@ export function isStageTransitionAllowed(
   // Без изменения — всегда ок (форма пересохраняется без смены этапа)
   if (from === to) return true;
 
-  // closed — спецслучай. Никто не переводит ИЗ closed через updateOrderAction
-  // (для повторного открытия — отдельный action; на текущем этапе запрещаем).
-  // В closed переводит только approveClosureAction (вне этой функции).
-  if (from === 'closed') return false;
+  // В сам closed переводит только approveClosureAction (вне этой функции).
   if (to === 'closed') return false;
 
+  // Переоткрытие закрытого заказа: директор может вернуть closed в активный этап
+  // (исправление ошибочного закрытия). Остальным ролям — нельзя.
+  if (from === 'closed') return role === 'director';
+
   if (role === 'director') {
-    // Директор ходит свободно по пайплайну (кроме closed, см. выше).
-    // Перевод в pending_closure — ок (потом approveClosure -> closed).
+    // Директор ходит свободно по пайплайну (кроме перехода в closed, см. выше).
     return true;
   }
 

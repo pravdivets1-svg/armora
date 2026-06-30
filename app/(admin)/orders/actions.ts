@@ -232,9 +232,12 @@ export async function createOrderAction(
     return { ok: false, error: 'Закрыть заказ может только директор через панель «На закрытие»' };
   }
 
-  const stageError = validateStageDates(d.stage, d.surveyAt, d.installAt);
-  if (stageError) {
-    return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
+  // Гейт обязательных дат этапа — кроме директора (минимум ограничений).
+  if (me.role !== 'director') {
+    const stageError = validateStageDates(d.stage, d.surveyAt, d.installAt);
+    if (stageError) {
+      return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
+    }
   }
 
   const intervalError = validateIntervals(d.surveyAt, d.surveyEndAt, d.installAt, d.installEndAt);
@@ -247,7 +250,7 @@ export async function createOrderAction(
     return { ok: false, error: assigneeError.error, fieldErrors: assigneeError.fieldErrors };
   }
 
-  if (d.stage === 'pending_closure') {
+  if (d.stage === 'pending_closure' && me.role !== 'director') {
     const fin = validateClosureFinances(d.totalAmount, d.prepayment, d.finalPayment, d.costAmount);
     if (fin) return { ok: false, error: fin.error, fieldErrors: fin.fieldErrors };
   }
@@ -355,11 +358,14 @@ export async function updateOrderAction(
   }
 
   // Машина состояний: даты для активных этапов
-  const surveyAtForCheck  = canEditAll(me.role) ? d.surveyAt  : (existing.surveyAt?.toISOString()  ?? null);
-  const installAtForCheck = canEditAll(me.role) ? d.installAt : (existing.installAt?.toISOString() ?? null);
-  const stageError = validateStageDates(d.stage, surveyAtForCheck, installAtForCheck);
-  if (stageError) {
-    return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
+  // Гейт обязательных дат этапа — кроме директора (минимум ограничений).
+  if (me.role !== 'director') {
+    const surveyAtForCheck  = canEditAll(me.role) ? d.surveyAt  : (existing.surveyAt?.toISOString()  ?? null);
+    const installAtForCheck = canEditAll(me.role) ? d.installAt : (existing.installAt?.toISOString() ?? null);
+    const stageError = validateStageDates(d.stage, surveyAtForCheck, installAtForCheck);
+    if (stageError) {
+      return { ok: false, error: stageError.error, fieldErrors: stageError.fieldErrors };
+    }
   }
 
   if (canEditAll(me.role)) {
@@ -373,8 +379,8 @@ export async function updateOrderAction(
     }
   }
 
-  // Гейт финансов при переводе в pending_closure или closed
-  if (d.stage === 'pending_closure' || d.stage === 'closed') {
+  // Гейт финансов при переводе в pending_closure/closed — кроме директора.
+  if ((d.stage === 'pending_closure' || d.stage === 'closed') && me.role !== 'director') {
     // Берём финансы из формы для редакторов / из существующего для тех, кто поле не видит
     const totalForCheck  = canEditMainAmounts(me.role) ? d.totalAmount  : Number(existing.totalAmount);
     const prepayForCheck = canEditMainAmounts(me.role) ? d.prepayment   : Number(existing.prepayment);
@@ -865,30 +871,36 @@ export async function updateOrderStageAction(orderId: string, next: Stage): Prom
     throw new Error(transitionErrorMessage(me.role, existing.stage, next));
   }
 
-  // Тот же гейт обязательных дат, что и в форме (updateOrderAction): без него
-  // быстрый перевод кнопкой HeroStage уводил заказ в «Замер назначен»/«Готова
-  // к установке» без даты → ломались напоминания и календарь.
-  const stageDateError = validateStageDates(
-    next,
-    existing.surveyAt?.toISOString() ?? null,
-    existing.installAt?.toISOString() ?? null,
-  );
-  if (stageDateError) throw new Error(stageDateError.error);
-
-  // Гейт финансов при переводе в pending_closure
-  if (next === 'pending_closure') {
-    const fin = validateClosureFinances(
-      Number(existing.totalAmount),
-      Number(existing.prepayment),
-      Number(existing.finalPayment),
-      Number(existing.costAmount),
+  // Гейт обязательных дат и финансов — для всех ролей, КРОМЕ директора
+  // (у директора минимум ограничений: осознанно может перевести этап без даты
+  // или подать на закрытие без заполненных финансов).
+  if (me.role !== 'director') {
+    const stageDateError = validateStageDates(
+      next,
+      existing.surveyAt?.toISOString() ?? null,
+      existing.installAt?.toISOString() ?? null,
     );
-    if (fin) throw new Error(fin.error);
+    if (stageDateError) throw new Error(stageDateError.error);
+
+    if (next === 'pending_closure') {
+      const fin = validateClosureFinances(
+        Number(existing.totalAmount),
+        Number(existing.prepayment),
+        Number(existing.finalPayment),
+        Number(existing.costAmount),
+      );
+      if (fin) throw new Error(fin.error);
+    }
   }
 
   await prisma.order.update({
     where: { id: orderId },
-    data: { stage: next },
+    data: {
+      stage: next,
+      // При переоткрытии (closed → активный) сбрасываем срок жизни публичной
+      // ссылки (на closed он ставился +90 дней).
+      tokenExpiresAt: tokenExpiresFor(next, existing.tokenExpiresAt),
+    },
   });
 
   // Audit log

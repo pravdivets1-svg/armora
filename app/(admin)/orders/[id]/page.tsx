@@ -13,6 +13,7 @@ import HeroStageBlock from './hero-stage-block';
 import { QuickActionsRow } from './quick-actions-row';
 import { awaitingStateOf } from '@/lib/awaiting';
 import { fmtDateTime } from '@/lib/format';
+import { INSTALLER_VISIBLE_STAGES } from '@/lib/orders';
 import {
   updateOrderAction,
   updateOrderStageAction,
@@ -27,11 +28,14 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
 
   const access = await prisma.order.findUnique({
     where: { id: params.id },
-    select: { id: true, surveyorId: true, installerId: true },
+    select: { id: true, surveyorId: true, installerId: true, stage: true },
   });
   if (!access) notFound();
   const isMine = access.surveyorId === me.id || access.installerId === me.id;
-  if (!isStaff(me.role) && !isMine) notFound();
+  // Установщик видит заказы от «В производстве» и далее, помимо своих назначений.
+  const installerCanView =
+    me.role === 'installer' && INSTALLER_VISIBLE_STAGES.includes(access.stage);
+  if (!isStaff(me.role) && !isMine && !installerCanView) notFound();
 
   const [order, assignableUsers, events, photoMetas] = await Promise.all([
     prisma.order.findUnique({

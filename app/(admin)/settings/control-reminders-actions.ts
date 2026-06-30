@@ -5,6 +5,8 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
 const InputSchema = z.object({
+  surveyDoneStaleEnabled:     z.boolean(),
+  surveyDoneStaleDays:        z.number().int().min(1).max(365),
   productionStaleEnabled:     z.boolean(),
   productionStaleDays:        z.number().int().min(1).max(365),
   installedNoCloseEnabled:    z.boolean(),

@@ -26,7 +26,7 @@ import { isEventAllowed, type EventKey } from '@/lib/notification-events';
 type ReminderKind =
   | 'survey_24h' | 'survey_3h'
   | 'install_24h' | 'install_3h'
-  | 'control_production' | 'control_installed' | 'control_pending_closure';
+  | 'control_survey_done' | 'control_production' | 'control_installed' | 'control_pending_closure';
 
 const WINDOW_MIN = 5; // ± от точного интервала, в минутах
 
@@ -127,14 +127,21 @@ async function processInstallWindow(hours: 24 | 3) {
 // (singleton id='default').
 
 type ControlSpec = {
-  stage: 'production' | 'installed' | 'pending_closure';
-  kind:  Extract<ReminderKind, 'control_production' | 'control_installed' | 'control_pending_closure'>;
+  stage: 'survey_done' | 'production' | 'installed' | 'pending_closure';
+  kind:  Extract<ReminderKind, 'control_survey_done' | 'control_production' | 'control_installed' | 'control_pending_closure'>;
   event: EventKey;
   title: string;
   body:  (clientName: string, days: number) => string;
 };
 
 const CONTROL_SPECS: ControlSpec[] = [
+  {
+    stage: 'survey_done',
+    kind:  'control_survey_done',
+    event: 'surveyDoneStale',
+    title: 'Готов к запуску, не в производстве',
+    body: (name, days) => `${name} · аванс получен ${days} дн назад, не отправлен на завод`,
+  },
   {
     stage: 'production',
     kind:  'control_production',
@@ -165,6 +172,7 @@ async function processControlReminders(): Promise<void> {
   const now = Date.now();
 
   const enabled: Record<typeof CONTROL_SPECS[number]['kind'], { on: boolean; days: number }> = {
+    control_survey_done:     { on: cfg.surveyDoneStaleEnabled,     days: cfg.surveyDoneStaleDays },
     control_production:      { on: cfg.productionStaleEnabled,     days: cfg.productionStaleDays },
     control_installed:       { on: cfg.installedNoCloseEnabled,    days: cfg.installedNoCloseDays },
     control_pending_closure: { on: cfg.pendingClosureStaleEnabled, days: cfg.pendingClosureStaleDays },
@@ -177,14 +185,16 @@ async function processControlReminders(): Promise<void> {
     const orders = await prisma.order.findMany({
       where: {
         stage: spec.stage,
-        updatedAt: { lt: cutoff },
+        // Время на стадии — по stageChangedAt, а не updatedAt: правки/комментарии
+        // не должны сбрасывать таймер «застрял».
+        stageChangedAt: { lt: cutoff },
         remindersSent: { none: { kind: spec.kind } },
       },
-      select: { id: true, number: true, clientName: true, updatedAt: true },
+      select: { id: true, number: true, clientName: true, stageChangedAt: true },
     });
 
     for (const o of orders) {
-      const ageDays = Math.floor((now - o.updatedAt.getTime()) / (24 * 60 * 60 * 1000));
+      const ageDays = Math.floor((now - o.stageChangedAt.getTime()) / (24 * 60 * 60 * 1000));
       try {
         await broadcastPushForEvent({
           title: `${spec.title} · № ${o.number}`,

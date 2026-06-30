@@ -93,6 +93,8 @@ export default async function SettingsPage() {
         {isDirector && controlCfg && (
           <ControlRemindersBlock
             initial={{
+              surveyDoneStaleEnabled:     controlCfg.surveyDoneStaleEnabled,
+              surveyDoneStaleDays:        controlCfg.surveyDoneStaleDays,
               productionStaleEnabled:     controlCfg.productionStaleEnabled,
               productionStaleDays:        controlCfg.productionStaleDays,
               installedNoCloseEnabled:    controlCfg.installedNoCloseEnabled,

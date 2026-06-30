@@ -10,7 +10,7 @@ import { saveControlRemindersAction, type ControlRemindersInput } from './contro
 
 type State = ControlRemindersInput;
 
-type RowKey = 'production' | 'installed' | 'pendingClosure';
+type RowKey = 'surveyDone' | 'production' | 'installed' | 'pendingClosure';
 
 const ROWS: Array<{
   key: RowKey;
@@ -19,6 +19,13 @@ const ROWS: Array<{
   flagName: keyof State;
   daysName: keyof State;
 }> = [
+  {
+    key: 'surveyDone',
+    title: 'Готов к запуску, не в производстве',
+    hint: 'Push менеджеру и директору если заказ «Замер сделан, аванс получен» не переведён в производство за указанные дни.',
+    flagName: 'surveyDoneStaleEnabled',
+    daysName: 'surveyDoneStaleDays',
+  },
   {
     key: 'production',
     title: 'Долго в производстве',

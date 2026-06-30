@@ -90,6 +90,10 @@ model Order {
 
   // Статус
   stage Stage @default(new)
+  // Когда заказ последний раз сменил этап. В отличие от updatedAt (двигается при
+  // ЛЮБОЙ правке — комментарий, фото, деньги), это честный счётчик «времени на
+  // стадии». На нём строятся контрольные напоминания о «застрявших» заказах.
+  stageChangedAt DateTime @default(now()) @map("stage_changed_at")
 
   // Назначения
   surveyorId  String?   @map("surveyor_id")
@@ -131,6 +135,8 @@ model Order {
   // Composite-индексы под фильтры расписания
   @@index([stage, surveyAt])
   @@index([stage, installAt])
+  // Под контрольные напоминания «застрял на стадии N дней»
+  @@index([stage, stageChangedAt])
   // Поиск по нормализованному телефону
   @@index([clientPhoneDigits])
   @@map("orders")
@@ -340,6 +346,10 @@ model ControlReminderConfig {
   pendingClosureStaleDays     Int      @default(3)     @map("pending_closure_stale_days")
   // Напоминание замерщику на экране календаря: внести результаты замера вовремя.
   surveyorDataReminderEnabled Boolean  @default(true)  @map("surveyor_data_reminder_enabled")
+  // «Готов к запуску, но не отправлен в производство»: стадия survey_done
+  // (замер сделан, аванс получен) висит дольше N дней — пора заводить на завод.
+  surveyDoneStaleEnabled      Boolean  @default(true)  @map("survey_done_stale_enabled")
+  surveyDoneStaleDays         Int      @default(2)     @map("survey_done_stale_days")
   updatedAt                   DateTime @updatedAt      @map("updated_at")
 
   @@map("control_reminder_config")

@@ -19,6 +19,7 @@ export const EVENT_KEYS = [
   'installReminder24h',
   'installReminder3h',
   // Контрольные напоминания (cron по «застрявшим» заказам)
+  'surveyDoneStale',
   'productionStale',
   'installedNoClose',
   'pendingClosureStale',
@@ -35,6 +36,7 @@ export const EVENT_META: Record<EventKey, { label: string; group: 'lead' | 'orde
   surveyReminder3h:   { label: 'Замер за 3 часа',                   group: 'reminder' },
   installReminder24h: { label: 'Установка за 24 часа',              group: 'reminder' },
   installReminder3h:  { label: 'Установка за 3 часа',               group: 'reminder' },
+  surveyDoneStale:     { label: 'Готов к запуску, не в производстве',  group: 'control' },
   productionStale:     { label: 'Заказ долго в производстве',        group: 'control' },
   installedNoClose:    { label: 'Установлена, но не закрыта',        group: 'control' },
   pendingClosureStale: { label: 'Ждёт закрытия слишком долго',       group: 'control' },
@@ -44,8 +46,8 @@ export const EVENT_META: Record<EventKey, { label: string; group: 'lead' | 'orde
 // «newLead» добавлен в список замерщика чтобы директор мог включить ему оповещения
 // о заявках прямо из базового вида матрицы (по дефолту flag = false).
 export const ROLE_RELEVANT: Record<Role, EventKey[]> = {
-  director:  ['newLead', 'pendingClosure', 'productionStale', 'installedNoClose', 'pendingClosureStale'],
-  manager:   ['newLead', 'productionStale', 'installedNoClose'],
+  director:  ['newLead', 'pendingClosure', 'surveyDoneStale', 'productionStale', 'installedNoClose', 'pendingClosureStale'],
+  manager:   ['newLead', 'surveyDoneStale', 'productionStale', 'installedNoClose'],
   surveyor:  ['newLead', 'surveyAssigned', 'surveyReminder24h', 'surveyReminder3h'],
   installer: ['installAssigned', 'installReminder24h', 'installReminder3h', 'installedNoClose'],
 };
@@ -57,25 +59,25 @@ const ROLE_DEFAULTS: Record<Role, Record<EventKey, boolean>> = {
     newLead: true, pendingClosure: true,
     surveyAssigned: false, surveyReminder24h: false, surveyReminder3h: false,
     installAssigned: false, installReminder24h: false, installReminder3h: false,
-    productionStale: true, installedNoClose: true, pendingClosureStale: true,
+    surveyDoneStale: true, productionStale: true, installedNoClose: true, pendingClosureStale: true,
   },
   manager: {
     newLead: true, pendingClosure: false,
     surveyAssigned: false, surveyReminder24h: false, surveyReminder3h: false,
     installAssigned: false, installReminder24h: false, installReminder3h: false,
-    productionStale: true, installedNoClose: true, pendingClosureStale: false,
+    surveyDoneStale: true, productionStale: true, installedNoClose: true, pendingClosureStale: false,
   },
   surveyor: {
     newLead: false, pendingClosure: false,
     surveyAssigned: true, surveyReminder24h: true, surveyReminder3h: true,
     installAssigned: false, installReminder24h: false, installReminder3h: false,
-    productionStale: false, installedNoClose: false, pendingClosureStale: false,
+    surveyDoneStale: false, productionStale: false, installedNoClose: false, pendingClosureStale: false,
   },
   installer: {
     newLead: false, pendingClosure: false,
     surveyAssigned: false, surveyReminder24h: false, surveyReminder3h: false,
     installAssigned: true, installReminder24h: true, installReminder3h: true,
-    productionStale: false, installedNoClose: true, pendingClosureStale: false,
+    surveyDoneStale: false, productionStale: false, installedNoClose: true, pendingClosureStale: false,
   },
 };
 

@@ -516,11 +516,14 @@ function canEditAll(role: Role): boolean {
 
 function buildUpdatePayload(
   role: Role,
-  existing: { totalAmount: any; prepayment: any; finalPayment: any; costAmount: any; tokenExpiresAt: Date | null; surveyAt: Date | null; surveyEndAt: Date | null; installAt: Date | null; installEndAt: Date | null; surveyorId: string | null; installerId: string | null; clientName: string; clientPhone: string; clientAddress: string; doorComment: string; widthMm: number | null; heightMm: number | null },
+  existing: { stage: Stage; totalAmount: any; prepayment: any; finalPayment: any; costAmount: any; tokenExpiresAt: Date | null; surveyAt: Date | null; surveyEndAt: Date | null; installAt: Date | null; installEndAt: Date | null; surveyorId: string | null; installerId: string | null; clientName: string; clientPhone: string; clientAddress: string; doorComment: string; widthMm: number | null; heightMm: number | null },
   d: z.infer<typeof orderInputSchema>,
 ) {
   const base = {
     stage: d.stage,
+    // Двигаем счётчик стадии только при реальной смене этапа — иначе пересохранение
+    // формы без смены этапа сбрасывало бы таймер «застрял на стадии».
+    ...(d.stage !== existing.stage ? { stageChangedAt: new Date() } : {}),
     tokenExpiresAt: tokenExpiresFor(d.stage, existing.tokenExpiresAt),
   };
 
@@ -678,6 +681,7 @@ export async function closeFromAwaitingAction(orderId: string) {
     where: { id: orderId },
     data: {
       stage: 'pending_closure',
+      stageChangedAt: new Date(),
       awaitingClient: false,
       awaitingClientSince: null,
       awaitingClientUntil: null,
@@ -720,6 +724,7 @@ export async function approveClosureAction(orderId: string) {
     where: { id: orderId },
     data: {
       stage: 'closed',
+      stageChangedAt: new Date(),
       tokenExpiresAt: tokenExpiresFor('closed', order.tokenExpiresAt),
       // Снимаем «ждём клиента» при закрытии — иначе закрытый заказ оставался бы
       // с активным/просроченным ожиданием, и его можно было «переоткрыть»
@@ -781,7 +786,7 @@ export async function rejectClosureAction(orderId: string) {
 
   await prisma.order.update({
     where: { id: orderId },
-    data: { stage: 'installed' },
+    data: { stage: 'installed', stageChangedAt: new Date() },
   });
 
   revalidatePath('/orders');
@@ -905,6 +910,8 @@ export async function updateOrderStageAction(orderId: string, next: Stage): Prom
     where: { id: orderId },
     data: {
       stage: next,
+      // Реальная смена этапа → двигаем счётчик «времени на стадии».
+      ...(next !== existing.stage ? { stageChangedAt: new Date() } : {}),
       // При переоткрытии (closed → активный) сбрасываем срок жизни публичной
       // ссылки (на closed он ставился +90 дней).
       tokenExpiresAt: tokenExpiresFor(next, existing.tokenExpiresAt),

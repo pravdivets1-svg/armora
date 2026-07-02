@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { MotionConfig } from 'framer-motion';
 import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import { AppShell } from '@/components/uikit';
@@ -14,24 +15,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const role = user?.role;
   const showLeadBadge = role === 'director' || role === 'manager';
 
-  let pendingClosures = 0;
-  let newLeads = 0;
-
-  if (role === 'director') {
-    try {
-      pendingClosures = await prisma.order.count({ where: { stage: 'pending_closure' } });
-    } catch (e) {
-      console.error('[ADMIN_LAYOUT_CLOSURES_ERROR]', e);
-    }
-  }
-
-  if (role === 'director' || role === 'manager') {
-    try {
-      newLeads = await prisma.lead.count({ where: { stage: 'new' } });
-    } catch (e) {
-      console.error('[ADMIN_LAYOUT_LEADS_ERROR]', e);
-    }
-  }
+  // Параллельно: два последовательных count'а добавляли лишние десятки мс TTFB
+  // на каждую загрузку любой админ-страницы.
+  const [pendingClosures, newLeads] = await Promise.all([
+    role === 'director'
+      ? prisma.order.count({ where: { stage: 'pending_closure' } }).catch((e) => {
+          console.error('[ADMIN_LAYOUT_CLOSURES_ERROR]', e);
+          return 0;
+        })
+      : Promise.resolve(0),
+    role === 'director' || role === 'manager'
+      ? prisma.lead.count({ where: { stage: 'new' } }).catch((e) => {
+          console.error('[ADMIN_LAYOUT_LEADS_ERROR]', e);
+          return 0;
+        })
+      : Promise.resolve(0),
+  ]);
 
   return (
     <AppShell
@@ -40,7 +39,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       pendingClosures={pendingClosures}
       newLeads={newLeads}
     >
-      <PageTransition>{children}</PageTransition>
+      {/* MotionConfig reducedMotion="user": framer-motion анимирует инлайн-стили и
+          НЕ подчиняется CSS-гарду prefers-reduced-motion из globals.css. */}
+      <MotionConfig reducedMotion="user">
+        <PageTransition>{children}</PageTransition>
+      </MotionConfig>
       <Suspense fallback={null}><ToastHost /></Suspense>
       <FaviconBadge enabled={showLeadBadge} />
       <PushPrompt />

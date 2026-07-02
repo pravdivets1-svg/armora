@@ -31,7 +31,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#ffffff',
+  // Токен app (#F6F7FB): чистый белый давал холодную полосу статус-бара PWA
+  // над градиентным фоном приложения.
+  themeColor: '#F6F7FB',
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',

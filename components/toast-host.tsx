@@ -40,6 +40,9 @@ export default function ToastHost() {
       <ToastFromQuery />
       <Toaster
         position="bottom-right"
+        // На мобиле поднимаем над таб-баром (64px + safe-area): дефолтные ~16px
+        // клали тост прямо на «Заказы»/«Календарь» в зоне большого пальца.
+        mobileOffset={{ bottom: 'calc(72px + env(safe-area-inset-bottom))' }}
         toastOptions={{
           classNames: {
             toast: 'rounded-xl border border-borderc bg-card shadow-soft-lg text-text1',

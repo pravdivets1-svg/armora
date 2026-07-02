@@ -66,7 +66,7 @@ export default function LiveSearch({
         placeholder={placeholder}
         aria-label={placeholder}
         autoComplete="off"
-        className={`block w-full min-w-0 pl-10 pr-9 h-10 rounded-md text-[14px]
+        className={`block w-full min-w-0 pl-10 pr-10 h-10 rounded-md text-[14px]
                     bg-subtle/70 border border-transparent text-text1
                     placeholder:text-text3
                     focus:outline-none focus:bg-card focus:border-text2/30 focus:ring-1 focus:ring-text2/20
@@ -78,12 +78,12 @@ export default function LiveSearch({
           type="button"
           onClick={clear}
           aria-label="Очистить поиск"
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 z-10
-                     w-5 h-5 flex items-center justify-center rounded
-                     text-text3 hover:text-text1 hover:bg-subtle
+          className="absolute right-0.5 top-1/2 -translate-y-1/2 z-10
+                     w-9 h-9 flex items-center justify-center rounded
+                     text-text3 hover:text-text1 hover:bg-subtle active:bg-subtle
                      transition-colors"
         >
-          <X size={12} />
+          <X size={14} />
         </button>
       )}
     </div>

@@ -69,12 +69,13 @@ function Pill({
     <button
       type="button"
       onClick={onClick}
-      className={`shrink-0 inline-flex items-center h-9 px-3.5 rounded-md text-[13px] font-medium
+      aria-pressed={active}
+      className={`shrink-0 inline-flex items-center h-11 lg:h-9 px-4 lg:px-3.5 rounded-md text-[13px] font-medium
                   transition-colors duration-fast ease-soft whitespace-nowrap
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-accent
                   ${active
                     ? 'bg-accent text-card'
-                    : 'bg-card border border-borderc text-text2 hover:text-text1'}`}
+                    : 'bg-card border border-borderc text-text2 hover:text-text1 active:bg-subtle'}`}
     >
       {children}
     </button>

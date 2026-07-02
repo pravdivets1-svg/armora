@@ -49,17 +49,18 @@ export function MobileTabBar({
                 href={it.href}
                 className={`relative flex flex-col items-center justify-center gap-1 h-full px-1
                             text-[11px] font-medium transition-colors duration-fast
-                            ${active ? 'text-accent' : 'text-text2 hover:text-text1'}`}
+                            active:bg-text1/[0.05] [-webkit-tap-highlight-color:transparent]
+                            ${active ? 'text-accent' : 'text-text2 hover:text-text1 active:text-text1'}`}
               >
                 {active && (
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-accent rounded-b-md" />
                 )}
                 <span className="relative">
-                  <Icon size={22} strokeWidth={1.6} />
+                  <Icon size={22} strokeWidth={active ? 2.1 : 1.6} />
                   {!!it.badge && it.badge > 0 && (
-                    <span className="absolute -top-1 -right-2 min-w-[16px] h-[16px] px-1
-                                     rounded-md bg-accent text-card text-[10px] font-semibold
-                                     tabular-nums leading-[16px] text-center">
+                    <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] px-1
+                                     rounded-md bg-accent text-card text-[11px] font-semibold
+                                     tabular-nums leading-[18px] text-center">
                       {it.badge > 99 ? '99+' : it.badge}
                     </span>
                   )}

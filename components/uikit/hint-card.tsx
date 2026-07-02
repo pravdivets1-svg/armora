@@ -56,10 +56,10 @@ export function HintCard({
         type="button"
         onClick={dismiss}
         aria-label="Скрыть подсказку"
-        className="absolute right-2 top-2 w-7 h-7 inline-flex items-center justify-center rounded
-                   text-text3 hover:text-text1 hover:bg-subtle transition-colors"
+        className="absolute right-1 top-1 w-10 h-10 inline-flex items-center justify-center rounded
+                   text-text3 hover:text-text1 hover:bg-subtle active:bg-subtle transition-colors"
       >
-        <X size={13} />
+        <X size={15} />
       </button>
     </div>
   );

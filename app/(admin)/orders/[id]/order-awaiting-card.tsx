@@ -159,7 +159,7 @@ function DecisionButton({
         catch { toast.error('Не удалось выполнить'); }
         finally { setPending(false); }
       }}
-      className={`inline-flex items-center justify-center gap-1.5 px-3 h-9 rounded-md text-[12.5px] font-medium border bg-card transition-colors disabled:opacity-50 ${cls}`}
+      className={`inline-flex items-center justify-center gap-1.5 px-3.5 h-11 lg:h-9 rounded-md text-[13px] font-medium border bg-card transition-colors disabled:opacity-50 ${cls}`}
     >
       {pending ? '…' : label}
     </button>

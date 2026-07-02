@@ -13,7 +13,7 @@ import { setLeadStageAction } from '@/app/(admin)/leads/actions';
 type Color = 'ok2' | 'warn2' | 'bad2';
 
 const STRIPE: Record<Color, string> = { ok2: 'bg-ok2',      warn2: 'bg-warn2',     bad2: 'bg-bad2' };
-const TEXT:   Record<Color, string> = { ok2: 'text-ok2',    warn2: 'text-warn2',   bad2: 'text-bad2' };
+const TEXT:   Record<Color, string> = { ok2: 'text-ok2-text', warn2: 'text-warn2-text', bad2: 'text-bad2-text' };
 const RING:   Record<Color, string> = { ok2: 'ring-ok2/30', warn2: 'ring-warn2/40', bad2: 'ring-bad2/45' };
 
 function fmtPhone(p: string): string {
@@ -74,13 +74,20 @@ export function UrgentLeadCard({
           {clientName}
         </Link>
 
-        <p className="mt-0.5 text-meta text-text2 tabular-nums truncate inline-flex items-baseline gap-1.5 w-full">
-          {address && <MapPin size={12} className="shrink-0 translate-y-px text-text3" />}
-          <span className="truncate">
-            {fmtPhone(phone)}
-            {address && ` · ${address}`}
-          </span>
-        </p>
+        {/* Телефон и адрес — раздельно: в одной truncate-строке адрес почти
+            всегда срезался. Адрес — ссылкой на карту. */}
+        <p className="mt-0.5 text-meta text-text2 tabular-nums">{fmtPhone(phone)}</p>
+        {address && (
+          <a
+            href={`https://yandex.ru/maps/?text=${encodeURIComponent(address)}`}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-0.5 flex items-center gap-1.5 text-meta text-text2 min-h-[32px] active:text-text1"
+          >
+            <MapPin size={12} className="shrink-0 text-text3" />
+            <span className="truncate">{address}</span>
+          </a>
+        )}
 
         {/* Действия: крупная подписанная «Позвонить» + «Связались» + открыть */}
         <div className="mt-3 grid grid-cols-[1fr_auto_auto] gap-2">

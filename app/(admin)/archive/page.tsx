@@ -8,6 +8,7 @@ import { requireUser } from '@/lib/auth-helpers';
 import { listClosedOrders } from '@/lib/orders';
 import { PageHeader, OrderCard, Empty } from '@/components/uikit';
 import LiveSearch from '@/components/live-search';
+import { plural } from '@/lib/format';
 
 export const metadata = { title: 'Архив — Armora' };
 export const dynamic = 'force-dynamic';
@@ -31,13 +32,14 @@ export default async function ArchivePage({ searchParams }: { searchParams: Sear
   });
 
   const pluralize = (n: number) =>
-    `${n} закрыт${n === 1 ? 'ый' : 'ых'} заказ${n === 1 ? '' : n < 5 ? 'а' : 'ов'}`;
+    `${n} ${plural(n, 'закрытый заказ', 'закрытых заказа', 'закрытых заказов')}`;
 
   return (
     <>
       <PageHeader title="Архив" sub={pluralize(total)} backHref="/orders" />
 
-      <div className="px-4 lg:px-6 pt-4 space-y-3 max-w-6xl mx-auto pb-[88px] lg:pb-12">
+      {/* pb-4: AppShell уже даёт клиренс под таб-бар — свой pb-[88px] удваивал пустоту. */}
+      <div className="px-4 lg:px-6 pt-4 space-y-3 max-w-6xl mx-auto pb-4 lg:pb-12">
         <LiveSearch
           defaultValue={searchParams.q ?? ''}
           placeholder="Поиск: ФИО / телефон / адрес / №"
@@ -72,8 +74,9 @@ export default async function ArchivePage({ searchParams }: { searchParams: Sear
             <Link
               href={{ query: { ...searchParams, page: Math.max(1, page - 1) } }}
               aria-disabled={page === 1}
-              className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-borderc/70
-                          ${page === 1 ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1 hover:bg-subtle/70'}`}
+              tabIndex={page === 1 ? -1 : undefined}
+              className={`inline-flex items-center gap-1.5 h-11 lg:h-9 px-4 lg:px-3 rounded-md border border-borderc/70
+                          ${page === 1 ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1 hover:bg-subtle/70 active:bg-subtle'}`}
             >
               <span aria-hidden>‹</span> Назад
             </Link>
@@ -81,8 +84,9 @@ export default async function ArchivePage({ searchParams }: { searchParams: Sear
             <Link
               href={{ query: { ...searchParams, page: Math.min(pageCount, page + 1) } }}
               aria-disabled={page === pageCount}
-              className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-borderc/70
-                          ${page === pageCount ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1 hover:bg-subtle/70'}`}
+              tabIndex={page === pageCount ? -1 : undefined}
+              className={`inline-flex items-center gap-1.5 h-11 lg:h-9 px-4 lg:px-3 rounded-md border border-borderc/70
+                          ${page === pageCount ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1 hover:bg-subtle/70 active:bg-subtle'}`}
             >
               Вперёд <span aria-hidden>›</span>
             </Link>

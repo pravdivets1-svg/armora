@@ -88,8 +88,8 @@ export default function NextEventCard({
     'text-text1';
 
   const kindBadge = isSurvey
-    ? 'bg-info2/[0.08] text-info2'
-    : 'bg-ok2/[0.08] text-ok2';
+    ? 'bg-info2/[0.08] text-info2-text'
+    : 'bg-ok2/[0.08] text-ok2-text';
 
   return (
     <Link
@@ -126,7 +126,9 @@ export default function NextEventCard({
             {clientAddress && (
               <p className="text-[13px] text-text2 mt-0.5 flex items-start gap-1.5 min-w-0">
                 <MapPin size={12} className="mt-0.5 shrink-0 text-text3" />
-                <span className="truncate">{clientAddress}</span>
+                {/* До двух строк: «куда ехать» — смысл карточки, корпус/квартира
+                    в конце адреса не должны обрезаться. */}
+                <span className="line-clamp-2 break-words">{clientAddress}</span>
               </p>
             )}
             {workerName && (

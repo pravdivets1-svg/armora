@@ -215,10 +215,10 @@ export function IntervalPicker({
               key={c.v}
               type="button"
               onClick={() => { setDate(c.v); onChange?.(); }}
-              className={`inline-flex items-center h-7 px-3 rounded-md text-[12px] font-medium border transition-colors
+              className={`inline-flex items-center h-11 lg:h-8 px-4 lg:px-3 rounded-md text-[13px] lg:text-[12px] font-medium border transition-colors
                 ${date === c.v
                   ? 'bg-accent border-accent text-white'
-                  : 'bg-card border-borderc text-text2 hover:bg-subtle/60'}`}
+                  : 'bg-card border-borderc text-text2 hover:bg-subtle/60 active:bg-subtle'}`}
             >
               {c.l}
             </button>
@@ -271,12 +271,12 @@ export function IntervalPicker({
               type="button"
               disabled={disabled}
               onClick={() => applyPreset(p)}
-              className={`inline-flex items-center h-7 px-2.5 rounded-md text-[12px] font-medium
+              className={`inline-flex items-center h-11 lg:h-8 px-3.5 lg:px-2.5 rounded-md text-[13px] lg:text-[12px] font-medium
                           border transition-colors tabular-nums
                           disabled:opacity-50 disabled:cursor-not-allowed
                           ${isActive
                             ? 'bg-accent border-accent text-white'
-                            : 'bg-card border-borderc text-text2 hover:border-text2/40 hover:bg-subtle/60'}`}
+                            : 'bg-card border-borderc text-text2 hover:border-text2/40 hover:bg-subtle/60 active:bg-subtle'}`}
             >
               {p.label}
             </button>

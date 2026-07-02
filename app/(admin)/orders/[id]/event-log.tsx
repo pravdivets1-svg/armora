@@ -45,7 +45,7 @@ export default function EventLog({ events }: { events: Event[] }) {
   if (events.length === 0) {
     return (
       <Card title="История изменений" icon={<History size={12} />}>
-        <div className="text-[13px] text-text3">Изменений пока нет —</div>
+        <div className="text-[13px] text-text3">Изменений пока нет.</div>
       </Card>
     );
   }

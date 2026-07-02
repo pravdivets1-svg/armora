@@ -240,10 +240,25 @@ function StageBtn({
 }) {
   return (
     <form action={setLeadStageAction.bind(null, leadId, stage)}>
-      <Button type="submit" variant={variant} block className="justify-start">
-        {icon} {label}
-      </Button>
+      <StageSubmit icon={icon} label={label} variant={variant} />
     </form>
+  );
+}
+
+// pending-состояние (как у ConvertSubmit): без него кнопка была активна до
+// ответа сервера — двойной тап отправлял действие дважды.
+function StageSubmit({
+  icon, label, variant,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  variant: 'primary' | 'secondary' | 'ghost';
+}) {
+  const { pending } = useFormStatus();
+  return (
+    <Button type="submit" variant={variant} block disabled={pending} className="justify-start">
+      {pending ? <Loader2 size={16} className="animate-spin" /> : icon} {label}
+    </Button>
   );
 }
 

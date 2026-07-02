@@ -110,7 +110,7 @@ export default async function ClosuresPage() {
                         <div className="text-h2 tabular-nums text-text1">{fmtMoney(o.totalAmount as any)}</div>
                         <div
                           className={`text-meta tabular-nums mt-0.5 ${
-                            margin >= 0 ? 'text-ok2' : 'text-bad2'
+                            margin >= 0 ? 'text-ok2-text' : 'text-bad2-text'
                           }`}
                         >
                           маржа {(margin >= 0 ? '+' : '') + fmtMoney(margin)}
@@ -139,7 +139,7 @@ export default async function ClosuresPage() {
                           <div
                             key={i}
                             className={`flex items-start gap-1.5 text-meta ${
-                              w.tone === 'bad' ? 'text-bad2' : 'text-warn2'
+                              w.tone === 'bad' ? 'text-bad2-text' : 'text-warn2-text'
                             }`}
                           >
                             <AlertTriangle size={12} className="shrink-0 mt-0.5" />
@@ -149,31 +149,34 @@ export default async function ClosuresPage() {
                       </div>
                     )}
 
-                    {/* Действия */}
-                    <div className="mt-3 flex items-center justify-between gap-2">
+                    {/* Действия: на 360–390px три элемента в один ряд не влезали —
+                        ссылка отдельной строкой, денежные кнопки сеткой на всю ширину. */}
+                    <div className="mt-2 space-y-2">
                       <Link
                         href={`/orders/${o.id}`}
-                        className="inline-flex items-center gap-1 text-meta text-text2 hover:text-text1"
+                        className="inline-flex items-center gap-1 min-h-[44px] -my-1 text-meta text-text2 hover:text-text1 active:text-text1"
                       >
                         Открыть карточку
                         <ChevronRight size={12} />
                       </Link>
-                      <div className="flex gap-2">
-                        <form action={rejectAction.bind(null, o.id)}>
+                      <div className="grid grid-cols-2 gap-2">
+                        <form action={rejectAction.bind(null, o.id)} className="contents">
                           <Button
                             type="submit"
                             variant="secondary"
-                            size="sm"
+                            block
+                            className="whitespace-nowrap"
                             title="Вернуть в «Установлена» для доработки"
                           >
                             <XCircle size={14} /> Вернуть
                           </Button>
                         </form>
-                        <form action={approveAction.bind(null, o.id)}>
+                        <form action={approveAction.bind(null, o.id)} className="contents">
                           <Button
                             type="submit"
                             variant="accent"
-                            size="sm"
+                            block
+                            className="whitespace-nowrap"
                             disabled={incompleteFinances}
                           >
                             <CheckCircle2 size={14} /> Закрыть заказ
@@ -202,7 +205,7 @@ function SummaryCell({
   tone?: 'default' | 'ok' | 'bad';
 }) {
   const cls =
-    tone === 'ok' ? 'text-ok2' : tone === 'bad' ? 'text-bad2' : 'text-text1';
+    tone === 'ok' ? 'text-ok2-text' : tone === 'bad' ? 'text-bad2-text' : 'text-text1';
   return (
     <div className="px-4 py-3 min-w-0">
       <div className="text-meta text-text3">{label}</div>

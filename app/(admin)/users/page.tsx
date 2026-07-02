@@ -6,7 +6,8 @@ import { Plus, Users as UsersIcon, ChevronRight } from 'lucide-react';
 import { requireRole } from '@/lib/auth-helpers';
 import { prisma } from '@/lib/prisma';
 import { ROLE_LABEL } from '@/lib/labels';
-import { Empty, PageHeader, IconButton } from '@/components/uikit';
+import { plural } from '@/lib/format';
+import { Empty, PageHeader } from '@/components/uikit';
 import RoleAvatar from '@/components/role-avatar';
 
 export const dynamic = 'force-dynamic';
@@ -18,11 +19,7 @@ function loginOf(email: string): string {
   return at >= 0 ? email.slice(0, at) : email;
 }
 
-function ruCount(n: number): string {
-  if (n === 1) return 'учётная запись';
-  if (n >= 2 && n <= 4) return 'учётные записи';
-  return 'учётных записей';
-}
+const ruCount = (n: number) => plural(n, 'учётная запись', 'учётные записи', 'учётных записей');
 
 export default async function UsersPage() {
   const me = await requireRole(['director']);
@@ -46,10 +43,17 @@ export default async function UsersPage() {
         title="Сотрудники"
         sub={`${users.length} ${ruCount(users.length)}`}
         actions={
-          <Link href="/users/new" aria-label="Новый сотрудник">
-            <IconButton size={40} variant="secondary" aria-label="Новый сотрудник">
-              <Plus size={16} />
-            </IconButton>
+          // Ссылка со стилями кнопки: <button> внутри <a> — невалидный HTML
+          // (двойной таб-стоп, скринридер читает элемент дважды).
+          <Link
+            href="/users/new"
+            aria-label="Новый сотрудник"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-md
+                       bg-card border border-borderc text-text2
+                       hover:bg-subtle hover:text-text1 active:bg-subtle transition-colors
+                       focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <Plus size={16} />
           </Link>
         }
       />
@@ -63,10 +67,11 @@ export default async function UsersPage() {
             action={
               <Link
                 href="/users/new"
-                className="inline-flex items-center gap-2 h-9 px-3 rounded-md
-                           bg-accent text-white hover:bg-accent/90 text-[13px] font-medium"
+                className="inline-flex items-center gap-2 h-11 px-4 rounded-md
+                           glass-button-dark text-white text-[14px] font-medium
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
-                <Plus size={14} /> Новый сотрудник
+                <Plus size={16} /> Новый сотрудник
               </Link>
             }
           />

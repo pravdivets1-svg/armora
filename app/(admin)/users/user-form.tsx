@@ -82,6 +82,9 @@ export default function UserForm({
                   required
                   pattern="[a-z0-9]{6}"
                   autoComplete="off"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   className="pr-32 font-mono tabular-nums"
                 />
                 <span
@@ -134,6 +137,8 @@ export default function UserForm({
                 name="maxUserId"
                 defaultValue={user?.maxUserId ?? ''}
                 placeholder="123456789"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 className="font-mono tabular-nums"
               />
             </Field>
@@ -199,9 +204,12 @@ function PasswordInputWithGen({ mode }: { mode: 'create' | 'edit' }) {
         onChange={(e) => setValue(e.target.value)}
         placeholder={mode === 'create' ? 'a1b2c' : '·····'}
         maxLength={5}
-        minLength={mode === 'create' ? 5 : 0}
+        minLength={5}
         required={mode === 'create'}
         autoComplete="new-password"
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
         className="flex-1 font-mono tabular-nums"
       />
       <button

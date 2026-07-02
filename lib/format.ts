@@ -106,6 +106,15 @@ export function fmtInterval(start: Date | string, end?: Date | string | null): s
   return `${fmtDateTime(a)} – ${fmtDateTime(b)}`;
 }
 
+// Русская плюрализация: plural(21, 'заказ', 'заказа', 'заказов') → «заказ».
+// Правила по n%10/n%100 (21 → one, 22–24 → few, 25+ → many, 11–14 → many).
+export function plural(n: number, one: string, few: string, many: string): string {
+  const m10 = n % 10, m100 = n % 100;
+  if (m10 === 1 && m100 !== 11) return one;
+  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
+  return many;
+}
+
 // Сокращение ФИО до «И. Иванов»
 export function shortName(full: string): string {
   const parts = full.trim().split(/\s+/);

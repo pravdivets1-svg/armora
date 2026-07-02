@@ -75,7 +75,7 @@ export async function SurveyorDataReminder({
           const reasonLabel =
             noContract && noPrice ? 'нет договора и цены' : noContract ? 'нет договора' : 'нет цены';
           // Отсутствие договора (юр. документ) — серьёзнее, красный чип; только цена — жёлтый.
-          const reasonChip = noContract ? 'bg-bad2/10 text-bad2' : 'bg-warn2/15 text-warn2';
+          const reasonChip = noContract ? 'bg-bad2/10 text-bad2-text' : 'bg-warn2/15 text-warn2-text';
           return (
             <li key={o.id}>
               <Link

@@ -214,14 +214,14 @@ export default async function LeadsPage({ searchParams }: { searchParams: Search
 
                             <div className="flex-1 min-w-0">
                               <div className="flex items-baseline justify-between gap-2">
-                                <p className="text-[13.5px] font-medium text-text1 truncate flex-1 min-w-0">
+                                <p className="text-[14px] font-medium text-text1 truncate flex-1 min-w-0">
                                   {lead.clientName}
                                 </p>
                                 <span className="text-meta text-text2 tabular-nums shrink-0">{fmtRelative(lead.createdAt)}</span>
                               </div>
                               <div className="flex items-center gap-2 mt-0.5">
                                 <LeadPill stage={lead.stage} />
-                                <span className="text-meta text-text2 tabular-nums truncate min-w-0">
+                                <span className="text-[14px] text-text1 tabular-nums truncate min-w-0">
                                   {fmtPhone(lead.clientPhone)}
                                 </span>
                               </div>

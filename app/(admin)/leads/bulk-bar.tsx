@@ -14,7 +14,8 @@
 // Действия отправляются обычной server-action формой с ids=csv.
 
 import { useEffect, useRef, useState } from 'react';
-import { Phone, CalendarClock, X, AlertOctagon, Trash2, Sparkles, CheckSquare, Square } from 'lucide-react';
+import { useFormStatus } from 'react-dom';
+import { Phone, CalendarClock, X, AlertOctagon, Trash2, Sparkles, CheckSquare, Square, Loader2 } from 'lucide-react';
 import { bulkSetLeadStageAction, bulkDeleteLeadsAction } from './actions';
 
 type Props = {
@@ -85,29 +86,34 @@ export default function LeadsBulkBar({ isDirector, children }: Props) {
 
   return (
     <div ref={containerRef} className="space-y-2.5">
-      {/* «Выбрать все» — над списком, видна только когда есть items */}
-      <div className="flex items-center gap-2 text-meta text-text3">
+      {/* «Выбрать все» — над списком. 44px тач-таргеты; кнопка всегда ДОБАВЛЯЕТ
+          все (раньше при частичном выборе тап снимал выделение — выбрать все
+          после 2 отмеченных было невозможно). */}
+      <div className="flex items-center gap-1 text-meta text-text3">
         <button
           type="button"
-          onClick={() => toggleAll(count === 0)}
-          className="inline-flex items-center gap-1.5 px-2 py-1 rounded text-text2 hover:text-text1
-                     hover:bg-subtle transition-colors"
+          onClick={() => toggleAll(true)}
+          className="inline-flex items-center gap-1.5 px-3 min-h-[44px] rounded-md text-text2 hover:text-text1
+                     hover:bg-subtle active:bg-subtle transition-colors"
         >
-          {count > 0 ? <CheckSquare size={14} /> : <Square size={14} />}
-          {count > 0 ? `Выбрано: ${count}` : 'Выбрать все'}
+          {count > 0 ? <CheckSquare size={16} /> : <Square size={16} />}
+          {count > 0 ? `Выбрано: ${count} · все` : 'Выбрать все'}
         </button>
         {count > 0 && (
           <button
             type="button"
             onClick={clearAll}
-            className="text-text3 hover:text-text1 transition-colors"
+            className="inline-flex items-center px-3 min-h-[44px] rounded-md text-text3 hover:text-text1
+                       hover:bg-subtle active:bg-subtle transition-colors"
           >
             Снять выделение
           </button>
         )}
       </div>
 
-      {children}
+      {/* Клиренс под плавающий бар: при активном выделении он перекрывал
+          последние карточки списка (их чекбокс и кнопку звонка). */}
+      <div className={count > 0 ? 'pb-40' : ''}>{children}</div>
 
       {/* Action bar — Linear-стиль: тёмная плашка text1, плотные кнопки */}
       {count > 0 && (
@@ -118,11 +124,11 @@ export default function LeadsBulkBar({ isDirector, children }: Props) {
           <span className="text-meta tabular-nums text-white/70 font-medium px-2">
             {count}
           </span>
-          <BulkBtn icon={<Phone size={13} />} label="Связались" stage="contacted" idsCsv={idsCsv} />
-          <BulkBtn icon={<CalendarClock size={13} />} label="На замер" stage="scheduled" idsCsv={idsCsv} />
-          <BulkBtn icon={<X size={13} />} label="Отказ" stage="rejected" idsCsv={idsCsv} />
-          <BulkBtn icon={<AlertOctagon size={13} />} label="Спам" stage="spam" idsCsv={idsCsv} />
-          <BulkBtn icon={<Sparkles size={13} />} label="В новые" stage="new" idsCsv={idsCsv} />
+          <BulkBtn icon={<Phone size={13} />} label="Связались" stage="contacted" idsCsv={idsCsv} onDone={clearAll} />
+          <BulkBtn icon={<CalendarClock size={13} />} label="На замер" stage="scheduled" idsCsv={idsCsv} onDone={clearAll} />
+          <BulkBtn icon={<X size={13} />} label="Отказ" stage="rejected" idsCsv={idsCsv} onDone={clearAll} />
+          <BulkBtn icon={<AlertOctagon size={13} />} label="Спам" stage="spam" idsCsv={idsCsv} onDone={clearAll} />
+          <BulkBtn icon={<Sparkles size={13} />} label="В новые" stage="new" idsCsv={idsCsv} onDone={clearAll} />
           {isDirector && (
             <form
               action={bulkDeleteLeadsAction}
@@ -147,24 +153,43 @@ export default function LeadsBulkBar({ isDirector, children }: Props) {
 }
 
 function BulkBtn({
-  icon, label, stage, idsCsv,
+  icon, label, stage, idsCsv, onDone,
 }: {
   icon: React.ReactNode;
   label: string;
   stage: string;
   idsCsv: string;
+  onDone: () => void;
 }) {
   return (
-    <form action={bulkSetLeadStageAction}>
+    // Обёртка: после действия снимаем выделение (uncontrolled-чекбоксы переживают
+    // RSC-ревалидацию, и бар оставался висеть со stale ids). finally — потому что
+    // server action завершается redirect-throw.
+    <form
+      action={async (fd: FormData) => {
+        try { await bulkSetLeadStageAction(fd); } finally { onDone(); }
+      }}
+    >
       <input type="hidden" name="stage" value={stage} />
       <input type="hidden" name="ids" value={idsCsv} />
-      <button
-        type="submit"
-        className="inline-flex items-center gap-1.5 px-2.5 h-11 rounded-md
-                   text-[13px] text-white/85 hover:bg-white/10 hover:text-white transition-colors"
-      >
-        {icon} {label}
-      </button>
+      <BulkSubmit icon={icon} label={label} />
     </form>
+  );
+}
+
+// Отдельный сабмит ради useFormStatus: pending-состояние блокирует двойной тап
+// и показывает спиннер (на полевом 3G между тапом и ответом проходят секунды).
+function BulkSubmit({ icon, label }: { icon: React.ReactNode; label: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="inline-flex items-center gap-1.5 px-2.5 h-11 rounded-md
+                 text-[13px] text-white/85 hover:bg-white/10 hover:text-white
+                 active:bg-white/15 disabled:opacity-60 transition-colors"
+    >
+      {pending ? <Loader2 size={13} className="animate-spin" /> : icon} {label}
+    </button>
   );
 }

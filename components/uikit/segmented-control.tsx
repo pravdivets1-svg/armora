@@ -23,7 +23,8 @@ export function SegmentedControl<T extends string>({
   size?: 'sm' | 'md';
   className?: string;
 }) {
-  const h = size === 'sm' ? 'h-7' : 'h-9';
+  // На мобиле сегменты не ниже 40px (это переключатели первого уровня).
+  const h = size === 'sm' ? 'h-10 lg:h-7' : 'h-11 lg:h-9';
   const text = size === 'sm' ? 'text-[12px]' : 'text-[13.5px]';
   return (
     <div
@@ -48,7 +49,7 @@ export function SegmentedControl<T extends string>({
           >
             {it.label}
             {typeof it.count === 'number' && (
-              <span className={`tabular-nums text-[11px] ${active ? 'text-text3' : 'text-text3/80'}`}>
+              <span className={`tabular-nums text-[11px] ${active ? 'text-text2' : 'text-text3'}`}>
                 {it.count}
               </span>
             )}

@@ -17,7 +17,7 @@
 import type { ReactNode } from 'react';
 
 const SIZE_MAP = {
-  sm:   { value: 'text-[16px] font-semibold',                          label: 'text-[10px]' },
+  sm:   { value: 'text-[16px] font-semibold',                          label: 'text-[11px]' },
   md:   { value: 'text-[24px] font-semibold',                          label: 'text-[11px]' },
   lg:   { value: 'text-[34px] font-semibold',                          label: 'text-[11px]' },
   xl:   { value: 'text-[56px] font-semibold tracking-tight',           label: 'text-[11px]' },

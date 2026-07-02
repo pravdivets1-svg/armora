@@ -61,9 +61,9 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md
+          className="inline-flex items-center gap-1.5 h-11 lg:h-9 px-4 lg:px-3.5 rounded-md
                      bg-accent text-card text-[13px] font-medium shrink-0
-                     transition-colors duration-fast hover:bg-accent/90
+                     transition-colors duration-fast hover:bg-accent/90 active:bg-accent-hover
                      focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
         >
           В Яндекс.Картах <ArrowUpRight size={14} />
@@ -75,8 +75,8 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
         {sorted.map((p, i) => {
           const isSurvey = p.kind === 'survey';
           const kindBadge = isSurvey
-            ? 'bg-info2/[0.08] text-info2'
-            : 'bg-ok2/[0.08] text-ok2';
+            ? 'bg-info2/[0.08] text-info2-text'
+            : 'bg-ok2/[0.08] text-ok2-text';
           return (
             <li key={`${p.number}-${i}`}>
               <Link
@@ -93,7 +93,7 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
               <span className="shrink-0 w-12 text-[14px] tabular-nums text-text2">
                 {fmtTime(p.at)}
               </span>
-              <span className={`shrink-0 inline-flex items-center h-4 px-1.5 rounded text-[10.5px]
+              <span className={`shrink-0 inline-flex items-center h-[18px] px-1.5 rounded text-[11px]
                                 font-semibold uppercase tracking-wide ${kindBadge}`}>
                 {isSurvey ? 'Замер' : 'Установка'}
               </span>
@@ -102,9 +102,11 @@ export default function TodayRouteCard({ points }: { points: Point[] }) {
                   {p.clientName}
                   <span className="ml-1.5 text-[12px] tabular-nums text-text3">№ {p.number}</span>
                 </span>
-                <span className="block text-[12.5px] text-text3 truncate flex items-center gap-1">
+                {/* flex + вложенный truncate-спан: block+flex конфликтовали, и
+                    ellipsis на flex-контейнере не работал — адрес клипался «в никуда». */}
+                <span className="flex items-center gap-1 min-w-0 text-[12.5px] text-text3">
                   <MapPin size={11} className="shrink-0 text-text3" />
-                  {p.clientAddress}
+                  <span className="truncate">{p.clientAddress}</span>
                 </span>
               </span>
               </Link>

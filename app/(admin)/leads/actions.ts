@@ -43,7 +43,7 @@ export async function setLeadStageAction(leadId: string, stage: LeadStage) {
   revalidatePath('/leads');
   revalidatePath(`/leads/${leadId}`);
   if (res.count === 0) {
-    redirect(`/leads/${leadId}?toast=${encodeURIComponent('Заявка уже преобразована или удалена')}&type=bad`);
+    redirect(`/leads/${leadId}?toast=${encodeURIComponent('Заявка уже преобразована или удалена')}&type=error`);
   }
 }
 

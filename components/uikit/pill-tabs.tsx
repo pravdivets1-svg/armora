@@ -48,11 +48,11 @@ export function PillTabs({
           <Link
             key={it.key}
             href={buildHref(it.key)}
-            className={`shrink-0 inline-flex items-center gap-1.5 h-9 px-3.5 rounded-md text-[13px] font-medium
+            className={`shrink-0 inline-flex items-center gap-1.5 h-11 lg:h-9 px-4 lg:px-3.5 rounded-md text-[13px] font-medium
                         transition-colors duration-fast ease-soft
                         ${active
                           ? 'bg-accent text-card'
-                          : 'bg-card border border-borderc text-text2 hover:text-text1'}`}
+                          : 'bg-card border border-borderc text-text2 hover:text-text1 active:bg-subtle'}`}
           >
             {it.label}
             {typeof it.count === 'number' && (

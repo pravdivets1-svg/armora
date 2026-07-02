@@ -82,7 +82,10 @@ export default async function CalendarPage({
         }))
     : [];
 
-  const subline = `${HORIZON_DAYS} дней · ваше расписание`;
+  // «Ближайший 21 день» (не «21 дней»); при фильтре по сотруднику — не «ваше».
+  const subline = searchParams.user
+    ? `Ближайший ${HORIZON_DAYS} день · расписание сотрудника`
+    : `Ближайший ${HORIZON_DAYS} день · ваше расписание`;
 
   return (
     <>
@@ -186,11 +189,12 @@ export default async function CalendarPage({
                 className={[
                   'relative',
                   idx > 0 ? 'border-t border-borderc' : '',
-                  isToday ? 'bg-accent/[0.02]' : '',
+                  isToday ? 'bg-accent/[0.04]' : '',
                 ].join(' ')}
               >
+                {/* z-20 — иначе полоска пряталась под sticky-заголовком дня (z-10, bg-card) */}
                 {isToday && (
-                  <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[2px] bg-accent" />
+                  <span aria-hidden className="absolute left-0 top-0 bottom-0 w-[3px] bg-accent z-20" />
                 )}
 
                 {/* Заголовок дня — sticky на мобильном */}
@@ -261,18 +265,18 @@ function EventRow({
   const kindIsSurvey = e.kind === 'survey';
   const kindLabel = kindIsSurvey ? 'Замер' : 'Установка';
 
-  // Бейдж типа — пастельный, 16px высотой.
+  // Бейдж типа — пастельный, текст тёмным .text-токеном (AA на светлой подложке).
   const kindBadge = kindIsSurvey
-    ? 'bg-info2/[0.08] text-info2'
-    : 'bg-ok2/[0.08] text-ok2';
+    ? 'bg-info2/[0.08] text-info2-text'
+    : 'bg-ok2/[0.08] text-ok2-text';
 
-  // Плавная цветовая шкала по daysOverdue:
+  // Плавная цветовая шкала по daysOverdue (тёмные text-токены — читаемо на улице):
   //   0 (сегодня/будущее) — нейтрал text-text2
-  //   1 (вчера)           — warn text-warn2
-  //   2+                  — bad text-bad2
+  //   1 (вчера)           — warn
+  //   2+                  — bad
   const timeColor =
-    e.daysOverdue >= 2 ? 'text-bad2' :
-    e.daysOverdue === 1 ? 'text-warn2' :
+    e.daysOverdue >= 2 ? 'text-bad2-text' :
+    e.daysOverdue === 1 ? 'text-warn2-text' :
     'text-text2';
   const rowDim = tone === 'past' ? (e.daysOverdue >= 2 ? 'opacity-60' : 'opacity-80') : '';
 
@@ -296,14 +300,22 @@ function EventRow({
           {kindLabel}
         </span>
 
-        {/* Клиент + адрес — одна строка с truncate */}
-        <span className="flex-1 min-w-0 flex items-baseline gap-2">
-          <span className="text-[14px] text-text1 truncate">
-            {e.clientName}
+        {/* Клиент (+ адрес). На мобиле адрес — второй строкой ВНУТРИ Link:
+            отдельный <p> вне ссылки был мёртвой зоной тапа в визуально едином ряду. */}
+        <span className="flex-1 min-w-0">
+          <span className="flex items-baseline gap-2">
+            <span className="text-[14px] text-text1 truncate">
+              {e.clientName}
+            </span>
+            {e.clientAddress && (
+              <span className="hidden sm:inline text-[13px] text-text3 truncate">
+                · {e.clientAddress}
+              </span>
+            )}
           </span>
           {e.clientAddress && (
-            <span className="hidden sm:inline text-[13px] text-text3 truncate">
-              · {e.clientAddress}
+            <span className="sm:hidden block text-[12.5px] text-text3 truncate">
+              {e.clientAddress}
             </span>
           )}
         </span>
@@ -325,12 +337,6 @@ function EventRow({
         )}
       </Link>
 
-      {/* Адрес отдельной строкой на мобильном */}
-      {e.clientAddress && (
-        <p className="sm:hidden px-4 pb-2 -mt-1 text-[12.5px] text-text3 truncate">
-          {e.clientAddress}
-        </p>
-      )}
     </li>
   );
 }

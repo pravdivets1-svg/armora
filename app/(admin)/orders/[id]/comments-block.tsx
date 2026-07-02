@@ -54,7 +54,7 @@ export default function CommentsBlock({
   return (
     <Card title="Комментарии исполнителей" icon={<MessageSquare size={12} />}>
       {comments.length === 0 ? (
-        <div className="text-[13px] text-text3 mb-3">Комментариев пока нет —</div>
+        <div className="text-[13px] text-text3 mb-3">Комментариев пока нет — напишите первый.</div>
       ) : (
         <ul className="divide-y divide-borderc/60 text-[14px] mb-3 -mt-1">
           {comments.map((c) => (

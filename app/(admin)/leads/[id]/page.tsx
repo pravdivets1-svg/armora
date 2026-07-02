@@ -99,7 +99,9 @@ export default async function LeadPage({ params }: { params: { id: string } }) {
         backHref="/leads"
       />
 
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-3 space-y-2.5 pb-[120px] lg:pb-12">
+      {/* pb: таб-бар 64 + CTA-плашка 68 + запас + safe-area — иначе низ
+          («Опасная зона», IP/UA) навсегда скрыт под «Создать заказ». */}
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-3 space-y-2.5 pb-[calc(160px+env(safe-area-inset-bottom))] lg:pb-12">
 
         {/* Pill + meta строкой */}
         <div className="flex flex-wrap items-center gap-2">

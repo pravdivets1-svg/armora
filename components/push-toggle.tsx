@@ -10,6 +10,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Bell, BellOff, BellRing } from 'lucide-react';
+import { toast } from 'sonner';
 import { VAPID_PUBLIC_KEY } from '@/lib/push-public';
 
 type State = 'loading' | 'unsupported' | 'denied' | 'idle' | 'subscribed' | 'busy';
@@ -103,7 +104,7 @@ export default function PushToggle() {
     } catch (e) {
       console.warn('[push] subscribe failed', e);
       setState('idle');
-      alert('Не удалось включить уведомления. Попробуйте ещё раз.');
+      toast.error('Не удалось включить уведомления. Попробуйте ещё раз.');
     }
   }
 

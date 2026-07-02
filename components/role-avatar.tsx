@@ -6,8 +6,8 @@ import type { Role } from '@prisma/client';
 const ROLE_COLORS: Record<Role, { bg: string; text: string; ring: string }> = {
   director:  { bg: 'bg-text1',       text: 'text-white',         ring: 'ring-text1/10' },
   manager:   { bg: 'bg-accent',      text: 'text-white',         ring: 'ring-accent/10' },
-  surveyor:  { bg: 'bg-info2/10',    text: 'text-info2',         ring: 'ring-info2/20' },
-  installer: { bg: 'bg-ok2/10',      text: 'text-ok2',           ring: 'ring-ok2/20' },
+  surveyor:  { bg: 'bg-info2/10',    text: 'text-info2-text',    ring: 'ring-info2/20' },
+  installer: { bg: 'bg-ok2/10',      text: 'text-ok2-text',      ring: 'ring-ok2/20' },
 };
 
 const SIZES = {

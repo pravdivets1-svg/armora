@@ -26,8 +26,8 @@ const SIZE_MAP = {
 
 const TONE_MAP = {
   default: 'text-text1',
-  ok:      'text-ok2',
-  bad:     'text-bad2',
+  ok:      'text-ok2-text',
+  bad:     'text-bad2-text',
   accent:  'text-accent',
   muted:   'text-text3',
 } as const;

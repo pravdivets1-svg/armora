@@ -5,7 +5,7 @@
 //   - StageStepper сверху: один клик = переход этапа (вместо select+save)
 //   - Sticky bottom bar с превью «К доплате» и Save/Delete — всегда виден
 //   - Алерты с border-left (toast-like)
-//   - Метрики «К доплате» / «Маржа» через единый <Metric>
+//   - Метрики «К доплате» / «Маржа» — Money-типографика (число доминирует)
 //   - Лейбл «приватно» вместо «(внутри)»
 
 import { useFormState, useFormStatus } from 'react-dom';
@@ -14,9 +14,8 @@ import { Save, AlertCircle, CheckCircle2, AlertTriangle, Lock, Phone } from 'luc
 import type { Stage, Role } from '@prisma/client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Card, Input, Textarea, Select, FieldLabel } from '@/components/ui';
-import { IntervalPicker, SURVEY_DEFAULT_HOURS, INSTALL_DEFAULT_HOURS } from '@/components/uikit';
+import { IntervalPicker, Money, SURVEY_DEFAULT_HOURS, INSTALL_DEFAULT_HOURS } from '@/components/uikit';
 import { fmtMoney, phoneDigits } from '@/lib/format';
-import { Metric } from '@/components/metric';
 import StageStepper from '@/components/stage-stepper';
 import UndoDeleteButton from '@/components/undo-delete-button';
 import { deleteOrderAction, type OrderActionState } from '../actions';
@@ -116,6 +115,15 @@ export default function OrderForm({
   const remaining = useMemo(() => Math.max(0, total - prepay - finalPay), [total, prepay, finalPay]);
   const margin = useMemo(() => total - cost, [total, cost]);
   const negativeMargin = total > 0 && cost > 0 && cost > total;
+
+  // Живое «К доплате» для мобильного дока HeroStage (см. hero-stage-block):
+  // полевой сотрудник видит сумму к приёму рядом с CTA этапа, не скролля к форме.
+  useEffect(() => {
+    if (mode !== 'edit') return;
+    window.dispatchEvent(new CustomEvent('armora:order-remaining', {
+      detail: { remaining: total > 0 ? remaining : null },
+    }));
+  }, [remaining, total, mode]);
 
   const fe = (state && !state.ok ? state.fieldErrors : undefined) ?? {};
 
@@ -331,23 +339,37 @@ export default function OrderForm({
               )}
             </div>
 
-            {/* Сводка вычисляемых: единый блок, выделен фоном — это не инпуты */}
-            <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 px-4 py-3 rounded-md bg-subtle border border-borderc/60">
-              <Metric label="К доплате клиентом" value={fmtMoney(remaining)} size="md" />
+            {/* Сводка вычисляемых: единый блок, выделен фоном — это не инпуты.
+                Money-типографика: число доминирует, валюта приглушена. */}
+            <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 px-4 py-3.5 rounded-md bg-subtle border border-borderc/60">
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-text3 font-medium">
+                  К доплате клиентом
+                </div>
+                <div className={`mt-1 leading-none ${remaining > 0 ? 'text-text1' : 'text-ok2-text'}`}>
+                  <Money value={remaining} size="lg" />
+                </div>
+                {remaining === 0 && total > 0 && (
+                  <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-ok2-text">
+                    <CheckCircle2 size={11} /> Оплачено полностью
+                  </div>
+                )}
+              </div>
               {p.canSeeCost && (
-                <Metric
-                  label={
-                    <span className="inline-flex items-center gap-1">
-                      Маржа
-                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-subtle text-text2 text-[11px] normal-case">
-                        <Lock size={10} /> приватно
-                      </span>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-text3 font-medium
+                                  inline-flex items-center gap-1.5">
+                    Маржа
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-card/70 text-text2 text-[11px] normal-case tracking-normal">
+                      <Lock size={10} /> приватно
                     </span>
-                  }
-                  value={(margin >= 0 ? '+' : '') + fmtMoney(margin)}
-                  tone={margin >= 0 ? 'ok' : 'bad'}
-                  size="md"
-                />
+                  </div>
+                  <div className={`mt-1 leading-none inline-flex items-baseline gap-0.5
+                                   ${margin >= 0 ? 'text-ok2-text' : 'text-bad2-text'}`}>
+                    <span className="text-[20px] font-semibold">{margin >= 0 ? '+' : '−'}</span>
+                    <Money value={Math.abs(margin)} size="lg" />
+                  </div>
+                </div>
               )}
             </div>
           </Card>

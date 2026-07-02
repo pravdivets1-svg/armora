@@ -20,3 +20,4 @@ export * from './hint-card';
 export * from './inset-group';
 export * from './toggle';
 export * from './segmented-control';
+export * from './money';

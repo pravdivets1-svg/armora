@@ -3,11 +3,7 @@ import type { Stage } from '@prisma/client';
 import { Phone, MapPin, Navigation } from 'lucide-react';
 import { StagePill } from './stage-pill';
 import { CopyButton } from './copy-button';
-
-function fmtRub(v: number | null | undefined): string {
-  if (v == null) return '—';
-  return `${v.toLocaleString('ru-RU')} ₽`;
-}
+import { Money } from './money';
 
 function fmtPhone(p: string | null | undefined): string {
   if (!p) return '';
@@ -17,7 +13,7 @@ function fmtPhone(p: string | null | undefined): string {
 // Цветовая полоса слева + тонкое стеклянное кольцо: стадия читается мгновенно,
 // но не «кричит». Liquid Glass: основа стекло, цвет только в индикаторе.
 const STAGE_STRIPE: Record<Stage, { stripe: string; ring: string }> = {
-  new:              { stripe: 'bg-text3',    ring: 'ring-white/30' },
+  new:              { stripe: 'bg-violet',   ring: 'ring-violet/25' },
   survey_scheduled: { stripe: 'bg-info2',    ring: 'ring-info2/25' },
   survey_done:      { stripe: 'bg-info2',    ring: 'ring-info2/25' },
   production:       { stripe: 'bg-warn2',    ring: 'ring-warn2/25' },
@@ -121,12 +117,12 @@ export function OrderCard({
         {/* Правая колонка: сумма сверху, быстрые действия снизу — вписаны в
             высоту левой колонки, карточка не растёт. */}
         <div className="shrink-0 flex flex-col items-end justify-between gap-2">
-          {/* Сумма — крупно, как сумма счёта в банковском приложении */}
+          {/* Сумма — крупно, число доминирует, валюта приглушена */}
           <div className="text-right">
-            <div className="text-[16px] font-semibold tabular-nums text-text1 leading-tight">
-              {fmtRub(amount)}
+            <Money value={amount} size="md" className="text-text1 leading-tight" />
+            <div className="text-[11px] uppercase tracking-wide text-text3 mt-0.5">
+              {amount == null ? 'нет суммы' : 'по договору'}
             </div>
-            <div className="text-meta text-text3 mt-0.5">{amount == null ? 'нет суммы' : 'по договору'}</div>
           </div>
 
           {/* Звонок / маршрут прямо из списка — без захода в заказ */}

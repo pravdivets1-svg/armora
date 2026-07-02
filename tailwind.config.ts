@@ -78,13 +78,18 @@ const config: Config = {
         mono: ['13px', { lineHeight: '18px', fontWeight: '500' }],
       },
       boxShadow: {
-        'soft':         '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
-        'soft-lg':      '0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04)',
-        'card':         '0 1px 2px rgba(15,23,42,.04), 0 1px 1px rgba(15,23,42,.03)',
-        'popover':      '0 12px 32px -8px rgba(15,23,42,.16), 0 2px 6px rgba(15,23,42,.06)',
-        'accent-glow':  '0 4px 20px -6px rgba(37,99,235,0.4)',
-        'ok-glow':      '0 4px 20px -6px rgba(22,163,74,0.3)',
-        'bad-glow':     '0 4px 20px -6px rgba(220,38,38,0.3)',
+        // База теней — тёмный индиго (indigo-950 #1E1B4B): чёрные тени на
+        // индиго-градиентном фоне выглядели «грязно», тонированные сливаются
+        // с фоном в цельное освещение сцены.
+        'soft':         '0 1px 3px rgba(30,27,75,0.07), 0 1px 2px rgba(30,27,75,0.04)',
+        'soft-lg':      '0 4px 12px rgba(30,27,75,0.09), 0 2px 4px rgba(30,27,75,0.04)',
+        'card':         '0 1px 2px rgba(30,27,75,.05), 0 1px 1px rgba(30,27,75,.03)',
+        'popover':      '0 12px 32px -8px rgba(30,27,75,.18), 0 2px 6px rgba(30,27,75,.06)',
+        // Glow-акценты пересчитаны от АКТУАЛЬНЫХ токенов (#4F46E5/#0E9F6E/#E5484D):
+        // прежние значения остались от старой сине-зелёной палитры.
+        'accent-glow':  '0 4px 20px -6px rgba(79,70,229,0.40)',
+        'ok-glow':      '0 4px 20px -6px rgba(14,159,110,0.30)',
+        'bad-glow':     '0 4px 20px -6px rgba(229,72,77,0.30)',
       },
       width:   { sidebar: '240px' },
       spacing: { sidebar: '240px', topbar: '56px', pageheader: '64px', tabbar: '64px' },

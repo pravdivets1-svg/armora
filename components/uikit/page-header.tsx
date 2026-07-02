@@ -1,12 +1,14 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 // Высота и размер кнопки «Назад» — ЧИСТЫМ CSS (h-14 lg:h-16, w-11 lg:w-9):
-// прежний JS-детект useIsDesktop стартовал с «десктопа», и на телефоне первый
-// рендер рисовал шапку 64px, после гидрации сжимал до 56px — контент прыгал
-// на 8px при каждой жёсткой загрузке. Заодно компонент стал серверным.
-// «Назад» — ссылка со стилями кнопки: <button> внутри <a> невалиден
-// (двойной таб-стоп, скринридер читал элемент дважды).
+// JS-детект давал прыжок 8px на мобильной гидрации.
+// Нижняя граница и тень появляются только когда контент реально уезжает
+// под шапку (iOS/Linear-паттерн): в покое шапка бесшовна со страницей.
+// «Назад» — ссылка со стилями кнопки: <button> внутри <a> невалиден.
 export function PageHeader({
   title,
   sub,
@@ -18,8 +20,22 @@ export function PageHeader({
   backHref?: string;
   actions?: React.ReactNode;
 }) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 8);
+    on();
+    window.addEventListener('scroll', on, { passive: true });
+    return () => window.removeEventListener('scroll', on);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-30 glass-strip border-b h-14 lg:h-16">
+    <header
+      className={`sticky top-0 z-30 glass-strip border-b h-14 lg:h-16
+                  transition-[box-shadow,border-color] duration-base ease-soft
+                  ${scrolled
+                    ? 'border-borderc shadow-[0_8px_24px_-16px_rgba(30,27,75,.25)]'
+                    : 'border-transparent'}`}
+    >
       <div className="flex items-center gap-2 h-full px-3 sm:px-4">
         {backHref && (
           <Link

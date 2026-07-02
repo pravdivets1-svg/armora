@@ -2,13 +2,16 @@ import type { Stage } from '@prisma/client';
 import { STAGE_LABEL } from '@/lib/labels';
 
 // Текст пилюли — тёмные .text-варианты статусных токенов (AA на soft-фонах);
-// точка-индикатор остаётся на ярком DEFAULT.
-const STYLE: Record<Stage, { bg: string; text: string; dot: string; pulse?: boolean }> = {
-  new:              { bg: 'bg-subtle',      text: 'text-text2',      dot: 'bg-text2' },
-  survey_scheduled: { bg: 'bg-info2-soft',  text: 'text-info2-text', dot: 'bg-info2' },
+// точка-индикатор остаётся на ярком DEFAULT. Правило внутри цветовой пары:
+// «запланировано» — точка-КОЛЬЦО, «сделано» — залитая (иначе survey_scheduled
+// и survey_done в списке неотличимы без чтения текста). new — фиолет: свежие
+// заказы семантически самые «горячие», серый делал их самыми выключенными.
+const STYLE: Record<Stage, { bg: string; text: string; dot: string; ring?: boolean; pulse?: boolean }> = {
+  new:              { bg: 'bg-violet-soft', text: 'text-violet',     dot: 'bg-violet' },
+  survey_scheduled: { bg: 'bg-info2-soft',  text: 'text-info2-text', dot: 'ring-info2', ring: true },
   survey_done:      { bg: 'bg-info2-soft',  text: 'text-info2-text', dot: 'bg-info2' },
   production:       { bg: 'bg-warn2-soft',  text: 'text-warn2-text', dot: 'bg-warn2' },
-  ready_to_install: { bg: 'bg-ok2-soft',    text: 'text-ok2-text',   dot: 'bg-ok2' },
+  ready_to_install: { bg: 'bg-ok2-soft',    text: 'text-ok2-text',   dot: 'ring-ok2', ring: true },
   installed:        { bg: 'bg-ok2-soft',    text: 'text-ok2-text',   dot: 'bg-ok2' },
   pending_closure:  { bg: 'bg-accent-soft', text: 'text-accent',     dot: 'bg-accent', pulse: true },
   closed:           { bg: 'bg-subtle',      text: 'text-text3',      dot: 'bg-text3' },
@@ -39,7 +42,11 @@ export function StagePill({
 
   return (
     <span className={`inline-flex items-center rounded-md font-medium whitespace-nowrap ${s.bg} ${s.text} ${cls}`}>
-      <span className={`shrink-0 rounded-full ${dot} ${s.dot} ${s.pulse ? 'animate-pulse' : ''}`} />
+      <span
+        className={`shrink-0 rounded-full ${dot}
+                    ${s.ring ? `ring-[1.5px] ring-inset bg-transparent ${s.dot}` : s.dot}
+                    ${s.pulse ? 'animate-pulse' : ''}`}
+      />
       <span className="truncate">{STAGE_LABEL[stage]}</span>
       {dur && <span className={`tabular-nums ${dur.cls}`}>· {dur.v}</span>}
     </span>

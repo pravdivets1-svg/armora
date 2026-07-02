@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { motion } from 'framer-motion';
 import type { Role } from '@prisma/client';
 import { LayoutList, Calendar, Inbox, CheckSquare, User } from 'lucide-react';
 
@@ -52,10 +53,19 @@ export function MobileTabBar({
                             active:bg-text1/[0.05] [-webkit-tap-highlight-color:transparent]
                             ${active ? 'text-accent' : 'text-text2 hover:text-text1 active:text-text1'}`}
               >
+                {/* Пилюля-подложка активного таба: перелетает между вкладками
+                    спрингом (layoutId). Читается большим пальцем мгновенно —
+                    2px-штрих сверху сливался с border-t самого бара.
+                    Центрирование маргином: transform занят layout-анимацией framer. */}
                 {active && (
-                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-accent rounded-b-md" />
+                  <motion.span
+                    layoutId="tab-active-pill"
+                    aria-hidden
+                    className="absolute top-1.5 left-1/2 -ml-7 h-8 w-14 rounded-full bg-accent-soft"
+                    transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                  />
                 )}
-                <span className="relative">
+                <span className="relative z-10">
                   <Icon size={22} strokeWidth={active ? 2.1 : 1.6} />
                   {!!it.badge && it.badge > 0 && (
                     <span className="absolute -top-1 -right-2 min-w-[18px] h-[18px] px-1

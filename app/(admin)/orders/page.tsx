@@ -177,18 +177,20 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 накрывал кнопки звонка/маршрута последней карточки.
                 daysInStage — от stageChangedAt: комментарий/правка не сбивают счётчик.
                 amount || null — новые заказы показывают «—», а не «0 ₽ по договору». */}
-            {items.map((o) => (
-              <OrderCard
-                key={o.id}
-                href={`/orders/${o.id}`}
-                number={String(o.number ?? '')}
-                clientName={o.clientName ?? '—'}
-                address={o.clientAddress}
-                stage={o.stage}
-                daysInStage={daysSinceUpdate(o.stageChangedAt)}
-                phone={o.clientPhone}
-                amount={Number(o.totalAmount) || null}
-              />
+            {items.map((o, i) => (
+              // Каскад: первые ~10 карточек появляются с шагом 30мс
+              <div key={o.id} className="card-in" style={{ animationDelay: `${Math.min(i, 10) * 30}ms` }}>
+                <OrderCard
+                  href={`/orders/${o.id}`}
+                  number={String(o.number ?? '')}
+                  clientName={o.clientName ?? '—'}
+                  address={o.clientAddress}
+                  stage={o.stage}
+                  daysInStage={daysSinceUpdate(o.stageChangedAt)}
+                  phone={o.clientPhone}
+                  amount={Number(o.totalAmount) || null}
+                />
+              </div>
             ))}
           </div>
         )}

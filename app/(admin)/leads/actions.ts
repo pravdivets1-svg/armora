@@ -11,10 +11,11 @@ import type { LeadStage } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
 import { requireUser, isStaff } from '@/lib/auth-helpers';
-import { normalizePhone } from '@/lib/format';
+import { normalizePhone, parseMskDateTimeLocal } from '@/lib/format';
 import { snapshotFromOrder } from '@/lib/order-events';
 import { notifyOrderAssignedSurveyTelegram } from '@/lib/telegram';
 import { notifySafe, sendPushToUser } from '@/lib/push';
+import { isEventAllowed } from '@/lib/notification-events';
 
 const STAGES: LeadStage[] = ['new', 'contacted', 'scheduled', 'converted', 'rejected', 'spam'];
 
@@ -30,13 +31,20 @@ export async function setLeadStageAction(leadId: string, stage: LeadStage) {
   // converted ставится только через convertToOrderAction
   if (stage === 'converted') throw new Error('Use convertToOrderAction');
 
-  await prisma.lead.update({
-    where: { id: leadId },
+  // updateMany вместо update: (1) не роняет action ошибкой P2025, если лид
+  // параллельно удалили; (2) защита от увода лида ИЗ converted — иначе лид
+  // с созданным заказом застревал в spam/rejected без пути восстановления
+  // (кнопки этапов и «Вернуть в работу» в UI для него скрыты).
+  const res = await prisma.lead.updateMany({
+    where: { id: leadId, stage: { not: 'converted' } },
     data: { stage },
   });
 
   revalidatePath('/leads');
   revalidatePath(`/leads/${leadId}`);
+  if (res.count === 0) {
+    redirect(`/leads/${leadId}?toast=${encodeURIComponent('Заявка уже преобразована или удалена')}&type=bad`);
+  }
 }
 
 // =====================================================================
@@ -53,7 +61,8 @@ export async function assignLeadAction(leadId: string, userId: string | null) {
     if (!u || !u.isActive || !isStaff(u.role)) throw new Error('User not found');
   }
 
-  await prisma.lead.update({
+  // updateMany: лид могли удалить параллельно — не роняем action по P2025.
+  await prisma.lead.updateMany({
     where: { id: leadId },
     data: { assignedToId: userId },
   });
@@ -70,7 +79,9 @@ export async function deleteLeadAction(leadId: string) {
   const me = await requireUser();
   if (me.role !== 'director') throw new Error('Forbidden');
 
-  await prisma.lead.delete({ where: { id: leadId } });
+  // deleteMany: повторное удаление (две вкладки/двойной тап) — тихий noop,
+  // а не необработанный P2025 с error boundary.
+  await prisma.lead.deleteMany({ where: { id: leadId } });
 
   revalidatePath('/leads');
   redirect(`/leads?toast=${encodeURIComponent('Заявка удалена')}&type=ok`);
@@ -167,12 +178,10 @@ export async function convertLeadToOrderAction(
   const phoneDigits = (lead.clientPhone ?? '').replace(/\D/g, '');
   const normalizedPhone = normalizePhone(lead.clientPhone ?? '');
 
-  // Дата замера + замерщик → можно сразу перевести в этап survey_scheduled
-  let surveyAt: Date | null = null;
-  if (d.surveyAt) {
-    const t = new Date(d.surveyAt);
-    if (!isNaN(t.getTime())) surveyAt = t;
-  }
+  // Дата замера + замерщик → можно сразу перевести в этап survey_scheduled.
+  // parseMskDateTimeLocal: ввод datetime-local трактуем как МСК (naive new Date
+  // на UTC-проде сдвигал замер на +3 часа — замерщик приезжал позже).
+  const surveyAt: Date | null = d.surveyAt ? parseMskDateTimeLocal(d.surveyAt) : null;
   const surveyorId = d.surveyorId || null;
   let surveyorUser: { id: string; fullName: string; role: string; isActive: boolean } | null = null;
   if (surveyorId) {
@@ -197,7 +206,9 @@ export async function convertLeadToOrderAction(
     // converted. Защита от гонки (двойной клик / два менеджера / ретрай):
     // конкурентный вызов получит count===0 и не создаст второй заказ.
     const claim = await tx.lead.updateMany({
-      where: { id: leadId, stage: { not: 'converted' } },
+      // convertedOrderId: null — страховка от двойного заказа, если лид когда-то
+      // оказался вне converted при заполненном convertedOrderId (легаси-данные).
+      where: { id: leadId, stage: { not: 'converted' }, convertedOrderId: null },
       data: { stage: 'converted' },
     });
     if (claim.count === 0) return { already: true as const };
@@ -271,14 +282,17 @@ export async function convertLeadToOrderAction(
       surveyAt:      surveyAtIso,
     }, baseUrl).catch((e) => console.warn('[telegram] survey assign notify failed', e));
 
-    void notifySafe(() =>
-      sendPushToUser(surveyorUser!.id, {
+    // Тот же гейт, что и в notifyOrderChanges: уважаем матрицу уведомлений
+    // (директор мог выключить surveyAssigned для замерщиков).
+    void notifySafe(async () => {
+      if (!(await isEventAllowed('surveyor', 'surveyAssigned'))) return;
+      await sendPushToUser(surveyorUser!.id, {
         title: `Замер: ${lead.clientName}`,
         body:  `${new Date(surveyAtIso).toLocaleString('ru-RU', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' })} · ${finalAddress}`,
         url:   `/orders/${order.id}`,
         tag:   `order-${order.id}-survey`,
-      }),
-    );
+      });
+    });
    } catch (e) {
     console.warn('[convertLeadToOrder] notify failed', e);
    }

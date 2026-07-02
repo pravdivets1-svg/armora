@@ -29,7 +29,7 @@ export function Toggle({
   return (
     <label
       htmlFor={id}
-      className={`flex items-center gap-3 select-none ${disabled ? 'opacity-50' : 'cursor-pointer'}`}
+      className={`flex items-center gap-3 select-none py-[9px] -my-[9px] px-1 -mx-1 ${disabled ? 'opacity-50' : 'cursor-pointer'}`}
     >
       {label && (
         <span className="flex-1 min-w-0">
@@ -48,11 +48,14 @@ export function Toggle({
           disabled={disabled}
           className="peer sr-only"
         />
-        {/* Трек */}
+        {/* Трек. focus-visible кольцо — на трек через peer (сам input — sr-only,
+            глобальный outline на нём невидим). off-трек затемнён (borders слишком
+            светлый — <2:1 на карточке). */}
         <span
           aria-hidden
           className={`block w-[44px] h-[26px] rounded-full transition-colors duration-fast
-                      ${checked ? 'bg-ok2' : 'bg-borders'}`}
+                      peer-focus-visible:ring-2 peer-focus-visible:ring-accent peer-focus-visible:ring-offset-2
+                      ${checked ? 'bg-ok2' : 'bg-ink-400'}`}
         />
         {/* Кружок */}
         <span

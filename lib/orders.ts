@@ -25,6 +25,20 @@ export const INSTALLER_VISIBLE_STAGES: Stage[] = [
   'production', 'ready_to_install', 'installed', 'pending_closure',
 ];
 
+// Единая проверка «может ли пользователь видеть заказ» — используется страницей
+// заказа и API фото, чтобы правила доступа не расходились между ними.
+// Свой = назначен замерщиком/установщиком ИЛИ сам создал заказ (замерщик-автор);
+// установщик дополнительно видит заказы от «В производстве» и далее.
+export function canViewOrder(
+  me: { id: string; role: Role },
+  order: { surveyorId: string | null; installerId: string | null; createdById: string; stage: Stage },
+): boolean {
+  if (isStaff(me.role)) return true;
+  if (order.surveyorId === me.id || order.installerId === me.id || order.createdById === me.id) return true;
+  if (me.role === 'installer' && INSTALLER_VISIBLE_STAGES.includes(order.stage)) return true;
+  return false;
+}
+
 export function buildOrderWhere(
   me: { id: string; role: Role },
   f: OrderListFilters,

@@ -36,6 +36,15 @@ function rateLimitOk(ip: string): boolean {
   }
   arr.push(now);
   rateMap.set(ip, arr);
+  // Опортунистическая чистка (как в /api/leads): без неё ключи на каждый
+  // уникальный IP копились бы бессрочно — медленная утечка памяти контейнера.
+  if (Math.random() < 0.02) {
+    for (const [key, ts] of rateMap.entries()) {
+      const fresh = ts.filter((t) => now - t < RL_WINDOW_MS);
+      if (fresh.length === 0) rateMap.delete(key);
+      else rateMap.set(key, fresh);
+    }
+  }
   return true;
 }
 
@@ -57,6 +66,9 @@ const draftSchema = z.object({
   widthMm:       z.coerce.number().int().min(0).max(5000).optional(),
   heightMm:      z.coerce.number().int().min(0).max(5000).optional(),
   estimatedPrice:z.coerce.number().min(0).max(10_000_000).optional(),
+  // honeypot — как в основном /api/leads: бот, нашедший этот эндпоинт,
+  // не должен тихо создавать «новые» лиды в обход основной защиты.
+  website:       z.string().optional(),
 }).passthrough();
 
 function phoneDigits(s: string): string {
@@ -82,6 +94,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'rate' }, { status: 429, headers: corsHeaders });
   }
 
+  // Лимит размера ДО парсинга (см. /api/leads): passthrough-схема иначе
+  // пропускает JSON-бомбу в память и в jsonb payload.
+  const len = Number(req.headers.get('content-length'));
+  if (!len || len > 64 * 1024) {
+    return NextResponse.json({ ok: false }, { status: 413, headers: corsHeaders });
+  }
+
   let body: unknown;
   try { body = await req.json(); } catch {
     return NextResponse.json({ ok: false }, { status: 400, headers: corsHeaders });
@@ -95,25 +114,51 @@ export async function POST(req: NextRequest) {
   if (digits.length < 5) {
     return NextResponse.json({ ok: false }, { status: 400, headers: corsHeaders });
   }
+  // Honeypot: как в основном эндпоинте — молча отвечаем ok, ничего не сохраняем.
+  if (d.website && d.website.trim().length > 0) {
+    return NextResponse.json({ ok: true }, { headers: corsHeaders });
+  }
 
   const cleanPayload = { ...(body as Record<string, unknown>) };
   delete (cleanPayload as any).website;
 
-  // Ищем недавний draft с тем же телефоном с того же IP за последний час
-  const recent = await prisma.lead.findFirst({
-    where: {
-      source: 'draft',
-      clientPhoneDigits: digits,
-      ip,
-      createdAt: { gte: new Date(Date.now() - RL_WINDOW_MS) },
-    },
-    orderBy: { createdAt: 'desc' },
-    select: { id: true },
-  });
+  try {
+    // Ищем недавний draft с тем же телефоном с того же IP за последний час
+    const recent = await prisma.lead.findFirst({
+      where: {
+        source: 'draft',
+        clientPhoneDigits: digits,
+        ip,
+        createdAt: { gte: new Date(Date.now() - RL_WINDOW_MS) },
+      },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, payload: true },
+    });
 
-  if (recent) {
-    await prisma.lead.update({
-      where: { id: recent.id },
+    if (recent) {
+      // МЕРЖИМ с уже сохранённым, а не перезаписываем: повторный blur только
+      // с телефоном не должен затирать ранее захваченные имя/адрес null'ами.
+      await prisma.lead.update({
+        where: { id: recent.id },
+        data: {
+          clientPhone:   normalizePhone(d.clientPhone),
+          clientPhoneDigits: digits,
+          ...(d.clientName    !== undefined && { clientName:    d.clientName }),
+          ...(d.clientAddress !== undefined && { clientAddress: d.clientAddress }),
+          ...(d.widthMm       !== undefined && { widthMm:       d.widthMm }),
+          ...(d.heightMm      !== undefined && { heightMm:      d.heightMm }),
+          ...(d.comment       !== undefined && { comment:       d.comment }),
+          ...(d.estimatedPrice !== undefined && { estimatedPrice: d.estimatedPrice }),
+          payload: {
+            ...((recent.payload as Record<string, unknown> | null) ?? {}),
+            ...cleanPayload,
+          } as any,
+        },
+      });
+      return NextResponse.json({ ok: true, leadId: recent.id, updated: true }, { headers: corsHeaders });
+    }
+
+    const lead = await prisma.lead.create({
       data: {
         clientName:    d.clientName ?? '(черновик)',
         clientPhone:   normalizePhone(d.clientPhone),
@@ -123,30 +168,19 @@ export async function POST(req: NextRequest) {
         heightMm:      d.heightMm ?? null,
         comment:       d.comment ?? '',
         estimatedPrice: d.estimatedPrice ?? null,
+        source:        'draft',
+        stage:         'new',
         payload:       cleanPayload as any,
+        ip,
+        userAgent:     req.headers.get('user-agent') ?? null,
       },
+      select: { id: true, number: true },
     });
-    return NextResponse.json({ ok: true, leadId: recent.id, updated: true }, { headers: corsHeaders });
+
+    return NextResponse.json({ ok: true, leadId: lead.id, number: lead.number }, { status: 201, headers: corsHeaders });
+  } catch (e) {
+    // Сбой БД → мягкий 503 с CORS, а не framework-500 без заголовков.
+    console.error('[drafts] save failed', { ip, error: e });
+    return NextResponse.json({ ok: false }, { status: 503, headers: corsHeaders });
   }
-
-  const lead = await prisma.lead.create({
-    data: {
-      clientName:    d.clientName ?? '(черновик)',
-      clientPhone:   normalizePhone(d.clientPhone),
-      clientPhoneDigits: digits,
-      clientAddress: d.clientAddress ?? null,
-      widthMm:       d.widthMm ?? null,
-      heightMm:      d.heightMm ?? null,
-      comment:       d.comment ?? '',
-      estimatedPrice: d.estimatedPrice ?? null,
-      source:        'draft',
-      stage:         'new',
-      payload:       cleanPayload as any,
-      ip,
-      userAgent:     req.headers.get('user-agent') ?? null,
-    },
-    select: { id: true, number: true },
-  });
-
-  return NextResponse.json({ ok: true, leadId: lead.id, number: lead.number }, { status: 201, headers: corsHeaders });
 }

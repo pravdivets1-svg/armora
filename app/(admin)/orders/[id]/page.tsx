@@ -13,7 +13,7 @@ import HeroStageBlock from './hero-stage-block';
 import { QuickActionsRow } from './quick-actions-row';
 import { awaitingStateOf } from '@/lib/awaiting';
 import { fmtDateTime } from '@/lib/format';
-import { INSTALLER_VISIBLE_STAGES } from '@/lib/orders';
+import { canViewOrder } from '@/lib/orders';
 import {
   updateOrderAction,
   updateOrderStageAction,
@@ -31,15 +31,9 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
     select: { id: true, surveyorId: true, installerId: true, createdById: true, stage: true },
   });
   if (!access) notFound();
-  // Свой = назначен замерщиком/установщиком ИЛИ сам создал заказ (замерщик-автор).
-  const isMine =
-    access.surveyorId === me.id ||
-    access.installerId === me.id ||
-    access.createdById === me.id;
-  // Установщик видит заказы от «В производстве» и далее, помимо своих назначений.
-  const installerCanView =
-    me.role === 'installer' && INSTALLER_VISIBLE_STAGES.includes(access.stage);
-  if (!isStaff(me.role) && !isMine && !installerCanView) notFound();
+  // Единые правила доступа со страницей и API фото — см. canViewOrder в lib/orders.ts
+  // (staff, назначенцы, автор заказа, установщик на стадиях production+).
+  if (!canViewOrder(me, access)) notFound();
 
   const [order, assignableUsers, events, photoMetas] = await Promise.all([
     prisma.order.findUnique({
@@ -149,7 +143,9 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         backHref="/orders"
       />
 
-      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-3 space-y-2 pb-[88px] lg:pb-12">
+      {/* pb на мобиле: таб-бар 64px + плавающий док HeroStage ~68px, иначе низ
+          контента (история/ссылка клиенту) навсегда под доком. */}
+      <div className="max-w-4xl mx-auto px-4 lg:px-6 py-3 space-y-2 pb-[calc(150px+env(safe-area-inset-bottom))] lg:pb-12">
         <HeroStageBlock
           current={order.stage}
           role={me.role}

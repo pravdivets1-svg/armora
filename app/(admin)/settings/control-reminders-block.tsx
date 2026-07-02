@@ -95,13 +95,19 @@ export default function ControlRemindersBlock({ initial }: { initial: State }) {
                   через
                   <input
                     type="number"
+                    inputMode="numeric"
                     min={1}
                     max={365}
                     value={days}
                     disabled={!checked}
-                    onChange={(e) => {
-                      const v = Math.max(1, Math.min(365, Number(e.target.value) || 0));
-                      patch({ [r.daysName]: v } as Partial<State>);
+                    // Ввод — только в локальный стейт (без записи в БД); клампим и
+                    // сохраняем на blur. Иначе стирание «5» мгновенно давало «1»,
+                    // «30» набиралось как «130», и каждая цифра шла в БД запросом.
+                    onChange={(e) => setState((s) => ({ ...s, [r.daysName]: e.target.value as any }))}
+                    onBlur={(e) => {
+                      const v = Math.max(1, Math.min(365, Number(e.target.value) || 1));
+                      if (v !== days) patch({ [r.daysName]: v } as Partial<State>);
+                      else setState((s) => ({ ...s, [r.daysName]: v }));
                     }}
                     className="w-16 h-10 px-2 rounded-md border border-borderc bg-card text-[16px] lg:text-[14px] text-text1 tabular-nums text-center
                                focus:outline-none focus:border-text2/40 focus:ring-1 focus:ring-text2/20

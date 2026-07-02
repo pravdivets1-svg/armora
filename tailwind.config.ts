@@ -19,11 +19,14 @@ const config: Config = {
         text1:      '#1A1B2E',
         text2:      '#4A4D68',
         text3:      '#6B6F8A',
-        // Status (живые, AA-контраст)
-        ok2:        { DEFAULT: '#0E9F6E', soft: '#E7F8F1' },
-        warn2:      { DEFAULT: '#D97706', soft: '#FCF1DF' },
-        bad2:       { DEFAULT: '#E5484D', soft: '#FCEBEC' },
-        info2:      { DEFAULT: '#3B82F6', soft: '#E8F0FE' },
+        // Status. DEFAULT — «живой» цвет для заливок/точек/крупных элементов
+        // (на белом даёт ~3:1 — только large text). Для МЕЛКОГО текста (11–14px)
+        // использовать .text — тёмные оттенки с AA-контрастом 4.5:1+ и на белом,
+        // и на своих soft-подложках.
+        ok2:        { DEFAULT: '#0E9F6E', soft: '#E7F8F1', text: '#047857' },
+        warn2:      { DEFAULT: '#D97706', soft: '#FCF1DF', text: '#8A5200' },
+        bad2:       { DEFAULT: '#E5484D', soft: '#FCEBEC', text: '#B3261E' },
+        info2:      { DEFAULT: '#3B82F6', soft: '#E8F0FE', text: '#1D4ED8' },
         // Фиолетовый акцент-партнёр (градиенты, второстепенные акценты)
         violet:     { DEFAULT: '#8B5CF6', soft: '#F1ECFE' },
         // === Legacy aliases ===

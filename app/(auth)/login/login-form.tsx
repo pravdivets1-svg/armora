@@ -35,8 +35,8 @@ export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
       </div>
 
       {state?.error && (
-        <div className="flex items-start gap-2 rounded-md bg-bad2-soft border border-bad2/25 px-3 py-2 text-[14px] text-bad2">
-          <AlertCircle size={15} className="mt-0.5 shrink-0" />
+        <div role="alert" className="flex items-start gap-2 rounded-md bg-bad2-soft border border-bad2/25 px-3 py-2 text-[14px] text-bad2-text">
+          <AlertCircle size={15} className="mt-0.5 shrink-0 text-bad2" />
           <span>{state.error}</span>
         </div>
       )}
@@ -51,9 +51,12 @@ export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
           maxLength={32}
           autoComplete="username"
           autoCapitalize="off"
+          autoCorrect="off"
           spellCheck={false}
+          enterKeyHint="next"
+          aria-invalid={!!state?.error}
           className="mt-1.5 w-full bg-card/95 border border-borderc text-text1
-                     rounded-md px-3.5 py-2.5 text-[15px] focus:outline-none focus:border-text2
+                     rounded-md px-3.5 py-2.5 text-[16px] focus:outline-none focus:border-text2
                      focus:ring-1 focus:ring-text2/20"
         />
       </label>
@@ -65,8 +68,13 @@ export default function LoginForm({ callbackUrl }: { callbackUrl: string }) {
           name="password"
           required
           autoComplete="current-password"
+          autoCapitalize="off"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="go"
+          aria-invalid={!!state?.error}
           className="mt-1.5 w-full bg-card/95 border border-borderc text-text1
-                     rounded-md px-3.5 py-2.5 text-[15px] focus:outline-none focus:border-text2
+                     rounded-md px-3.5 py-2.5 text-[16px] focus:outline-none focus:border-text2
                      focus:ring-1 focus:ring-text2/20"
         />
       </label>

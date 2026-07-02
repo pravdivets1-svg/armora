@@ -8,9 +8,13 @@ import { auth } from '@/auth';
 import { prisma } from '@/lib/prisma';
 import type { Role } from '@prisma/client';
 
-export async function requireUser() {
+// Для API-роутов (fetch с клиента): как requireUser, но вместо redirect('/login')
+// возвращает null — роут отвечает 401 JSON. Иначе протухшая сессия давала
+// 307 → HTML-страницу логина, которую клиентский fetch «успешно» парсил в {}
+// и ронял рендер (undefined в state).
+export async function apiUser() {
   const session = await auth();
-  if (!session?.user) redirect('/login');
+  if (!session?.user) return null;
   // Сверяем роль/активность с БД на каждом защищённом запросе. JWT «вмораживает»
   // их на момент логина (cookie живёт днями), поэтому без этой сверки отключённый
   // или разжалованный сотрудник сохранял бы старый доступ до истечения cookie.
@@ -20,8 +24,14 @@ export async function requireUser() {
     where: { id: session.user.id },
     select: { role: true, isActive: true, fullName: true },
   });
-  if (!fresh || !fresh.isActive) redirect('/login');
+  if (!fresh || !fresh.isActive) return null;
   return { ...session.user, role: fresh.role, name: fresh.fullName };
+}
+
+export async function requireUser() {
+  const user = await apiUser();
+  if (!user) redirect('/login');
+  return user;
 }
 
 export async function requireRole(roles: Role[]) {

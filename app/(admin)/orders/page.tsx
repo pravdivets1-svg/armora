@@ -172,7 +172,11 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             }
           />
         ) : (
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5 pb-8">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-2.5 pb-28 lg:pb-8">
+            {/* pb-28 на мобиле — клиренс под FAB (зона ~80–136px от низа), иначе он
+                накрывал кнопки звонка/маршрута последней карточки.
+                daysInStage — от stageChangedAt: комментарий/правка не сбивают счётчик.
+                amount || null — новые заказы показывают «—», а не «0 ₽ по договору». */}
             {items.map((o) => (
               <OrderCard
                 key={o.id}
@@ -181,21 +185,23 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
                 clientName={o.clientName ?? '—'}
                 address={o.clientAddress}
                 stage={o.stage}
-                daysInStage={daysSinceUpdate(o.updatedAt)}
+                daysInStage={daysSinceUpdate(o.stageChangedAt)}
                 phone={o.clientPhone}
-                amount={Number(o.totalAmount)}
+                amount={Number(o.totalAmount) || null}
               />
             ))}
           </div>
         )}
 
         {pageCount > 1 && (
-          <nav className="flex items-center justify-between text-meta text-text3 pb-8" aria-label="Пагинация">
+          <nav className="flex items-center justify-between text-meta text-text3 pb-28 lg:pb-8 pr-20 lg:pr-0" aria-label="Пагинация">
+            {/* h-11 на мобиле — тач-таргет; pr-20 — «Вперёд» не уходит под FAB. */}
             <Link
               href={{ query: { ...searchParams, page: Math.max(1, page - 1) } }}
               aria-disabled={page === 1}
-              className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-borderc/70
-                          ${page === 1 ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1 hover:bg-subtle/70'}`}
+              tabIndex={page === 1 ? -1 : undefined}
+              className={`inline-flex items-center gap-1.5 h-11 lg:h-9 px-4 lg:px-3 rounded-md border border-borderc/70
+                          ${page === 1 ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1 hover:bg-subtle/70 active:bg-subtle'}`}
             >
               <span aria-hidden>‹</span> Назад
             </Link>
@@ -203,8 +209,9 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
             <Link
               href={{ query: { ...searchParams, page: Math.min(pageCount, page + 1) } }}
               aria-disabled={page === pageCount}
-              className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-borderc/70
-                          ${page === pageCount ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1 hover:bg-subtle/70'}`}
+              tabIndex={page === pageCount ? -1 : undefined}
+              className={`inline-flex items-center gap-1.5 h-11 lg:h-9 px-4 lg:px-3 rounded-md border border-borderc/70
+                          ${page === pageCount ? 'opacity-40 pointer-events-none' : 'text-text2 hover:text-text1 hover:bg-subtle/70 active:bg-subtle'}`}
             >
               Вперёд <span aria-hidden>›</span>
             </Link>

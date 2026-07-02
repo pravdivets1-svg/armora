@@ -13,6 +13,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { Bell, X } from 'lucide-react';
+import { toast } from 'sonner';
 import { VAPID_PUBLIC_KEY } from '@/lib/push-public';
 
 const DISMISS_KEY = 'armora.pushPromptDismissedAt';
@@ -101,19 +102,24 @@ export default function PushPrompt() {
     } catch (e) {
       console.warn('[push-prompt] enable failed', e);
       setState('visible');
-      alert('Не удалось включить уведомления. Попробуйте через колокольчик в шапке.');
+      // toast вместо блокирующего системного alert (и без ссылки на «колокольчик
+      // в шапке» — такого элемента в текущем каркасе нет).
+      toast.error('Не удалось включить уведомления. Попробуйте позже в Профиле.');
     }
   }
 
   if (state === 'hidden') return null;
 
+  // На мобиле баннер поднят над таб-баром (64px + safe-area): с bottom-4 и тем же
+  // z-40 таб-бар (позже в DOM) перекрывал ряд кнопок «Включить»/«Не сейчас».
   return (
     <div
       role="dialog"
       aria-label="Включить уведомления"
-      className="fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm z-40
+      className="fixed right-4 left-4 sm:left-auto sm:max-w-sm z-50
+                 bottom-[calc(64px+env(safe-area-inset-bottom)+12px)] lg:bottom-4
                  bg-card border border-borderc rounded-xl shadow-soft
-                 p-4 flex items-start gap-3 animate-in fade-in slide-in-from-bottom-4"
+                 p-4 flex items-start gap-3"
     >
       <div className="w-9 h-9 rounded-full bg-accent text-white inline-flex items-center justify-center shrink-0">
         <Bell size={16} />
@@ -130,8 +136,8 @@ export default function PushPrompt() {
             type="button"
             onClick={enable}
             disabled={state === 'busy'}
-            className="px-3 py-1.5 rounded-md bg-accent text-white text-[13px] font-medium
-                       hover:bg-accent/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+            className="inline-flex items-center min-h-[44px] px-4 rounded-md bg-accent text-white text-[13px] font-medium
+                       hover:bg-accent/90 active:bg-accent-hover disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           >
             {state === 'busy' ? 'Включаем…' : 'Включить'}
           </button>
@@ -139,8 +145,8 @@ export default function PushPrompt() {
             type="button"
             onClick={dismiss}
             disabled={state === 'busy'}
-            className="px-3 py-1.5 rounded-md text-text3 text-[13px] hover:text-text1
-                       hover:bg-subtle transition-colors"
+            className="inline-flex items-center min-h-[44px] px-4 rounded-md text-text3 text-[13px] hover:text-text1
+                       hover:bg-subtle active:bg-subtle transition-colors"
           >
             Не сейчас
           </button>
@@ -150,9 +156,10 @@ export default function PushPrompt() {
         type="button"
         onClick={dismiss}
         aria-label="Закрыть"
-        className="text-text3 hover:text-text2 p-1 -mt-1 -mr-1 rounded shrink-0"
+        className="w-10 h-10 -mt-2 -mr-2 inline-flex items-center justify-center rounded-md
+                   text-text3 hover:text-text2 active:bg-subtle shrink-0 transition-colors"
       >
-        <X size={14} />
+        <X size={16} />
       </button>
     </div>
   );

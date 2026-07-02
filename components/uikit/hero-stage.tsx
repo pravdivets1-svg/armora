@@ -62,18 +62,25 @@ export function HeroStage({
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="text-meta text-text2 hover:text-text1 transition-colors inline-flex items-center gap-0.5 shrink-0"
+            className="text-meta text-text2 hover:text-text1 active:bg-subtle/60 rounded-md transition-colors
+                       inline-flex items-center gap-0.5 shrink-0 min-h-[44px] px-2 -mr-2 -my-2"
           >
             Все этапы <ChevronRight size={13} />
           </button>
         </div>
 
-        {/* Сегментный прогресс — визуально показывает позицию в цепочке этапов */}
+        {/* Сегментный прогресс: пройденные — приглушённый accent, ТЕКУЩИЙ —
+            индиго→фиолет градиент со свечением (позиция считывается мгновенно),
+            будущие — нейтральные. Переход плавный при смене этапа. */}
         <div className="flex items-center gap-1" aria-hidden>
           {STAGE_ORDER.map((s, i) => (
             <span
               key={s}
-              className={`h-1.5 flex-1 rounded-full ${i <= idx ? 'bg-accent' : 'bg-borderc/70'}`}
+              className={`h-1.5 flex-1 rounded-full transition-colors duration-slow ease-soft ${
+                i < idx ? 'bg-accent/60'
+                : i === idx ? 'bg-gradient-to-r from-accent to-violet shadow-[0_0_10px_rgba(99,102,241,.45)]'
+                : 'bg-borderc/70'
+              }`}
             />
           ))}
         </div>
@@ -134,7 +141,7 @@ export function HeroStage({
               }
             }}
             disabled={pending}
-            className="block w-full text-meta text-text3 hover:text-text1
+            className="block w-full min-h-[44px] text-meta text-text3 hover:text-text1
                        transition-colors text-center underline-offset-2 hover:underline
                        disabled:opacity-50"
           >

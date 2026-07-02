@@ -43,6 +43,20 @@ export function isSameMskDay(a: Date, b: Date): boolean {
   return mskDayKey(a) === mskDayKey(b);
 }
 
+// Парсер значения <input type="datetime-local"> ("YYYY-MM-DDTHH:mm", БЕЗ таймзоны).
+// Прод-сервер работает в UTC: naive new Date(s) трактует строку как UTC и сдвигает
+// время на +3 часа МСК. Принудительно интерпретируем ввод как Europe/Moscow.
+export function parseMskDateTimeLocal(s: string | null | undefined): Date | null {
+  if (!s) return null;
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+  if (m) {
+    const [, y, mo, da, h, mi] = m;
+    return new Date(Date.UTC(+y, +mo - 1, +da, +h - 3, +mi));
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 export const fmtMoney = (n: number | string) =>
   new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 0 }).format(Number(n)) + ' ₽';
 

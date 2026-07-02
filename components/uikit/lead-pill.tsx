@@ -1,13 +1,14 @@
 import type { LeadStage } from '@prisma/client';
 import { LEAD_STAGE_LABEL } from '@/lib/lead-labels';
 
+// Текст — тёмные .text-варианты статусов (AA на soft-фонах), точка — яркий DEFAULT.
 const STYLE: Record<LeadStage, { bg: string; text: string; dot: string; pulse?: boolean }> = {
-  new:       { bg: 'bg-accent-soft', text: 'text-accent', dot: 'bg-accent', pulse: true },
-  contacted: { bg: 'bg-info2-soft',  text: 'text-info2',  dot: 'bg-info2' },
-  scheduled: { bg: 'bg-warn2-soft',  text: 'text-warn2',  dot: 'bg-warn2' },
-  converted: { bg: 'bg-ok2-soft',    text: 'text-ok2',    dot: 'bg-ok2' },
-  rejected:  { bg: 'bg-subtle',      text: 'text-text3',  dot: 'bg-text3' },
-  spam:      { bg: 'bg-bad2-soft',   text: 'text-bad2',   dot: 'bg-bad2' },
+  new:       { bg: 'bg-accent-soft', text: 'text-accent',     dot: 'bg-accent', pulse: true },
+  contacted: { bg: 'bg-info2-soft',  text: 'text-info2-text', dot: 'bg-info2' },
+  scheduled: { bg: 'bg-warn2-soft',  text: 'text-warn2-text', dot: 'bg-warn2' },
+  converted: { bg: 'bg-ok2-soft',    text: 'text-ok2-text',   dot: 'bg-ok2' },
+  rejected:  { bg: 'bg-subtle',      text: 'text-text3',      dot: 'bg-text3' },
+  spam:      { bg: 'bg-bad2-soft',   text: 'text-bad2-text',  dot: 'bg-bad2' },
 };
 
 export function LeadPill({

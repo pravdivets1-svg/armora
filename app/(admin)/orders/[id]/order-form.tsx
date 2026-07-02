@@ -169,6 +169,7 @@ export default function OrderForm({
   }, []);
 
   return (
+    <>
     <form
       ref={formRef}
       action={formAction}
@@ -193,8 +194,8 @@ export default function OrderForm({
       )}
 
       {state && !state.ok && (
-        <div className="flex items-start gap-2 rounded-md bg-bad2-soft border border-bad2/20 px-3 py-2 text-[13px] text-bad2">
-          <AlertCircle size={14} className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 rounded-md bg-bad2-soft border border-bad2/20 px-3 py-2 text-[13px] text-bad2-text">
+          <AlertCircle size={14} className="mt-0.5 shrink-0 text-bad2" />
           <span>{state.error}</span>
         </div>
       )}
@@ -209,8 +210,8 @@ export default function OrderForm({
           в sticky-баре снизу. Большая плашка нужна только для ошибок. */}
 
       {negativeMargin && p.canSeeCost && (
-        <div className="flex items-start gap-2 rounded-md bg-warn2-soft border border-warn2/20 px-3 py-2 text-[13px] text-warn2">
-          <AlertTriangle size={14} className="mt-0.5 shrink-0" />
+        <div className="flex items-start gap-2 rounded-md bg-warn2-soft border border-warn2/20 px-3 py-2 text-[13px] text-warn2-text">
+          <AlertTriangle size={14} className="mt-0.5 shrink-0 text-warn2" />
           <span>
             <strong className="font-semibold">Внимание:</strong> себестоимость ({fmtMoney(cost)}) выше цены по договору ({fmtMoney(total)}).
             Заказ убыточен на {fmtMoney(cost - total)}.
@@ -227,7 +228,7 @@ export default function OrderForm({
               <label>
                 <FieldLabel>ФИО</FieldLabel>
                 <Input name="clientName" defaultValue={order?.clientName} disabled={disableClient} className="mt-1" />
-                {fe['clientName'] && <span className="text-xs text-bad2 mt-1 block">{fe['clientName']}</span>}
+                {fe['clientName'] && <span className="text-xs text-bad2-text mt-1 block">{fe['clientName']}</span>}
               </label>
               <label>
                 <FieldLabel>Телефон</FieldLabel>
@@ -240,12 +241,12 @@ export default function OrderForm({
                   />
                   <PhoneActions phone={order?.clientPhone ?? ''} />
                 </div>
-                {fe['clientPhone'] && <span className="text-xs text-bad2 mt-1 block">{fe['clientPhone']}</span>}
+                {fe['clientPhone'] && <span className="text-xs text-bad2-text mt-1 block">{fe['clientPhone']}</span>}
               </label>
               <label className="md:col-span-2">
                 <FieldLabel>Адрес установки</FieldLabel>
                 <AddressField defaultValue={order?.clientAddress} disabled={disableClient} />
-                {fe['clientAddress'] && <span className="text-xs text-bad2 mt-1 block">{fe['clientAddress']}</span>}
+                {fe['clientAddress'] && <span className="text-xs text-bad2-text mt-1 block">{fe['clientAddress']}</span>}
               </label>
             </div>
           </Card>
@@ -274,9 +275,10 @@ export default function OrderForm({
             </div>
           </Card>
 
-          {/* Финансы: 3 поля + сводка */}
+          {/* Финансы: 3 поля + сводка. Одна колонка до 420px — суммы критичны,
+              на 360px в 2 колонки инпуты ужимались до ~150px и лейблы рвались. */}
           <Card title="Финансы">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 gap-3">
               <label>
                 <FieldLabel>Цена по договору, ₽</FieldLabel>
                 <Input
@@ -285,7 +287,7 @@ export default function OrderForm({
                   onChange={(e) => setTotal(Number(e.target.value) || 0)}
                   className="mt-1 tabular-nums" min={0}
                 />
-                {fe['totalAmount'] && <span className="text-xs text-bad2 mt-1 block">{fe['totalAmount']}</span>}
+                {fe['totalAmount'] && <span className="text-xs text-bad2-text mt-1 block">{fe['totalAmount']}</span>}
               </label>
               <label>
                 <FieldLabel>Аванс получен, ₽</FieldLabel>
@@ -295,7 +297,7 @@ export default function OrderForm({
                   onChange={(e) => setPrepay(Number(e.target.value) || 0)}
                   className="mt-1 tabular-nums" min={0}
                 />
-                {fe['prepayment'] && <span className="text-xs text-bad2 mt-1 block">{fe['prepayment']}</span>}
+                {fe['prepayment'] && <span className="text-xs text-bad2-text mt-1 block">{fe['prepayment']}</span>}
               </label>
               <label>
                 <FieldLabel>Остаток получен, ₽</FieldLabel>
@@ -305,7 +307,7 @@ export default function OrderForm({
                   onChange={(e) => setFinalPay(Number(e.target.value) || 0)}
                   className="mt-1 tabular-nums" min={0}
                 />
-                {fe['finalPayment'] && <span className="text-xs text-bad2 mt-1 block">{fe['finalPayment']}</span>}
+                {fe['finalPayment'] && <span className="text-xs text-bad2-text mt-1 block">{fe['finalPayment']}</span>}
               </label>
 
               {p.canSeeCost && (
@@ -313,8 +315,8 @@ export default function OrderForm({
                   <FieldLabel>
                     <span className="inline-flex items-center gap-1">
                       Себестоимость, ₽
-                      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-subtle text-text2 text-[9px] tracking-wider normal-case">
-                        <Lock size={8} /> приватно
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-subtle text-text2 text-[11px] normal-case">
+                        <Lock size={10} /> приватно
                       </span>
                     </span>
                   </FieldLabel>
@@ -324,7 +326,7 @@ export default function OrderForm({
                     onChange={(e) => setCost(Number(e.target.value) || 0)}
                     className="mt-1 tabular-nums" min={0}
                   />
-                  {fe['costAmount'] && <span className="text-xs text-bad2 mt-1 block">{fe['costAmount']}</span>}
+                  {fe['costAmount'] && <span className="text-xs text-bad2-text mt-1 block">{fe['costAmount']}</span>}
                 </label>
               )}
             </div>
@@ -337,8 +339,8 @@ export default function OrderForm({
                   label={
                     <span className="inline-flex items-center gap-1">
                       Маржа
-                      <span className="inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-subtle text-text2 text-[9px] tracking-wider normal-case">
-                        <Lock size={8} /> приватно
+                      <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-subtle text-text2 text-[11px] normal-case">
+                        <Lock size={10} /> приватно
                       </span>
                     </span>
                   }
@@ -349,8 +351,6 @@ export default function OrderForm({
               )}
             </div>
           </Card>
-
-          {comments}
         </div>
 
         {/* Правая колонка */}
@@ -374,8 +374,8 @@ export default function OrderForm({
               disabled={disableClient}
               onChange={scheduleAutosave}
             />
-            {fe['surveyAt']    && <span className="text-xs text-bad2 mt-1 block">{fe['surveyAt']}</span>}
-            {fe['surveyEndAt'] && <span className="text-xs text-bad2 mt-1 block">{fe['surveyEndAt']}</span>}
+            {fe['surveyAt']    && <span className="text-xs text-bad2-text mt-1 block">{fe['surveyAt']}</span>}
+            {fe['surveyEndAt'] && <span className="text-xs text-bad2-text mt-1 block">{fe['surveyEndAt']}</span>}
             <label className="block mt-3">
               <FieldLabel>Замерщик</FieldLabel>
               <Select name="surveyorId" defaultValue={order?.surveyorId ?? ''} disabled={disableClient} className="mt-1">
@@ -396,8 +396,8 @@ export default function OrderForm({
               disabled={disableClient}
               onChange={scheduleAutosave}
             />
-            {fe['installAt']    && <span className="text-xs text-bad2 mt-1 block">{fe['installAt']}</span>}
-            {fe['installEndAt'] && <span className="text-xs text-bad2 mt-1 block">{fe['installEndAt']}</span>}
+            {fe['installAt']    && <span className="text-xs text-bad2-text mt-1 block">{fe['installAt']}</span>}
+            {fe['installEndAt'] && <span className="text-xs text-bad2-text mt-1 block">{fe['installEndAt']}</span>}
             <label className="block mt-3">
               <FieldLabel>Установщик</FieldLabel>
               <Select name="installerId" defaultValue={order?.installerId ?? ''} disabled={disableClient} className="mt-1">
@@ -437,6 +437,11 @@ export default function OrderForm({
         </div>
       </div>
     </form>
+    {/* Комментарии — ВНЕ <form>: у CommentsBlock свой server-action и своя форма.
+        Вложенные формы HTML запрещает (парсер выкидывал внутреннюю), из-за чего
+        отправка комментария сабмитила весь заказ, а ввод дёргал autosave. */}
+    {comments}
+    </>
   );
 }
 

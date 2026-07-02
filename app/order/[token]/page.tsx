@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 import { Phone, Check, Archive } from 'lucide-react';
 
 import { prisma } from '@/lib/prisma';
-import { STAGE_LABEL, STAGE_ORDER } from '@/lib/labels';
+import { STAGE_LABEL_PUBLIC, STAGE_ORDER } from '@/lib/labels';
 import { fmtMoney, fmtFullDateTime, phoneDigits } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -49,8 +49,8 @@ export default async function PublicOrderPage({
         <div className="max-w-xl mx-auto px-5 py-4 flex items-center justify-between">
           <div>
             <div className="text-[15px] font-semibold tracking-tight text-text1">{companyName}</div>
-            <a href={`tel:+${companyPhoneDigits}`} className="text-[12px] text-text3 hover:text-text1 tabular-nums">
-              {companyPhone}
+            <a href={`tel:+${companyPhoneDigits}`} className="inline-flex items-center gap-1 min-h-[44px] -my-3 text-[13px] text-text3 active:text-text1 tabular-nums">
+              <Phone size={12} /> {companyPhone}
             </a>
           </div>
           <div className="text-[11px] text-text3 uppercase tracking-wider">Статус</div>
@@ -76,7 +76,7 @@ export default async function PublicOrderPage({
             <span className="normal-case tracking-normal tabular-nums">Шаг {stepNumber} из {STAGE_ORDER.length}</span>
           </div>
           <div className="mt-2 text-[18px] font-semibold text-text1">
-            {STAGE_LABEL[order.stage]}
+            {STAGE_LABEL_PUBLIC[order.stage]}
           </div>
 
           <div
@@ -85,7 +85,7 @@ export default async function PublicOrderPage({
             aria-valuenow={stepNumber}
             aria-valuemin={1}
             aria-valuemax={STAGE_ORDER.length}
-            aria-label={`Этап ${stepNumber} из ${STAGE_ORDER.length}: ${STAGE_LABEL[order.stage]}`}
+            aria-label={`Этап ${stepNumber} из ${STAGE_ORDER.length}: ${STAGE_LABEL_PUBLIC[order.stage]}`}
           >
             <div className="h-full bg-accent rounded-full" style={{ width: `${percent}%` }} />
           </div>
@@ -97,10 +97,9 @@ export default async function PublicOrderPage({
               return (
                 <li
                   key={s}
+                  aria-current={current ? 'step' : undefined}
                   className={`flex items-center gap-3 ${
-                    current ? 'font-medium text-text1' :
-                    done ? 'text-text3' :
-                    'text-text3/70'
+                    current ? 'font-medium text-text1' : 'text-text3'
                   }`}
                 >
                   {done ? (
@@ -116,7 +115,7 @@ export default async function PublicOrderPage({
                       {i + 1}
                     </span>
                   )}
-                  <span>{STAGE_LABEL[s]}</span>
+                  <span>{STAGE_LABEL_PUBLIC[s]}</span>
                 </li>
               );
             })}
@@ -157,8 +156,8 @@ export default async function PublicOrderPage({
           <div className="text-[14px] text-text3">Вопросы по заказу?</div>
           <a
             href={`tel:+${companyPhoneDigits}`}
-            className="inline-flex items-center gap-2 mt-3 px-5 py-2.5 rounded-md
-                       bg-accent hover:bg-accent/90 text-white font-medium text-[14px]
+            className="inline-flex items-center justify-center gap-2 mt-3 px-5 min-h-[44px] rounded-md
+                       bg-accent hover:bg-accent/90 active:bg-accent-hover text-white font-medium text-[14px]
                        transition-colors"
           >
             <Phone size={14} /> Позвонить в компанию
@@ -246,8 +245,8 @@ function ExpiredView() {
         </p>
         <a
           href={`tel:+${companyPhoneDigits}`}
-          className="inline-flex items-center gap-2 mt-5 px-4 py-2 rounded-md
-                     bg-accent hover:bg-accent/90 text-white font-medium text-[14px] tabular-nums
+          className="inline-flex items-center justify-center gap-2 mt-5 px-4 min-h-[44px] rounded-md
+                     bg-accent hover:bg-accent/90 active:bg-accent-hover text-white font-medium text-[14px] tabular-nums
                      transition-colors"
         >
           <Phone size={14} /> {companyPhone}

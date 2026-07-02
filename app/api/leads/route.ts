@@ -147,6 +147,17 @@ export async function POST(req: NextRequest) {
     );
   }
 
+  // Лимит размера ДО парсинга: req.json() буферизует всё тело в память, а
+  // passthrough-схема пропустила бы гигантский payload в jsonb. 64 КБ хватает
+  // любой честной заявке с запасом; больше — JSON-бомба.
+  const len = Number(req.headers.get('content-length'));
+  if (!len || len > 64 * 1024) {
+    return NextResponse.json(
+      { ok: false, error: 'Слишком большой запрос' },
+      { status: 413, headers: corsHeaders },
+    );
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -181,30 +192,52 @@ export async function POST(req: NextRequest) {
   delete (cleanPayload as any).utmMedium;
   delete (cleanPayload as any).utmCampaign;
 
-  const lead = await prisma.lead.create({
-    data: {
-      clientName:        d.clientName,
-      clientPhone:       normalizePhone(d.clientPhone),
-      clientPhoneDigits: phoneDigits(d.clientPhone),
-      clientAddress:     d.clientAddress ?? null,
-      widthMm:           d.widthMm ?? null,
-      heightMm:          d.heightMm ?? null,
-      comment:           d.comment ?? '',
-      estimatedPrice:    d.estimatedPrice ?? null,
-      source:            d.source ?? 'calc',
-      stage:             isSpam ? 'spam' : 'new',
-      payload:           cleanPayload as any,
-      ip,
-      userAgent,
-      utmSource:         d.utmSource ?? null,
-      utmMedium:         d.utmMedium ?? null,
-      utmCampaign:       d.utmCampaign ?? null,
-    },
-    select: { id: true, number: true, stage: true },
-  });
+  // try/catch: транзиентный сбой Postgres (rebuild-окно Timeweb) без обработки
+  // отдавал framework-500 БЕЗ CORS-заголовков — форма на внешнем лендинге
+  // получала opaque TypeError и не могла показать «попробуйте ещё раз».
+  let lead: { id: string; number: number; stage: string };
+  try {
+    lead = await prisma.lead.create({
+      data: {
+        clientName:        d.clientName,
+        clientPhone:       normalizePhone(d.clientPhone),
+        clientPhoneDigits: phoneDigits(d.clientPhone),
+        clientAddress:     d.clientAddress ?? null,
+        widthMm:           d.widthMm ?? null,
+        heightMm:          d.heightMm ?? null,
+        comment:           d.comment ?? '',
+        estimatedPrice:    d.estimatedPrice ?? null,
+        source:            d.source ?? 'calc',
+        stage:             isSpam ? 'spam' : 'new',
+        payload:           cleanPayload as any,
+        ip,
+        userAgent,
+        utmSource:         d.utmSource ?? null,
+        utmMedium:         d.utmMedium ?? null,
+        utmCampaign:       d.utmCampaign ?? null,
+      },
+      select: { id: true, number: true, stage: true },
+    });
+  } catch (e) {
+    console.error('[leads] create failed', { ip, error: e });
+    return NextResponse.json(
+      { ok: false, error: 'Не удалось сохранить заявку. Попробуйте ещё раз.' },
+      { status: 503, headers: corsHeaders },
+    );
+  }
+
+  // Троттлинг уведомлений: бот, прошедший honeypot (curl с валидными полями),
+  // не должен заваливать телефоны staff пушами и сжигать квоты Resend/Telegram.
+  // >3 заявок за 10 минут с одного IP — сохраняем лид, но канальные уведомления
+  // не шлём (лид всё равно виден в /leads и в бейдже «Новые»).
+  const recentFromIp = (rateMap.get(ip) ?? []).filter((t) => Date.now() - t < 10 * 60 * 1000).length;
+  const notifyAllowed = recentFromIp <= 3;
+  if (!notifyAllowed) {
+    console.warn('[leads] notifications throttled', { ip, recentFromIp });
+  }
 
   // Уведомления — только для нормальных заявок (не спам)
-  if (!isSpam) {
+  if (!isSpam && notifyAllowed) {
     const baseUrl =
       process.env.NEXT_PUBLIC_BASE_URL ||
       `${req.nextUrl.protocol}//${req.headers.get('host')}`;

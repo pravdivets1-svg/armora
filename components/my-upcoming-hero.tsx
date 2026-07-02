@@ -91,7 +91,7 @@ export async function MyUpcomingHero({ me }: { me: { id: string; role: Role } })
       <ul className="divide-y divide-white/30">
         {events.map((e) => {
           const kindLabel = e.kind === 'survey' ? 'Замер' : 'Установка';
-          const kindBg = e.kind === 'survey' ? 'bg-info2/[0.08] text-info2' : 'bg-ok2/[0.08] text-ok2';
+          const kindBg = e.kind === 'survey' ? 'bg-info2/[0.08] text-info2-text' : 'bg-ok2/[0.08] text-ok2-text';
           const dayLabel = dayLabelFor(e.at);
           return (
             <li key={`${e.orderId}-${e.kind}`}>
@@ -107,7 +107,7 @@ export async function MyUpcomingHero({ me }: { me: { id: string; role: Role } })
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className={`inline-flex items-center h-4 px-1.5 rounded text-[10.5px]
+                    <span className={`inline-flex items-center h-[18px] px-1.5 rounded text-[11px]
                                       font-semibold uppercase tracking-wide ${kindBg}`}>
                       {kindLabel}
                     </span>

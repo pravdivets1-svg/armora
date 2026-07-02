@@ -20,6 +20,19 @@ export const STAGE_LABEL: Record<Stage, string> = {
   closed:           'Закрыта',
 };
 
+// Клиентские названия этапов для публичной страницы /order/[token]:
+// без внутреннего жаргона CRM («Новая», «Ожидает закрытия»).
+export const STAGE_LABEL_PUBLIC: Record<Stage, string> = {
+  new:              'Заказ принят',
+  survey_scheduled: 'Замер назначен',
+  survey_done:      'Замер выполнен',
+  production:       'Дверь в производстве',
+  ready_to_install: 'Готова к установке',
+  installed:        'Дверь установлена',
+  pending_closure:  'Завершаем заказ',
+  closed:           'Заказ завершён',
+};
+
 export const STAGE_ORDER: Stage[] = [
   'new',
   'survey_scheduled',

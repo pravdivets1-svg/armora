@@ -99,10 +99,12 @@ export function OrderCard({
             <p className="text-meta text-text2 flex items-center gap-1.5 w-full mb-0.5">
               <MapPin size={11} className="shrink-0 translate-y-[1px] text-text3" />
               <span className="truncate flex-1 min-w-0">{address}</span>
+              {/* 40×40px хит-зона (иконка прежняя): 24px в перчатках не попасть —
+                  промах проваливался в оверлей-ссылку и открывал заказ. */}
               <CopyButton
                 text={address}
                 label="Скопировать адрес"
-                className="w-6 h-6 -my-1 rounded-md text-text3 hover:text-text1 hover:bg-subtle/70"
+                className="w-10 h-10 -my-3 -mr-2 rounded-md text-text3 hover:text-text1 hover:bg-subtle/70"
               />
             </p>
           )}
@@ -124,7 +126,7 @@ export function OrderCard({
             <div className="text-[16px] font-semibold tabular-nums text-text1 leading-tight">
               {fmtRub(amount)}
             </div>
-            <div className="text-meta text-text3 mt-0.5">по договору</div>
+            <div className="text-meta text-text3 mt-0.5">{amount == null ? 'нет суммы' : 'по договору'}</div>
           </div>
 
           {/* Звонок / маршрут прямо из списка — без захода в заказ */}

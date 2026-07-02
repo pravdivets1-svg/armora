@@ -43,12 +43,14 @@ export default function OrderPhotos({
   initial: PhotoMeta[];
 }) {
   const [photos, setPhotos] = useState<PhotoMeta[]>(initial);
-  const [uploadKind, setUploadKind] = useState<PhotoMeta['kind']>('contract');
   const [uploading, setUploading] = useState(false);
   const [lightbox, setLightbox] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  async function handleFiles(files: FileList | null) {
+  // kind — АРГУМЕНТОМ, не через state: setState не меняет замыкание текущего
+  // рендера, и первое фото после переключения плитки уходило с предыдущим kind
+  // (акт сохранялся как «Договор»).
+  async function handleFiles(files: FileList | null, kind: PhotoMeta['kind']) {
     if (!files || files.length === 0) return;
     setUploading(true);
     try {
@@ -57,16 +59,22 @@ export default function OrderPhotos({
           toast.error(`Файл «${f.name}» больше 5 МБ`);
           continue;
         }
-        const fd = new FormData();
-        fd.append('file', f);
-        fd.append('kind', uploadKind);
-        const r = await fetch(`/api/orders/${orderId}/photos`, { method: 'POST', body: fd });
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) {
-          toast.error(`Не удалось загрузить «${f.name}»: ${j?.error ?? r.status}`);
-          continue;
+        // Пофайловый try/catch: обрыв сети на 3-м файле из 6 не должен молча
+        // отбрасывать остальные — замерщик должен видеть, что не загрузилось.
+        try {
+          const fd = new FormData();
+          fd.append('file', f);
+          fd.append('kind', kind);
+          const r = await fetch(`/api/orders/${orderId}/photos`, { method: 'POST', body: fd });
+          const j = await r.json().catch(() => ({}));
+          if (!r.ok || !j.photo) {
+            toast.error(`Не удалось загрузить «${f.name}»: ${j?.error ?? r.status}`);
+            continue;
+          }
+          setPhotos((prev) => [j.photo, ...prev]);
+        } catch {
+          toast.error(`Сеть: не удалось загрузить «${f.name}»`);
         }
-        setPhotos((prev) => [j.photo, ...prev]);
       }
     } finally {
       setUploading(false);
@@ -121,10 +129,7 @@ export default function OrderPhotos({
               accept="image/jpeg,image/png,image/webp"
               capture="environment"
               className="sr-only"
-              onChange={(e) => {
-                setUploadKind(k);
-                handleFiles(e.target.files);
-              }}
+              onChange={(e) => handleFiles(e.target.files, k)}
               disabled={uploading}
             />
           </label>
@@ -137,15 +142,19 @@ export default function OrderPhotos({
             <Loader2 size={12} className="animate-spin" /> Загрузка…
           </span>
         )}
-        <label className="cursor-pointer hover:text-text1 transition-colors underline-offset-2 hover:underline">
-          из галереи
+        {/* Галерея грузит с kind='other' — тип виден в подписи фото.
+            min-h 44px: раньше это была 11px-ссылка с тач-зоной ~16px. */}
+        <label className="inline-flex items-center gap-1.5 min-h-[44px] px-3 -mr-3 -my-3
+                          text-[13px] text-text2 cursor-pointer rounded-md
+                          hover:text-text1 active:bg-subtle/60 transition-colors">
+          <FileImage size={14} /> из галереи
           <input
             ref={inputRef}
             type="file"
             accept="image/jpeg,image/png,image/webp"
             multiple
             className="sr-only"
-            onChange={(e) => handleFiles(e.target.files)}
+            onChange={(e) => handleFiles(e.target.files, 'other')}
             disabled={uploading}
           />
         </label>
@@ -153,7 +162,7 @@ export default function OrderPhotos({
 
       {/* Сетка */}
       {photos.length === 0 ? (
-        <div className="text-[13px] text-text3">Фото пока нет —</div>
+        <div className="text-[13px] text-text3">Фото пока нет — снимите договор или замер плитками выше.</div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
           {photos.map((p) => {
@@ -185,12 +194,12 @@ export default function OrderPhotos({
                   <button
                     type="button"
                     onClick={() => remove(p.id)}
-                    className="shrink-0 w-9 h-9 inline-flex items-center justify-center rounded
-                               text-text3 hover:text-bad2 hover:bg-bad2-soft transition-colors"
+                    className="shrink-0 w-10 h-10 -my-1 -mr-1 inline-flex items-center justify-center rounded
+                               text-text3 hover:text-bad2 hover:bg-bad2-soft active:bg-bad2-soft transition-colors"
                     aria-label="Удалить фото"
                     title="Удалить"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={16} />
                   </button>
                 </figcaption>
               </figure>

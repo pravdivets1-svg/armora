@@ -23,7 +23,10 @@ export function buildYandexRouteUrl(points: { clientAddress: string }[]): string
     .filter(Boolean)
     .map((addr) => encodeURIComponent(addr));
   if (parts.length === 0) return 'https://yandex.ru/maps/';
-  return `https://yandex.ru/maps/?rtext=${parts.join('~')}&rtt=auto`;
+  // Пустой стартовый сегмент (~) = «Моё местоположение»: иначе при ОДНОЙ точке
+  // rtext заполнял только «Откуда» и маршрут не строился, а при нескольких —
+  // терялся участок от текущего места сотрудника до первого клиента.
+  return `https://yandex.ru/maps/?rtext=~${parts.join('~')}&rtt=auto`;
 }
 
 export default function TodayRouteCard({ points }: { points: Point[] }) {

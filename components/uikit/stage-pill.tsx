@@ -1,15 +1,17 @@
 import type { Stage } from '@prisma/client';
 import { STAGE_LABEL } from '@/lib/labels';
 
+// Текст пилюли — тёмные .text-варианты статусных токенов (AA на soft-фонах);
+// точка-индикатор остаётся на ярком DEFAULT.
 const STYLE: Record<Stage, { bg: string; text: string; dot: string; pulse?: boolean }> = {
-  new:              { bg: 'bg-subtle',      text: 'text-text2',  dot: 'bg-text2' },
-  survey_scheduled: { bg: 'bg-info2-soft',  text: 'text-info2',  dot: 'bg-info2' },
-  survey_done:      { bg: 'bg-info2-soft',  text: 'text-info2',  dot: 'bg-info2' },
-  production:       { bg: 'bg-warn2-soft',  text: 'text-warn2',  dot: 'bg-warn2' },
-  ready_to_install: { bg: 'bg-ok2-soft',    text: 'text-ok2',    dot: 'bg-ok2' },
-  installed:        { bg: 'bg-ok2-soft',    text: 'text-ok2',    dot: 'bg-ok2' },
-  pending_closure:  { bg: 'bg-accent-soft', text: 'text-accent', dot: 'bg-accent', pulse: true },
-  closed:           { bg: 'bg-subtle',      text: 'text-text3',  dot: 'bg-text3' },
+  new:              { bg: 'bg-subtle',      text: 'text-text2',      dot: 'bg-text2' },
+  survey_scheduled: { bg: 'bg-info2-soft',  text: 'text-info2-text', dot: 'bg-info2' },
+  survey_done:      { bg: 'bg-info2-soft',  text: 'text-info2-text', dot: 'bg-info2' },
+  production:       { bg: 'bg-warn2-soft',  text: 'text-warn2-text', dot: 'bg-warn2' },
+  ready_to_install: { bg: 'bg-ok2-soft',    text: 'text-ok2-text',   dot: 'bg-ok2' },
+  installed:        { bg: 'bg-ok2-soft',    text: 'text-ok2-text',   dot: 'bg-ok2' },
+  pending_closure:  { bg: 'bg-accent-soft', text: 'text-accent',     dot: 'bg-accent', pulse: true },
+  closed:           { bg: 'bg-subtle',      text: 'text-text3',      dot: 'bg-text3' },
 };
 
 export function StagePill({
@@ -22,11 +24,13 @@ export function StagePill({
   size?: 'sm' | 'md';
 }) {
   const s = STYLE[stage];
+  // Счётчик дней: тёмные text-токены вместо opacity (opacity-60 поверх статусного
+  // цвета давала контраст <2:1 — на улице счётчик был невидим).
   const dur =
     daysInStage == null || stage === 'closed' ? null
-    : daysInStage > 14 ? { v: `${daysInStage}д`, cls: 'text-bad2' }
-    : daysInStage > 5  ? { v: `${daysInStage}д`, cls: 'text-warn2' }
-    : { v: `${daysInStage}д`, cls: 'opacity-60' };
+    : daysInStage > 14 ? { v: `${daysInStage}д`, cls: 'text-bad2-text' }
+    : daysInStage > 5  ? { v: `${daysInStage}д`, cls: 'text-warn2-text' }
+    : { v: `${daysInStage}д`, cls: 'text-text2' };
 
   const cls = size === 'md'
     ? 'h-8 px-3 text-[13.5px] gap-2'

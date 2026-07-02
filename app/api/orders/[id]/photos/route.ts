@@ -9,7 +9,8 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { requireUser, isStaff } from '@/lib/auth-helpers';
+import { apiUser } from '@/lib/auth-helpers';
+import { canViewOrder } from '@/lib/orders';
 import type { OrderPhotoKind } from '@prisma/client';
 
 const MAX_BYTES = 5 * 1024 * 1024; // 5 МБ
@@ -18,23 +19,30 @@ const ALLOWED_KINDS: OrderPhotoKind[] = ['contract', 'survey', 'act', 'other'];
 
 export const runtime = 'nodejs';
 
+// Доступ = те же правила, что у страницы заказа (canViewOrder): staff, назначенцы,
+// автор заказа, установщик на стадиях production+. Раньше проверялись только
+// surveyorId/installerId — у автора-замерщика и установщика были битые фото и 403.
+// apiUser вместо requireUser: при протухшей сессии отвечаем 401 JSON, а не 307 на HTML.
 async function checkAccess(orderId: string) {
-  const me = await requireUser();
+  const me = await apiUser();
+  if (!me) return { error: 'unauthorized' as const };
   const order = await prisma.order.findUnique({
     where: { id: orderId },
-    select: { id: true, surveyorId: true, installerId: true, stage: true },
+    select: { id: true, surveyorId: true, installerId: true, createdById: true, stage: true },
   });
   if (!order) return { error: 'not_found' as const };
-  const isMine = order.surveyorId === me.id || order.installerId === me.id;
-  if (!isStaff(me.role) && !isMine) return { error: 'forbidden' as const };
+  if (!canViewOrder(me, order)) return { error: 'forbidden' as const };
   return { me, order };
+}
+
+function accessError(error?: 'unauthorized' | 'not_found' | 'forbidden') {
+  const status = error === 'unauthorized' ? 401 : error === 'not_found' ? 404 : 403;
+  return NextResponse.json({ error: error ?? 'forbidden' }, { status });
 }
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   const acc = await checkAccess(params.id);
-  if ('error' in acc) {
-    return NextResponse.json({ error: acc.error }, { status: acc.error === 'not_found' ? 404 : 403 });
-  }
+  if ('error' in acc) return accessError(acc.error);
   const photos = await prisma.orderPhoto.findMany({
     where: { orderId: params.id },
     orderBy: { createdAt: 'desc' },
@@ -49,8 +57,14 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   const acc = await checkAccess(params.id);
-  if ('error' in acc) {
-    return NextResponse.json({ error: acc.error }, { status: acc.error === 'not_found' ? 404 : 403 });
+  if ('error' in acc) return accessError(acc.error);
+
+  // Лимит размера ДО буферизации тела: req.formData() разбирает весь multipart
+  // в память, и проверка file.size после него не спасает от OOM единственного
+  // контейнера. Отклоняем и честно объявленные большие тела, и chunked без длины.
+  const len = Number(req.headers.get('content-length'));
+  if (!len || len > MAX_BYTES + 64 * 1024) {
+    return NextResponse.json({ error: 'too_large', max: MAX_BYTES }, { status: 413 });
   }
 
   let form: FormData;

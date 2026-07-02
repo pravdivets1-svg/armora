@@ -62,7 +62,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Searc
         sub={pluralize(total)}
         actions={
           <>
-            <FilterSheet>
+            <FilterSheet activeCount={[searchParams.stage, searchParams.user].filter(Boolean).length}>
               <AutoSubmitSelect
                 name="stage"
                 defaultValue={searchParams.stage ?? ''}

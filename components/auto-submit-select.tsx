@@ -23,7 +23,7 @@ export default function AutoSubmitSelect({
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
 
   function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const v = e.target.value;
@@ -39,18 +39,22 @@ export default function AutoSubmitSelect({
   }
 
   return (
+    // isPending: на полевом 3G между выбором и новым списком проходят секунды —
+    // без визуального отклика пользователь выбирал повторно.
     <select
       defaultValue={defaultValue}
       onChange={handleChange}
       aria-label={ariaLabel}
+      disabled={isPending}
       className={`field block min-w-0 bg-subtle/70 border border-transparent text-text1 rounded-md
                   px-3.5 py-2 pr-8 text-[14px] leading-6
                   appearance-none
                   focus:outline-none focus:bg-card focus:border-text2/30 focus:ring-1 focus:ring-text2/20
                   transition-colors
+                  ${isPending ? 'opacity-60' : ''}
                   h-10 ${className}`}
       style={{
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238A93A1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B6F8A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'right 0.7rem center',
       }}

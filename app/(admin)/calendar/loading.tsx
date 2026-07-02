@@ -6,7 +6,13 @@ import { Skeleton } from '@/components/skeletons';
 
 export default function Loading() {
   return (
-    <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 pb-12 space-y-4">
+    <>
+      {/* Плейсхолдер sticky-шапки — без него контент прыгал на 56px, когда
+          приходила настоящая PageHeader. */}
+      <header className="sticky top-0 z-30 glass-strip border-b h-14 lg:h-16 flex items-center px-3 sm:px-4">
+        <Skeleton className="h-5 w-28" />
+      </header>
+      <main className="max-w-3xl mx-auto px-4 lg:px-6 pt-3 pb-12 space-y-4">
       {/* Hero: следующее событие */}
       <div className="rounded-md border border-borderc bg-card px-4 py-3.5 pl-5 space-y-2">
         <div className="flex items-center gap-2">
@@ -53,5 +59,6 @@ export default function Loading() {
         ))}
       </section>
     </main>
+    </>
   );
 }

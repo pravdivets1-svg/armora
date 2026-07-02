@@ -1,10 +1,12 @@
-'use client';
-
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { IconButton } from './button';
-import { useIsDesktop } from './use-media-query';
 
+// Высота и размер кнопки «Назад» — ЧИСТЫМ CSS (h-14 lg:h-16, w-11 lg:w-9):
+// прежний JS-детект useIsDesktop стартовал с «десктопа», и на телефоне первый
+// рендер рисовал шапку 64px, после гидрации сжимал до 56px — контент прыгал
+// на 8px при каждой жёсткой загрузке. Заодно компонент стал серверным.
+// «Назад» — ссылка со стилями кнопки: <button> внутри <a> невалиден
+// (двойной таб-стоп, скринридер читал элемент дважды).
 export function PageHeader({
   title,
   sub,
@@ -16,20 +18,19 @@ export function PageHeader({
   backHref?: string;
   actions?: React.ReactNode;
 }) {
-  const isDesktop = useIsDesktop();
-  const iconSize: 36 | 44 = isDesktop ? 36 : 44;
-
   return (
-    <header
-      className="sticky top-0 z-30 glass-strip border-b"
-      style={{ height: isDesktop ? 64 : 56 }}
-    >
+    <header className="sticky top-0 z-30 glass-strip border-b h-14 lg:h-16">
       <div className="flex items-center gap-2 h-full px-3 sm:px-4">
         {backHref && (
-          <Link href={backHref} aria-label="Назад" className="-ml-1">
-            <IconButton size={iconSize} aria-label="Назад">
-              <ArrowLeft size={18} />
-            </IconButton>
+          <Link
+            href={backHref}
+            aria-label="Назад"
+            className="-ml-1 inline-flex items-center justify-center shrink-0
+                       w-11 h-11 lg:w-9 lg:h-9 rounded-md text-text2
+                       hover:bg-subtle hover:text-text1 active:bg-subtle
+                       transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          >
+            <ArrowLeft size={18} />
           </Link>
         )}
         <div className="min-w-0 flex-1">

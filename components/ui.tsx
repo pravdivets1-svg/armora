@@ -49,14 +49,14 @@ export function Select({ className = '', children, ...rest }: SelectProps) {
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'success' | 'danger' | 'accent';
 
 const BTN_VARIANT: Record<ButtonVariant, string> = {
-  // primary = нейтральный near-black, по дефолту
-  primary:   'bg-accent hover:bg-accent/90 text-white font-medium',
-  // accent = синий, только для критичных CTA
-  accent:    'bg-accent hover:bg-accent-hover text-white font-medium',
-  secondary: 'bg-card hover:bg-subtle text-text1 border border-borderc',
-  ghost:     'text-text2 hover:bg-subtle hover:text-text1',
-  success:   'bg-ok2 hover:bg-ok2/90 text-white font-medium',
-  danger:    'text-bad2 hover:bg-bad2-soft border border-transparent',
+  // primary — индиго-CTA (алиас accent после смены палитры 2026)
+  primary:   'bg-accent hover:bg-accent/90 active:bg-accent-hover text-white font-medium',
+  // accent = индиго, для критичных CTA
+  accent:    'bg-accent hover:bg-accent-hover active:bg-accent-deep text-white font-medium',
+  secondary: 'bg-card hover:bg-subtle active:bg-subtle text-text1 border border-borderc',
+  ghost:     'text-text2 hover:bg-subtle hover:text-text1 active:bg-subtle',
+  success:   'bg-ok2 hover:bg-ok2/90 active:bg-ok2/80 text-white font-medium',
+  danger:    'text-bad2 hover:bg-bad2-soft active:bg-bad2-soft border border-transparent',
 };
 
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -67,8 +67,10 @@ export function Button({ variant = 'primary', className = '', children, ...rest 
   return (
     <button
       className={`inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-md
+                  min-h-[44px] lg:min-h-[36px]
                   text-[13.5px] disabled:opacity-50 disabled:cursor-not-allowed
-                  transition-colors duration-fast ease-soft
+                  transition-[color,background-color,border-color,transform] duration-fast ease-soft
+                  active:scale-[0.98] disabled:active:scale-100
                   ${BTN_VARIANT[variant]} ${className}`}
       {...rest}
     >

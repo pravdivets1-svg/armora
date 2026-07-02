@@ -29,13 +29,15 @@ export function PageShell({
 }
 
 export function PageBack({ href, label }: { href: string; label: string }) {
+  // min-h 44px (компенсировано отрицательными маргинами): голый текст 13px
+  // давал тач-зону ~18px — в перчатках промахнуться проще, чем попасть.
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-1.5 text-[13px] text-text3 hover:text-text1
-                 -mt-1 transition-colors"
+      className="inline-flex items-center gap-1.5 min-h-[44px] -my-3 pr-4 text-[13px]
+                 text-text3 hover:text-text1 active:text-text1 transition-colors"
     >
-      <ArrowLeft size={14} /> {label}
+      <ArrowLeft size={16} /> {label}
     </Link>
   );
 }

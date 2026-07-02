@@ -149,7 +149,7 @@ export default async function OrderPage({ params }: { params: { id: string } }) 
         <HeroStageBlock
           current={order.stage}
           role={me.role}
-          enteredAt={order.updatedAt.toISOString()}
+          enteredAt={order.stageChangedAt.toISOString()}
           nextEvent={nextEvent}
           onStageChange={stageAction}
           onApproveClosure={approveAction}

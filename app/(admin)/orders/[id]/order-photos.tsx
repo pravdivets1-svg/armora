@@ -94,14 +94,19 @@ export default function OrderPhotos({
     toast.success('Фото удалено');
   }
 
-  // Esc — закрыть лайтбокс
+  // Esc — закрыть лайтбокс; на время показа блокируем скролл страницы
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setLightbox(null);
     }
     if (lightbox) {
       window.addEventListener('keydown', onKey);
-      return () => window.removeEventListener('keydown', onKey);
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        window.removeEventListener('keydown', onKey);
+        document.body.style.overflow = prev;
+      };
     }
   }, [lightbox]);
 
@@ -213,6 +218,7 @@ export default function OrderPhotos({
         <div
           role="dialog"
           aria-modal="true"
+          aria-label="Просмотр фото"
           onClick={() => setLightbox(null)}
           className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
         >
@@ -227,7 +233,7 @@ export default function OrderPhotos({
           </button>
           <img
             src={lightbox}
-            alt=""
+            alt="Фото заказа в полном размере"
             className="max-w-full max-h-full object-contain"
             onClick={(e) => e.stopPropagation()}
           />
